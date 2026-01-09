@@ -36,17 +36,19 @@ def master_kyc_form(client_name):
         st.session_state["view"] = "management"
         st.rerun()
     
-    st.title(f"🛡️ Master KYC: {client_name}")
+    st.title(f"🛡️ Master KYC Form: {client_name}")
     with st.form("kyc_form"):
         st.subheader("Section 1: Entity Background")
         st.text_input("Proposed Company Name", value=client_name)
         st.text_area("Principal Business Activities")
+        
         st.divider()
-        st.subheader("Section 2: Stakeholders")
+        st.subheader("Section 2: Individual Stakeholders")
         num = st.number_input("Number of Individuals", 1, 10, 1)
-        # Form fields go here...
+        
+        # This is where the "long list" of fields will continue to grow
         if st.form_submit_button("Save Master KYC"):
-            st.success("Saved!")
+            st.success(f"KYC Data for {client_name} Saved.")
 
 # --- 4. MAIN APP ---
 if check_password():
@@ -54,7 +56,7 @@ if check_password():
         st.title("Client Management System")
         df = get_clients()
 
-        # --- RESTORING YOUR SIDEBAR (ADD CLIENT) ---
+        # --- SIDEBAR: ADD NEW CLIENT ---
         st.sidebar.header("Add New Client")
         with st.sidebar.form("add_form", clear_on_submit=True):
             new_num = st.number_input("Client Number", min_value=1, step=1)
@@ -63,34 +65,34 @@ if check_password():
             new_month = st.selectbox("Year End Month", MONTHS)
             new_status = st.selectbox("Status", ["Active", "Terminated"])
             if st.form_submit_button("Save New Client"):
-                add_client(new_num, new_name, new_uen, new_month, new_status)
-                st.rerun()
+                if new_name:
+                    add_client(new_num, new_name, new_uen, new_month, new_status)
+                    st.rerun()
 
         if not df.empty:
-            # Formatting as per your original request
+            # Formatting headers to Uppercase
             df.columns = [col.replace('_', ' ').upper() for col in df.columns]
             
-            # --- IN-TABLE BUTTON LOGIC ---
-            st.subheader("📋 Client Database")
-            st.info("💡 To build a KYC form, click the 'BUILD' checkbox next to the client name.")
+            # Add the "NEW FORM" column for interaction
+            df["NEW FORM"] = False
             
-            # Add an action column for the checkbox
-            df["BUILD KYC"] = False
-            
-            # Reorder columns to put Action at the front
-            cols = ["BUILD KYC"] + [c for c in df.columns if c != "BUILD KYC"]
-            df = df[cols]
+            # Reorder: Put NEW FORM first, keep ID for background logic
+            cols = ["NEW FORM"] + [c for c in df.columns if c != "NEW FORM"]
+            df_display = df[cols]
 
-            # Display interactive table
+            st.subheader("📋 Client Database")
+            
+            # INTERACTIVE TABLE
             edited_df = st.data_editor(
-                df,
+                df_display,
                 hide_index=True,
                 use_container_width=True,
-                disabled=[c for c in df.columns if c != "BUILD KYC"], # Only allow checkbox to be clicked
+                disabled=[c for c in df_display.columns if c != "NEW FORM"],
+                key="main_table"
             )
 
-            # Check if a checkbox was clicked
-            clicked_rows = edited_df[edited_df["BUILD KYC"] == True]
+            # Check if "NEW FORM" was checked
+            clicked_rows = edited_df[edited_df["NEW FORM"] == True]
             if not clicked_rows.empty:
                 st.session_state["selected_client_name"] = clicked_rows.iloc[0]["NAME"]
                 st.session_state["view"] = "kyc_form"
@@ -98,19 +100,54 @@ if check_password():
 
             st.divider()
 
-            # --- RESTORING YOUR EDIT/DELETE SECTION ---
+            # --- EDIT / DELETE SECTION (RESTORED & FULLY FUNCTIONAL) ---
             st.subheader("📝 Edit or Delete Client Details")
-            client_options = {f"{row['NAME']} (ID: {row['ID']})": row['ID'] for _, row in df.iterrows()}
-            selected_option = st.selectbox("Select a client to modify:", list(client_options.keys()))
-            selected_id = client_options[selected_option]
-            client_info = df[df['ID'] == selected_id].iloc[0]
             
-            with st.expander(f"Modify Details for {client_info['NAME']}", expanded=True):
-                # ... (Your original Edit/Delete UI code here) ...
-                st.write("Edit and Delete logic preserved here.")
-                if st.button("🗑️ Delete Client"):
-                    delete_client(int(selected_id))
-                    st.rerun()
-    
+            # Search to help find client to edit
+            search_edit = st.text_input("Search Client to Edit")
+            edit_df = df.copy()
+            if search_edit:
+                edit_df = edit_df[edit_df['NAME'].str.contains(search_edit.upper(), na=False)]
+
+            client_options = {f"{row['NAME']} (ID: {row['ID']})": row['ID'] for _, row in edit_df.iterrows()}
+            
+            if client_options:
+                selected_option = st.selectbox("Select a client to modify:", list(client_options.keys()))
+                selected_id = client_options[selected_option]
+                
+                # Fetch original data for the selected ID
+                client_info = df[df['ID'] == selected_id].iloc[0]
+                
+                with st.expander(f"Modify Details for {client_info['NAME']}", expanded=True):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        edit_num = st.number_input("Client Number", value=int(client_info['CLIENT NUM']), key="ed_num")
+                        edit_name = st.text_input("Customer Name", value=str(client_info['NAME']), key="ed_name")
+                        edit_uen = st.text_input("UEN", value=str(client_info['UEN']), key="ed_uen")
+                    with col2:
+                        curr_month = str(client_info['YEAR END'])
+                        m_idx = MONTHS.index(curr_month) if curr_month in MONTHS else 0
+                        edit_month = st.selectbox("Year End", MONTHS, index=m_idx, key="ed_month")
+                        
+                        stat_list = ["Active", "Terminated"]
+                        curr_stat = str(client_info['STATUS'])
+                        s_idx = stat_list.index(curr_stat) if curr_stat in stat_list else 0
+                        edit_status = st.selectbox("Client Status", stat_list, index=s_idx, key="ed_stat")
+
+                    eb_col1, eb_col2, _ = st.columns([1, 1, 2])
+                    if eb_col1.button("✅ Update Details", type="primary"):
+                        update_client(int(selected_id), edit_num, edit_name, edit_uen, edit_month, edit_status)
+                        st.success("Details Updated")
+                        st.rerun()
+                        
+                    if eb_col2.button("🗑️ Delete Client"):
+                        delete_client(int(selected_id))
+                        st.warning("Client Deleted")
+                        st.rerun()
+            else:
+                st.info("No clients found to edit.")
+        else:
+            st.info("Database is empty. Add a client from the sidebar.")
+
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
