@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from database import init_db, get_clients, add_client, delete_client, update_client
-
+from datetime import date
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="Audit & Incorporation Portal", layout="wide")
 init_db()
@@ -32,81 +32,42 @@ def check_password():
 
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
+    # Navigation Back Button (Placed outside the form)
     if st.button("⬅️ Back to Client Database"):
         st.session_state["view"] = "management"
         st.rerun()
     
-    # --- IMAGE REFERENCE: PROGRESS TRACKER ---
-    # Creating the green progress bar look from your photo
-    st.markdown("""
-        <style>
-        .step-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .step { text-align: center; font-family: sans-serif; font-size: 14px; color: #2e7d32; }
-        .circle { height: 40px; width: 40px; background-color: #2e7d32; border-radius: 50%; 
-                  display: inline-flex; align-items: center; justify-content: center; color: white; 
-                  font-weight: bold; margin-bottom: 5px; border: 2px solid #2e7d32; }
-        .circle-inactive { background-color: white; color: #2e7d32; }
-        .line { flex-grow: 1; height: 4px; background-color: #2e7d32; margin-top: -25px; }
-        </style>
-        <div class='step-container'>
-            <div class='step'><div class='circle'>1</div><br>Master KYC Form</div>
-            <div class='line'></div>
-            <div class='step'><div class='circle circle-inactive'>2</div><br>BG Sec File</div>
-            <div class='line'></div>
-            <div class='step'><div class='circle circle-inactive'>3</div><br>Customer Acceptance Form</div>
-            <div class='line'></div>
-            <div class='step'><div class='circle circle-inactive'>4</div><br>Secretarial Engagement Letter</div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.title(f"🛡️ Master KYC Form: {client_name}")
 
-    st.markdown("### BASIC INFORMATION REQUEST FORM & KYC")
-    
-    with st.form("kyc_form_from_photo"):
-        # Section A: Basic Info (Matching the photo layout)
-        st.write("#### BASIC INFORMATION REQUEST FORM & KYC")
+    # Start the form
+    with st.form("kyc_form_exhaustive"):
+        st.subheader("Section A: Entity Background")
+        st.text_input("Proposed Company Name", value=client_name)
+        st.text_area("Detailed Nature of Business")
         
-        # Date Field
-        st.date_input("Date", value=date.today())
+        st.divider()
+        
+        st.subheader("Section B: Financial Profile")
+        st.selectbox("Source of Wealth", ["Salary", "Business Profits", "Investments"])
+        
         st.divider()
 
-        # Company Details Row
-        st.write("**Company Details**")
-        st.text_input("Company Name", value=client_name)
+        # Section C: Individual Stakeholders
+        st.subheader("Section C: Individual Stakeholders")
+        st.write("Provide full details for all Directors and Shareholders.")
         
-        col_id1, col_id2, col_id3 = st.columns([2, 1, 1])
-        with col_id1:
-            st.text_input("Company No.")
-        with col_id2:
-            st.text_input("Date of incorporation", placeholder="DD/MM/YYYY")
-        with col_id3:
-            st.text_input("Year End Date", value="31 Dec")
-
-        st.divider()
-
-        # Proposed Activity Row
-        st.write("**Proposed Company Activity**")
-        col_act1, col_act2 = st.columns(2)
-        with col_act1:
-            st.text_input("Main Activity", placeholder="e.g. Accounting, Audits")
-        with col_act2:
-            st.text_input("Secondary Activity", placeholder="e.g. Tax")
-
-        st.divider()
-
-        # Section B: Directors (From bottom of photo)
-        st.write("#### DIRECTORS DETAILS")
-        num_dir = st.number_input("Number of Directors", 1, 10, 1)
+        # Fixing the Date error here
+        st.date_input("Date of Application", value=date.today()) 
         
-        for i in range(int(num_dir)):
-            with st.container(border=True):
-                r1c1, r1c2, r1c3, r1c4 = st.columns([2, 1, 1, 1])
-                with r1c1: st.text_input("Name as per Passport/NRIC", key=f"dname_{i}")
-                with r1c2: st.text_input("NRIC/Passport No.", key=f"did_{i}")
-                with r1c3: st.text_input("Date of Birth", key=f"ddob_{i}")
-                with r1c4: st.text_input("Email Address", key=f"dmail_{i}")
+        num_ppl = st.number_input("Number of Individuals", 1, 10, 1)
+        for i in range(int(num_ppl)):
+            st.text_input(f"Full Name of Stakeholder {i+1}", key=f"stakeholder_{i}")
 
-        if st.form_submit_button("Save Section 1"):
-            st.success("Section 1 Saved Successfully")
+        # CRITICAL: Every st.form must have a submit button inside the 'with' block
+        submitted = st.form_submit_button("Submit & Archive Master KYC")
+        
+        if submitted:
+            st.success(f"KYC Form for {client_name} has been captured!")
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
