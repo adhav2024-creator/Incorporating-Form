@@ -36,17 +36,77 @@ def master_kyc_form(client_name):
         st.session_state["view"] = "management"
         st.rerun()
     
-    st.title(f"🛡️ Master KYC Form: {client_name}")
-    with st.form("kyc_form"):
-        st.subheader("Section 1: Entity Background")
-        st.text_input("Proposed Company Name", value=client_name)
-        st.text_area("Principal Business Activities")
-        st.divider()
-        st.subheader("Section 2: Individual Stakeholders")
-        st.number_input("Number of Individuals", 1, 10, 1)
-        if st.form_submit_button("Save Master KYC"):
-            st.success(f"KYC Data for {client_name} Saved.")
+    # --- IMAGE REFERENCE: PROGRESS TRACKER ---
+    # Creating the green progress bar look from your photo
+    st.markdown("""
+        <style>
+        .step-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .step { text-align: center; font-family: sans-serif; font-size: 14px; color: #2e7d32; }
+        .circle { height: 40px; width: 40px; background-color: #2e7d32; border-radius: 50%; 
+                  display: inline-flex; align-items: center; justify-content: center; color: white; 
+                  font-weight: bold; margin-bottom: 5px; border: 2px solid #2e7d32; }
+        .circle-inactive { background-color: white; color: #2e7d32; }
+        .line { flex-grow: 1; height: 4px; background-color: #2e7d32; margin-top: -25px; }
+        </style>
+        <div class='step-container'>
+            <div class='step'><div class='circle'>1</div><br>Master KYC Form</div>
+            <div class='line'></div>
+            <div class='step'><div class='circle circle-inactive'>2</div><br>BG Sec File</div>
+            <div class='line'></div>
+            <div class='step'><div class='circle circle-inactive'>3</div><br>Customer Acceptance Form</div>
+            <div class='line'></div>
+            <div class='step'><div class='circle circle-inactive'>4</div><br>Secretarial Engagement Letter</div>
+        </div>
+    """, unsafe_allow_html=True)
 
+    st.markdown("### BASIC INFORMATION REQUEST FORM & KYC")
+    
+    with st.form("kyc_form_from_photo"):
+        # Section A: Basic Info (Matching the photo layout)
+        st.write("#### BASIC INFORMATION REQUEST FORM & KYC")
+        
+        # Date Field
+        st.date_input("Date", value=date.today())
+        st.divider()
+
+        # Company Details Row
+        st.write("**Company Details**")
+        st.text_input("Company Name", value=client_name)
+        
+        col_id1, col_id2, col_id3 = st.columns([2, 1, 1])
+        with col_id1:
+            st.text_input("Company No.")
+        with col_id2:
+            st.text_input("Date of incorporation", placeholder="DD/MM/YYYY")
+        with col_id3:
+            st.text_input("Year End Date", value="31 Dec")
+
+        st.divider()
+
+        # Proposed Activity Row
+        st.write("**Proposed Company Activity**")
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            st.text_input("Main Activity", placeholder="e.g. Accounting, Audits")
+        with col_act2:
+            st.text_input("Secondary Activity", placeholder="e.g. Tax")
+
+        st.divider()
+
+        # Section B: Directors (From bottom of photo)
+        st.write("#### DIRECTORS DETAILS")
+        num_dir = st.number_input("Number of Directors", 1, 10, 1)
+        
+        for i in range(int(num_dir)):
+            with st.container(border=True):
+                r1c1, r1c2, r1c3, r1c4 = st.columns([2, 1, 1, 1])
+                with r1c1: st.text_input("Name as per Passport/NRIC", key=f"dname_{i}")
+                with r1c2: st.text_input("NRIC/Passport No.", key=f"did_{i}")
+                with r1c3: st.text_input("Date of Birth", key=f"ddob_{i}")
+                with r1c4: st.text_input("Email Address", key=f"dmail_{i}")
+
+        if st.form_submit_button("Save Section 1"):
+            st.success("Section 1 Saved Successfully")
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
