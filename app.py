@@ -32,42 +32,64 @@ def check_password():
 
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
-    # Navigation Back Button (Placed outside the form)
     if st.button("⬅️ Back to Client Database"):
         st.session_state["view"] = "management"
         st.rerun()
     
-    st.title(f"🛡️ Master KYC Form: {client_name}")
+    st.title("BASIC INFORMATION REQUEST FORM & KYC")
 
-    # Start the form
-    with st.form("kyc_form_exhaustive"):
-        st.subheader("Section A: Entity Background")
-        st.text_input("Proposed Company Name", value=client_name)
-        st.text_area("Detailed Nature of Business")
+    with st.form("kyc_form_exact"):
+        st.write("### BASIC INFORMATION REQUEST FORM & KYC")
         
+        # Date field at the top
+        st.date_input("Date", value=date(2020, 1, 1))
+        
+        # --- SECTION: COMPANY DETAILS ---
+        st.write("### Company Details")
+        st.text_input("Company Name", value=client_name)
+        
+        col1, col2, col3 = st.columns([2, 2, 1])
+        with col1:
+            st.text_input("Company No.", value="200517609N")
+        with col2:
+            st.date_input("Date of incorporation", value=date(2005, 1, 1))
+        with col3:
+            st.text_input("Year End Date", value="31 Dec")
+
+        # --- SECTION: PROPOSED COMPANY ACTIVITY ---
+        st.write("### Proposed Company Activity")
+        act_col1, act_col2 = st.columns(2)
+        with act_col1:
+            st.text_input("Main Activity", value="Accounting, Audits")
+        with act_col2:
+            st.text_input("Secondary Activity", value="Tax")
+
         st.divider()
-        
-        st.subheader("Section B: Financial Profile")
-        st.selectbox("Source of Wealth", ["Salary", "Business Profits", "Investments"])
-        
-        st.divider()
 
-        # Section C: Individual Stakeholders
-        st.subheader("Section C: Individual Stakeholders")
-        st.write("Provide full details for all Directors and Shareholders.")
+        # --- SECTION: DIRECTORS DETAILS ---
+        st.write("### DIRECTORS DETAILS")
         
-        # Fixing the Date error here
-        st.date_input("Date of Application", value=date.today()) 
+        # Row 1: Name, ID, DOB
+        d_row1_col1, d_row1_col2, d_row1_col3 = st.columns([2, 1, 1])
+        with d_row1_col1:
+            st.text_input("Name as per Passport/NRIC")
+        with d_row1_col2:
+            st.text_input("NRIC/Passport No.")
+        with d_row1_col3:
+            st.date_input("Date of Birth", value=date(1980, 1, 1))
         
-        num_ppl = st.number_input("Number of Individuals", 1, 10, 1)
-        for i in range(int(num_ppl)):
-            st.text_input(f"Full Name of Stakeholder {i+1}", key=f"stakeholder_{i}")
+        # Row 2: Email, Phone/Other, Address (matches footer of your image)
+        d_row2_col1, d_row2_col2, d_row2_col3 = st.columns([2, 1, 2])
+        with d_row2_col1:
+            st.text_input("Email Address")
+        with d_row2_col2:
+            st.text_input("Contact Details") # Placeholder for the icons/labels in your image
+        with d_row2_col3:
+            st.text_area("Residential Address", height=68)
 
-        # CRITICAL: Every st.form must have a submit button inside the 'with' block
-        submitted = st.form_submit_button("Submit & Archive Master KYC")
-        
-        if submitted:
-            st.success(f"KYC Form for {client_name} has been captured!")
+        # Submit button to satisfy Streamlit requirements
+        if st.form_submit_button("Save Form"):
+            st.success("Form Saved")
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
