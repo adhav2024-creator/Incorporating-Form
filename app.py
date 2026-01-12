@@ -217,6 +217,20 @@ def master_kyc_form(client_name):
         st.write("### CORRESPONDENCE ADDRESS")
         st.text_area("Correspondence Address Details", key="correspondence_address", height=100)
 
+        st.divider()
+
+        # --- CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
+        st.write("### CURRENT EMPLOYMENT/BUSINESS PARTICULARS")
+        emp_c1, emp_c2 = st.columns(2)
+        with emp_c1:
+            st.text_input("BO's Name", key="emp_bo_name")
+            st.text_input("Company Name", key="emp_company")
+            st.text_input("Business Nature/Industry", key="emp_industry")
+        with emp_c2:
+            st.text_input("Years in employment", key="emp_years_employment")
+            st.text_input("Years of experience in the industry", key="emp_years_exp")
+            st.file_uploader("Addition of CV", type=["pdf", "doc", "docx"], key="emp_cv")
+
         if st.form_submit_button("Save Form"):
             st.success("Form Saved Successfully")
 
