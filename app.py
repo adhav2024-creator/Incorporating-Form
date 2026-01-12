@@ -270,7 +270,7 @@ def master_kyc_form(client_name):
                 st.rerun()
 
 # --- 4. BG SEC FILE SECTION ---
-_# --- 4. BG SEC FILE SECTION ---
+
 def bg_sec_file_form(client_name):
     if st.button("Back to Master KYC"):
         st.session_state["view"] = "kyc_form"
