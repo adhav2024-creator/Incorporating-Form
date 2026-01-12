@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from database import init_db, get_clients, add_client, delete_client, update_client
 from datetime import date
+
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="Audit & Incorporation Portal", layout="wide")
 init_db()
@@ -35,7 +36,78 @@ def master_kyc_form(client_name):
     if st.button("⬅️ Back to Client Database"):
         st.session_state["view"] = "management"
         st.rerun()
-    
+
+    # --- PROGRESS BAR (MATCHING YOUR IMAGE) ---
+    st.markdown("""
+        <style>
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 20px 0;
+            position: relative;
+        }
+        .progress-line {
+            position: absolute;
+            top: 45px;
+            left: 5%;
+            right: 5%;
+            height: 4px;
+            background-color: #2E7D32;
+            z-index: 1;
+        }
+        .step {
+            text-align: center;
+            z-index: 2;
+            flex: 1;
+        }
+        .circle {
+            width: 50px;
+            height: 50px;
+            background-color: #2E7D32;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-weight: bold;
+            font-size: 20px;
+            border: 3px solid #2E7D32;
+        }
+        .inactive-circle {
+            background-color: white;
+            color: #2E7D32;
+        }
+        .label {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #2E7D32;
+        }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step">
+                <div class="circle">1</div>
+                <div class="label">Master KYC Form</div>
+            </div>
+            <div class="step">
+                <div class="circle inactive-circle">2</div>
+                <div class="label">BG Sec File</div>
+            </div>
+            <div class="step">
+                <div class="circle inactive-circle">3</div>
+                <div class="label">Customer Acceptance Form</div>
+            </div>
+            <div class="step">
+                <div class="circle inactive-circle">4</div>
+                <div class="label">Secretarial Engagement Letter</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     st.title("BASIC INFORMATION REQUEST FORM & KYC")
 
     with st.form("kyc_form_exact"):
@@ -78,25 +150,26 @@ def master_kyc_form(client_name):
         with d_row1_col3:
             st.date_input("Date of Birth", value=date(1980, 1, 1))
         
-        # Row 2: Email, Phone/Other, Address (matches footer of your image)
+        # Row 2: Email, Phone/Other, Address
         d_row2_col1, d_row2_col2, d_row2_col3 = st.columns([2, 1, 2])
         with d_row2_col1:
             st.text_input("Email Address")
         with d_row2_col2:
-            st.text_input("Contact Details") # Placeholder for the icons/labels in your image
+            st.text_input("Contact Details")
         with d_row2_col3:
             st.text_area("Residential Address", height=68)
 
-        # Submit button to satisfy Streamlit requirements
+        # Submit button
         if st.form_submit_button("Save Form"):
             st.success("Form Saved")
+
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("Client Management System")
         df = get_clients()
 
-        # --- SIDEBAR: ADD NEW CLIENT ---
+        # Sidebar logic
         st.sidebar.header("Add New Client")
         with st.sidebar.form("add_form", clear_on_submit=True):
             new_num = st.number_input("Client Number", min_value=1, step=1)
@@ -110,11 +183,7 @@ if check_password():
                     st.rerun()
 
         if not df.empty:
-            # ORIGINAL DASHBOARD METRICS
-            # 1. Ensure numeric sorting for metrics
             df['client_num'] = pd.to_numeric(df['client_num'], errors='coerce')
-            
-            # 2. Capitalize Headers for calculation
             df.columns = [col.replace('_', ' ').upper() for col in df.columns]
 
             st.subheader("📊 Practice Overview")
@@ -125,11 +194,9 @@ if check_password():
 
             st.divider()
 
-            # --- SEARCH & INTERACTIVE TABLE ---
             st.subheader("📋 Client Database")
             search_query = st.text_input("🔍 Search by Client Name or UEN", "")
             
-            # Filter Logic
             filtered_df = df.copy()
             if search_query:
                 filtered_df = filtered_df[
@@ -137,7 +204,6 @@ if check_password():
                     filtered_df['UEN'].str.contains(search_query.upper(), na=False)
                 ]
 
-            # Add "NEW FORM" interaction column
             filtered_df["NEW FORM"] = False
             cols = ["NEW FORM"] + [c for c in filtered_df.columns if c != "NEW FORM"]
             display_df = filtered_df[cols]
@@ -150,7 +216,6 @@ if check_password():
                 key="main_table"
             )
 
-            # Check if checkbox clicked
             clicked_rows = edited_df[edited_df["NEW FORM"] == True]
             if not clicked_rows.empty:
                 st.session_state["selected_client_name"] = clicked_rows.iloc[0]["NAME"]
@@ -159,7 +224,6 @@ if check_password():
 
             st.divider()
 
-            # --- ORIGINAL EDIT / DELETE SECTION ---
             st.subheader("📝 Edit or Delete Client Details")
             client_options = {f"{row['NAME']} (ID: {row['ID']})": row['ID'] for _, row in filtered_df.iterrows()}
             
