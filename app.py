@@ -36,7 +36,6 @@ def check_password():
     return False
 
 # --- 3. KYC FORM SECTION ---
-# --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
     if st.button("Back to Client Database"):
         st.session_state["view"] = "management"
@@ -65,14 +64,14 @@ def master_kyc_form(client_name):
 
     with st.form("kyc_form_exact"):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
-        st.date_input("Date", value=date.today())
+        st.date_input("Date", value=date.today(), format="DD/MM/YYYY")
         
         # --- COMPANY DETAILS ---
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name)
         col1, col2, col3 = st.columns([2, 2, 1])
         with col1: st.text_input("Company No.", value="200517609N")
-        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1))
+        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), format="DD/MM/YYYY")
         with col3: st.text_input("Year End Date", value="31 Dec")
 
         st.write("#### Proposed Company Activity")
@@ -99,7 +98,7 @@ def master_kyc_form(client_name):
             d_c1, d_c2, d_c3 = st.columns([2, 1, 1])
             with d_c1: st.text_input(f"Name as per Passport/NRIC", key=f"d_name_{i}")
             with d_c2: st.text_input(f"NRIC/Passport no.", key=f"d_id_{i}")
-            with d_c3: st.date_input(f"Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}")
+            with d_c3: st.date_input(f"Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}", format="DD/MM/YYYY")
             
             d_c4, d_c5, d_c6 = st.columns([2, 1, 1])
             with d_c4: st.text_input(f"Email address", key=f"d_email_{i}")
@@ -130,7 +129,7 @@ def master_kyc_form(client_name):
                 name = st.text_input(f"Name as per Passport/NRIC", key=f"s_name_{j}")
                 sh_names.append(name if name else f"Shareholder {j+1}")
             with s_c2: st.text_input(f"NRIC/Passport", key=f"s_id_{j}")
-            with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}")
+            with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}", format="DD/MM/YYYY")
             
             s_c4, s_c5, s_c6 = st.columns([2, 1, 1])
             with s_c4: st.text_input(f"Email address", key=f"s_email_{j}")
@@ -273,7 +272,6 @@ if check_password():
     if st.session_state["view"] == "management":
         st.title("🏢 Client Management System")
 
-        # --- 2. DATA FETCHING ---
         df = get_clients()
 
         if not df.empty:
@@ -288,7 +286,7 @@ if check_password():
             m_col3.metric("Terminated", len(df[df['STATUS'] == 'Terminated']))
             st.divider()
 
-        # --- 3. SIDEBAR (ADD CLIENT) ---
+        # SIDEBAR (ADD CLIENT)
         st.sidebar.header("Add New Client")
         with st.sidebar.form("add_form", clear_on_submit=True):
             new_num = st.number_input("Client Number", min_value=1, step=1)
@@ -303,7 +301,7 @@ if check_password():
                     st.success("Client Added!")
                     st.rerun()
 
-        # --- 4. MAIN DISPLAY & FORM ACCESS ---
+        # MAIN DISPLAY & SEARCH
         if not df.empty:
             st.subheader("📋 Client Database")
             st.info("💡 Check the **'ENTER FORM'** box next to a client to open their KYC form.")
@@ -317,19 +315,16 @@ if check_password():
                     filtered_df['UEN'].str.contains(search_query, case=False, na=False)
                 ]
 
-            # Adding interactive column for form access
             filtered_df.insert(0, "ENTER FORM", False)
             
-            # Use data_editor to allow clicking the "ENTER FORM" checkbox
             edited_df = st.data_editor(
                 filtered_df,
                 hide_index=True,
                 use_container_width=True,
-                disabled=[c for c in filtered_df.columns if c != "ENTER FORM"], # Only allow checkbox to be clicked
+                disabled=[c for c in filtered_df.columns if c != "ENTER FORM"],
                 key="main_table"
             )
 
-            # Check if a checkbox was clicked
             clicked_rows = edited_df[edited_df["ENTER FORM"] == True]
             if not clicked_rows.empty:
                 st.session_state["selected_client_name"] = clicked_rows.iloc[0]["NAME"]
@@ -338,7 +333,7 @@ if check_password():
 
             st.divider()
 
-            # --- 5. EDIT / DELETE SECTION ---
+            # EDIT / DELETE SECTION
             st.subheader("📝 Edit or Delete Client Details")
             client_options = {f"{row['NAME']} (ID: {row['ID']})": row['ID'] for _, row in filtered_df.iterrows()}
             
@@ -374,5 +369,4 @@ if check_password():
             st.info("No clients found.")
 
     elif st.session_state["view"] == "kyc_form":
-        # Calls the function defined in your Step 3
         master_kyc_form(st.session_state["selected_client_name"])
