@@ -125,9 +125,7 @@ def master_kyc_form(client_name):
                 st.session_state.num_shareholders -= 1
                 st.rerun()
 
-        # Create a list to store shareholder names for the next section
         sh_names = []
-
         for j in range(st.session_state.num_shareholders):
             st.markdown(f"#### Shareholder {j+1} Particulars")
             s_c1, s_c2, s_c3 = st.columns([2, 1, 1])
@@ -148,12 +146,8 @@ def master_kyc_form(client_name):
 
         # --- PERCENTAGE OF SHAREHOLDING DETAILS ---
         st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
-        
         for k in range(st.session_state.num_shareholders):
-            # Uses the names from the list created in the previous loop
-            current_sh_name = sh_names[k]
-            st.write(f"#### {current_sh_name}")
-            
+            st.write(f"#### {sh_names[k]}")
             p_col1, p_col2 = st.columns(2)
             with p_col1:
                 st.text_input(f"Share of percentage", key=f"p_perc_{k}")
@@ -162,6 +156,18 @@ def master_kyc_form(client_name):
                 st.text_input(f"No. of shares issued", key=f"p_issued_{k}")
                 st.text_input(f"Paid up amount", key=f"p_paid_{k}")
             st.write("---")
+
+        st.divider()
+
+        # --- COMPANY SECRETARY ---
+        st.write("### COMPANY SECRETARY")
+        sec_col1, sec_col2 = st.columns([2, 1])
+        with sec_col1:
+            st.text_input("Name as per passport/NRIC", key="sec_name")
+            st.text_area("Address", key="sec_address", height=70)
+        with sec_col2:
+            st.text_input("NRIC/Passport no.", key="sec_id")
+            st.text_input("Nationality", key="sec_nat")
 
         if st.form_submit_button("Save Form"):
             st.success("Form Saved Successfully")
