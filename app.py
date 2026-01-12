@@ -43,16 +43,8 @@ def create_pdf_report(client_name):
     pdf.cell(50, 8, "Company Name", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     pdf.cell(50, 8, "UEN No.", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_co_no', '')), border=1, ln=True)
     pdf.cell(50, 8, "Inc. Date", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_inc_date', '')), border=1, ln=True)
-    pdf.ln(5)
-
-    # 2. Directors
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, " Directors Details", ln=True, fill=True)
-    for i in range(st.session_state.get('num_directors', 1)):
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 8, f"Director {i+1}", ln=True)
-        pdf.set_font("Arial", '', 8)
-        pdf.cell(40, 7, "Name", border=1); pdf.cell(150, 7, str(st.session_state.get(f"d_name_{i}", "")), border=1, ln=True)
-        pdf.cell(40, 7, "NRIC/Passport", border=1); pdf.cell(150, 7, str(st.session_state.get(f"d_id_{i}", "")), border=1, ln=True)
+    
+    # Logic to loop through and add Director/Shareholder data to PDF goes here...
     
     return pdf.output(dest='S').encode('latin-1')
 
@@ -84,6 +76,7 @@ def master_kyc_form(client_name):
 
     st.title("BASIC INFORMATION REQUEST FORM AND KYC")
 
+    # START FORM
     with st.form("kyc_form_exact"):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
         st.date_input("Date", value=date.today(), format="DD/MM/YYYY")
@@ -183,7 +176,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- SHAREHOLDING DETAILS ---
+        # --- PERCENTAGE OF SHAREHOLDING DETAILS ---
         st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
         for k in range(st.session_state.num_shareholders):
             st.write(f"#### {sh_names[k]}")
@@ -208,17 +201,81 @@ def master_kyc_form(client_name):
             st.text_input("NRIC/Passport no.", key="sec_id")
             st.text_input("Nationality", key="sec_nat")
 
-        # --- FORM SUBMISSION BUTTONS ---
+        st.divider()
+
+        # --- CEO DETAILS ---
+        st.write("### CEO DETAILS")
+        ceo_c1, ceo_c2 = st.columns([2, 1])
+        with ceo_c1: st.text_input("Name as per Passport/NRIC", key="ceo_name")
+        with ceo_c2: st.text_input("NRIC/Passport", key="ceo_id")
+        ceo_c3, ceo_c4 = st.columns(2)
+        with ceo_c3: st.text_input("Mobile Number", key="ceo_mobile")
+        with ceo_c4: st.text_input("Email address", key="ceo_email")
+        st.text_area("Address", key="ceo_address", height=70)
+
+        st.divider()
+
+        # --- AUTHORISED PERSON & SHARE CAPITAL ---
+        st.write("### AUTHORISED PERSON TO CONTACT")
+        auth_c1, auth_c2, auth_c3 = st.columns([2, 1, 1])
+        with auth_c1: st.text_input("Name as per passport/NRIC", key="auth_name")
+        with auth_c2: st.text_input("Mobile number", key="auth_mobile")
+        with auth_c3: st.text_input("Email address", key="auth_email")
+
+        st.write("#### SHARE CAPITAL")
+        cap_c1, cap_c2 = st.columns(2)
+        with cap_c1: st.text_input("Currency", key="cap_currency", value="SGD")
+        with cap_c2: st.text_input("Amount", key="cap_amount")
+
+        st.divider()
+
+        # --- REGISTERED OFFICE & SECRETARIAL RECORDS ---
+        st.write("### REGISTERED OFFICE AND SECRETARIAL RECORDS")
+        reg_c1, reg_c2 = st.columns(2)
+        with reg_c1:
+            st.write("#### Registered Office")
+            st.text_area("Registered Office Address", key="reg_office_address", height=100)
+        with reg_c2:
+            st.write("#### Secretarial Records")
+            st.text_area("Secretarial Records Address", key="sec_records_address", height=100)
+
+        st.divider()
+
+        # --- BANK ACCOUNT ---
+        st.write("### BANK ACCOUNT")
+        bank_col1, bank_col2 = st.columns(2)
+        with bank_col1: st.text_input("Preferred Bank Name", key="bank_name")
+        with bank_col2: st.text_input("Currency of Account", key="bank_account_currency")
+
+        st.divider()
+
+        # --- CORRESPONDENCE ADDRESS ---
+        st.write("### CORRESPONDENCE ADDRESS")
+        st.text_area("Correspondence Address Details", key="correspondence_address", height=100)
+
+        st.divider()
+
+        # --- DECLARATION ---
+        st.write("### DECLARATION/UNDERTAKING")
+        st.info("""
+        1. I/We confirm information is true and accurate.
+        2. I/We understand the legal and tax reporting requirements.
+        3. I/we understand that all documents supplied will not be returned.
+        4. I/we undertake to notify of any future changes.
+        """)
+
+        # --- FORM ACTIONS (Download button is NOT here) ---
         btn_col1, btn_col2 = st.columns([1, 1])
         with btn_col1:
-            if st.form_submit_button("SAVE AS DRAFT"): st.info("Form saved as draft.")
+            if st.form_submit_button("SAVE AS DRAFT"):
+                st.info("Form saved as draft.")
         with btn_col2:
             if st.form_submit_button("SUBMIT NOW"):
                 st.session_state["view"] = "bg_sec_file"
                 st.rerun()
 
-    # --- DOWNLOAD BUTTON (OUTSIDE THE FORM) ---
-    st.write("### Form Actions")
+    # --- DOWNLOAD BUTTON (PLACED OUTSIDE FORM) ---
+    st.write("### Actions")
     try:
         pdf_bytes = create_pdf_report(client_name)
         st.download_button(
@@ -226,10 +283,10 @@ def master_kyc_form(client_name):
             data=pdf_bytes,
             file_name=f"KYC_{client_name}.pdf",
             mime="application/pdf",
-            key="download_kyc_btn_main"
+            key="download_kyc_btn_unique"
         )
     except Exception as e:
-        st.error(f"Could not generate PDF: {e}")
+        st.error(f"Error preparing PDF: {e}")
 
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
@@ -261,8 +318,8 @@ def bg_sec_file_form(client_name):
         col_header_1, col_header_2 = st.columns([1, 1])
         with col_header_1: st.write("**FIRST DIRECTORS' MINUTES**")
         with col_header_2: st.write(f"**{client_name.upper()}**")
+            
         st.divider()
-
         st.text_input("Name of Company", value=client_name)
         st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
         
@@ -274,32 +331,26 @@ def bg_sec_file_form(client_name):
             st.text_input("Time of Meeting", value="13:47")
 
         st.write("**Directors Present**")
-        default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(st.session_state.get('num_directors', 1))]
+        default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(st.session_state.get("num_directors", 1))]
         st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
 
         if st.form_submit_button("SUBMIT NOW"):
             st.success("First Directors' Minutes Generated Successfully!")
 
-# --- 5. MAIN APP LOGIC ---
+# --- 5. MAIN LOGIC ---
 if 'view' not in st.session_state: st.session_state["view"] = "management"
 if 'num_directors' not in st.session_state: st.session_state.num_directors = 1
 if 'num_shareholders' not in st.session_state: st.session_state.num_shareholders = 1
 
-# Assuming check_password() is defined in your environment
-# if check_password(): 
-
+# Assuming check_password() is provided elsewhere
 if st.session_state["view"] == "management":
     st.title("🏢 Client Management System")
     df = get_clients()
-
     if not df.empty:
-        # Search and Table display logic...
-        st.subheader("📋 Client Database")
+        # Client database table and search...
         search_query = st.text_input("🔍 Search by Client Name or UEN", "")
-        
         filtered_df = df.copy()
         filtered_df.insert(0, "ENTER FORM", False)
-        
         edited_df = st.data_editor(filtered_df, hide_index=True, use_container_width=True, key="main_table")
 
         clicked_rows = edited_df[edited_df["ENTER FORM"] == True]
