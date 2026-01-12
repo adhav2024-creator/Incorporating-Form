@@ -41,7 +41,7 @@ def master_kyc_form(client_name):
         st.session_state["view"] = "management"
         st.rerun()
 
-    # --- PROGRESS BAR ---
+    # --- PROGRESS BAR (CSS/HTML) ---
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -66,7 +66,7 @@ def master_kyc_form(client_name):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
         st.date_input("Date", value=date(2020, 1, 1))
         
-        # --- COMPANY DETAILS ---
+        # --- SECTION 1: COMPANY DETAILS ---
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name)
         col1, col2, col3 = st.columns([2, 2, 1])
@@ -81,7 +81,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- DIRECTORS DETAILS ---
+        # --- SECTION 2: DIRECTORS DETAILS ---
         d_head_col, d_add_col, d_rem_col = st.columns([4, 1, 1])
         with d_head_col: st.write("### DIRECTORS DETAILS")
         
@@ -109,7 +109,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP ---
+        # --- SECTION 3: SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP ---
         s_head_col, s_add_col, s_rem_col = st.columns([4, 1, 1])
         with s_head_col: st.write("### SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP")
         
@@ -126,7 +126,7 @@ def master_kyc_form(client_name):
             st.markdown(f"#### Shareholder {j+1} Particulars")
             s_c1, s_c2, s_c3 = st.columns([2, 1, 1])
             with s_c1: 
-                name = st.text_input(f"Name as per Passport/NRIC", key=f"s_name_{j}")
+                name = st.text_input(f"Name as per Passport/NRIC", key=f"s_name_{j}", placeholder=f"Shareholder {j+1}")
                 sh_names.append(name if name else f"Shareholder {j+1}")
             with s_c2: st.text_input(f"NRIC/Passport", key=f"s_id_{j}")
             with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}")
@@ -140,7 +140,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- PERCENTAGE OF SHAREHOLDING DETAILS ---
+        # --- SECTION 4: PERCENTAGE OF SHAREHOLDING DETAILS ---
         st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
         for k in range(st.session_state.num_shareholders):
             st.write(f"#### {sh_names[k]}")
@@ -155,7 +155,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- COMPANY SECRETARY ---
+        # --- SECTION 5: COMPANY SECRETARY ---
         st.write("### COMPANY SECRETARY")
         sec_c1, sec_c2 = st.columns([2, 1])
         with sec_c1:
@@ -167,7 +167,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- CEO DETAILS ---
+        # --- SECTION 6: CEO DETAILS ---
         st.write("### CEO DETAILS")
         ceo_c1, ceo_c2 = st.columns([2, 1])
         with ceo_c1:
@@ -179,15 +179,30 @@ def master_kyc_form(client_name):
         with ceo_c4: st.text_input("Email address", key="ceo_email")
         st.text_area("Address", key="ceo_address", height=70)
 
+        st.divider()
+
+        # --- SECTION 7: AUTHORISED PERSON & SHARE CAPITAL ---
+        st.write("### AUTHORISED PERSON TO CONTACT")
+        auth_c1, auth_c2, auth_c3 = st.columns([2, 1, 1])
+        with auth_c1: st.text_input("Name as per passport/NRIC", key="auth_name")
+        with auth_c2: st.text_input("Mobile number", key="auth_mobile")
+        with auth_c3: st.text_input("Email address", key="auth_email")
+
+        st.write("#### SHARE CAPITAL")
+        cap_c1, cap_c2 = st.columns(2)
+        with cap_c1: st.text_input("Currency", key="cap_currency", value="SGD")
+        with cap_c2: st.text_input("Amount", key="cap_amount")
+
         if st.form_submit_button("Save Form"):
             st.success("Form Saved Successfully")
 
-# --- 4. MAIN APP ---
+# --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("Client Management System")
         df = get_clients()
 
+        # Sidebar for Adding Clients
         st.sidebar.header("Add New Client")
         with st.sidebar.form("add_form", clear_on_submit=True):
             new_num = st.number_input("Client Number", min_value=1, step=1)
