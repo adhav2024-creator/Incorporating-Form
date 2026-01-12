@@ -125,10 +125,15 @@ def master_kyc_form(client_name):
                 st.session_state.num_shareholders -= 1
                 st.rerun()
 
+        # Create a list to store shareholder names for the next section
+        sh_names = []
+
         for j in range(st.session_state.num_shareholders):
             st.markdown(f"#### Shareholder {j+1} Particulars")
             s_c1, s_c2, s_c3 = st.columns([2, 1, 1])
-            with s_c1: st.text_input(f"Name as per Passport/NRIC (SH {j+1})", key=f"s_name_{j}")
+            with s_c1: 
+                sh_name = st.text_input(f"Name as per Passport/NRIC (SH {j+1})", key=f"s_name_{j}")
+                sh_names.append(sh_name if sh_name else f"Shareholder {j+1}")
             with s_c2: st.text_input(f"NRIC/Passport (SH {j+1})", key=f"s_id_{j}")
             with s_c3: st.date_input(f"Date of Birth (SH {j+1})", value=date(1990, 1, 1), key=f"s_dob_{j}")
             
@@ -137,6 +142,25 @@ def master_kyc_form(client_name):
             with s_c5: st.text_input(f"Mobile Number (SH {j+1})", key=f"s_mobile_{j}")
             with s_c6: st.text_input(f"Nationality (SH {j+1})", key=f"s_nat_{j}")
             st.text_area(f"Address (SH {j+1})", key=f"s_address_{j}", height=70)
+            st.write("---")
+
+        st.divider()
+
+        # --- PERCENTAGE OF SHAREHOLDING DETAILS ---
+        st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
+        
+        for k in range(st.session_state.num_shareholders):
+            # Uses the names from the list created in the previous loop
+            current_sh_name = sh_names[k]
+            st.write(f"#### {current_sh_name}")
+            
+            p_col1, p_col2 = st.columns(2)
+            with p_col1:
+                st.text_input(f"Share of percentage", key=f"p_perc_{k}")
+                st.text_input(f"No. of shares applied", key=f"p_applied_{k}")
+            with p_col2:
+                st.text_input(f"No. of shares issued", key=f"p_issued_{k}")
+                st.text_input(f"Paid up amount", key=f"p_paid_{k}")
             st.write("---")
 
         if st.form_submit_button("Save Form"):
