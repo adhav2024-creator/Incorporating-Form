@@ -109,7 +109,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- SHAREHOLDER DETAILS ---
+        # --- SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP ---
         s_head_col, s_add_col, s_rem_col = st.columns([4, 1, 1])
         with s_head_col: st.write("### SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP")
         
@@ -140,7 +140,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- PERCENTAGE OF SHAREHOLDING ---
+        # --- PERCENTAGE OF SHAREHOLDING DETAILS ---
         st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
         for k in range(st.session_state.num_shareholders):
             st.write(f"#### {sh_names[k]}")
@@ -193,7 +193,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- REGISTERED OFFICE & RECORDS ---
+        # --- REGISTERED OFFICE & SECRETARIAL RECORDS ---
         st.write("### REGISTERED OFFICE AND SECRETARIAL RECORDS")
         reg_c1, reg_c2 = st.columns(2)
         with reg_c1:
@@ -213,7 +213,13 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- CURRENT EMPLOYMENT ---
+        # --- CORRESPONDENCE ADDRESS ---
+        st.write("### CORRESPONDENCE ADDRESS")
+        st.text_area("Correspondence Address Details", key="correspondence_address", height=100)
+
+        st.divider()
+
+        # --- CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
         st.write("### CURRENT EMPLOYMENT/BUSINESS PARTICULARS")
         emp_c1, emp_c2 = st.columns(2)
         with emp_c1:
@@ -227,7 +233,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- SOURCE OF WEALTH ---
+        # --- BO'S SOURCE OF WEALTH ---
         st.write("### BO'S SOURCE OF WEALTH")
         sow_options = [
             ("Salary/Bonus Income (Annual) Name of the employer, position and annual salary", "salary"),
@@ -237,6 +243,7 @@ def master_kyc_form(client_name):
             ("Sale of Assets/Shares Type of assets/shares, date of sale, value of sale", "sale"),
             ("Others (Please provide details )", "others")
         ]
+
         for label, key in sow_options:
             c1, c2 = st.columns([2, 1])
             with c1: st.checkbox(label, key=f"sow_check_{key}")
@@ -244,32 +251,27 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- DECLARATION ---
+        # --- DECLARATION/UNDERTAKING ---
         st.write("### DECLARATION/UNDERTAKING")
         st.info("""
-        1. I/We confirm information is true. 2. I understand legal/tax requirements. 
-        3. Documents won't be returned. 4. I will notify changes. 5. Firm reserves right for more docs.
+        1. I/We confirm information is true and accurate.
+        2. I/We understand the legal and tax reporting requirements and will comply with all relevant reporting requirements.
+        3. I/we understand that all documents supplied will not be returned.
+        4. I/we undertake to notify of any future changes to the information.
         """)
-        st.text_input("Name of the Beneficial Owner", key="decl_bo_name")
-
-        # --- SIGNATURE SECTION (UPGRADED) ---
-        st.write("### SIGNATURE")
-        sig_col1, sig_col2 = st.columns(2)
         
-        with sig_col1:
-            st.write("Upload Signature (Image from Dropbox/Local)")
-            signature_file = st.file_uploader("Upload PNG/JPG Signature", type=["png", "jpg", "jpeg"], key="sig_upload")
-            if signature_file:
-                st.image(signature_file, width=250, caption="Uploaded Signature Preview")
+        # --- SIGNATURE SECTION ---
+        st.write("### SIGNATURE OF BENEFICIAL OWNER")
+        st.text_input("Full Name of the Beneficial Owner", key="decl_bo_name")
         
-        with sig_col2:
-            st.write("Official Use Signature Line")
-            st.write("")
-            st.write("__________________________________________")
-            st.caption("Authorized Signatory")
+        st.write("Upload Signature (Image from Dropbox or Local)")
+        signature_file = st.file_uploader("Upload PNG/JPG Signature", type=["png", "jpg", "jpeg"], key="sig_upload")
+        if signature_file:
+            st.image(signature_file, width=300, caption="Beneficial Owner Signature Preview")
 
         st.divider()
         
+        # --- SUBMISSION BUTTONS ---
         btn_col1, _, btn_col3 = st.columns([1, 4, 1])
         with btn_col1:
             if st.form_submit_button("SAVE AS DRAFT"):
@@ -299,7 +301,9 @@ if check_password():
         if not df.empty:
             df['client_num'] = pd.to_numeric(df['client_num'], errors='coerce')
             df.columns = [col.upper() for col in df.columns]
+
             st.subheader("Client Database")
+            search_query = st.text_input("Search", "")
             
             filtered_df = df.copy()
             filtered_df["NEW FORM"] = False
