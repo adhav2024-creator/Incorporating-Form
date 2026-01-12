@@ -203,7 +203,15 @@ def master_kyc_form(client_name):
 
         if st.form_submit_button("Save Form"):
             st.success("Form Saved Successfully")
+        st.divider()
 
+        # --- BANK ACCOUNT ---
+        st.write("### BANK ACCOUNT")
+        bank_col1, bank_col2 = st.columns(2)
+        with bank_col1:
+            st.text_input("Preferred Bank Name", key="bank_name")
+        with bank_col2:
+            st.text_input("Currency of Account", key="bank_account_currency", placeholder="e.g. SGD, USD")
 # --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
