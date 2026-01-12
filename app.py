@@ -33,9 +33,11 @@ def check_password():
 
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
-    # Initialize director count in session state if not already there
+    # Initialize counts in session state
     if "num_directors" not in st.session_state:
         st.session_state.num_directors = 1
+    if "num_shareholders" not in st.session_state:
+        st.session_state.num_shareholders = 1
 
     if st.button("Back to Client Database"):
         st.session_state["view"] = "management"
@@ -66,6 +68,7 @@ def master_kyc_form(client_name):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
         st.date_input("Date", value=date(2020, 1, 1))
         
+        # --- COMPANY DETAILS ---
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name)
         col1, col2, col3 = st.columns([2, 2, 1])
@@ -80,51 +83,64 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- DIRECTORS DETAILS HEADER WITH ACTION BUTTONS ---
-        head_col, add_col, rem_col = st.columns([4, 1, 1])
-        with head_col:
+        # --- DIRECTORS DETAILS ---
+        d_head_col, d_add_col, d_rem_col = st.columns([4, 1, 1])
+        with d_head_col:
             st.write("### DIRECTORS DETAILS")
         
-        # Action Buttons inside the form
-        add_clicked = add_col.form_submit_button("+ Add Director")
-        rem_clicked = rem_col.form_submit_button("- Remove Director")
-
-        if add_clicked:
+        if d_add_col.form_submit_button("+ Add Director"):
             st.session_state.num_directors += 1
             st.rerun()
-        
-        if rem_clicked:
+        if d_rem_col.form_submit_button("- Remove Director"):
             if st.session_state.num_directors > 1:
                 st.session_state.num_directors -= 1
                 st.rerun()
-            else:
-                st.error("At least one director is required.")
 
-        # Display Director Inputs
         for i in range(st.session_state.num_directors):
             st.markdown(f"#### Director {i+1} Particulars")
+            d_c1, d_c2, d_c3 = st.columns([2, 1, 1])
+            with d_c1: st.text_input(f"Name as per Passport/NRIC (Dir {i+1})", key=f"d_name_{i}")
+            with d_c2: st.text_input(f"NRIC/Passport no. (Dir {i+1})", key=f"d_id_{i}")
+            with d_c3: st.date_input(f"Date of birth (Dir {i+1})", value=date(1990, 1, 1), key=f"d_dob_{i}")
             
-            d_col1, d_col2, d_col3 = st.columns([2, 1, 1])
-            with d_col1:
-                st.text_input(f"Name as per Passport/NRIC (Dir {i+1})", key=f"d_name_{i}")
-            with d_col2:
-                st.text_input(f"NRIC/Passport no. (Dir {i+1})", key=f"d_id_{i}")
-            with d_col3:
-                st.date_input(f"Date of birth (Dir {i+1})", value=date(1990, 1, 1), key=f"d_dob_{i}")
-            
-            d_col4, d_col5, d_col6 = st.columns([2, 1, 1])
-            with d_col4:
-                st.text_input(f"Email address (Dir {i+1})", key=f"d_email_{i}")
-            with d_col5:
-                st.text_input(f"Mobile number (Dir {i+1})", key=f"d_mobile_{i}")
-            with d_col6:
-                st.text_input(f"Nationality (Dir {i+1})", key=f"d_nat_{i}")
-            
+            d_c4, d_c5, d_c6 = st.columns([2, 1, 1])
+            with d_c4: st.text_input(f"Email address (Dir {i+1})", key=f"d_email_{i}")
+            with d_c5: st.text_input(f"Mobile number (Dir {i+1})", key=f"d_mobile_{i}")
+            with d_c6: st.text_input(f"Nationality (Dir {i+1})", key=f"d_nat_{i}")
             st.text_area(f"Address (Dir {i+1})", key=f"d_address_{i}", height=70)
             st.write("---")
 
+        st.divider()
+
+        # --- SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP ---
+        s_head_col, s_add_col, s_rem_col = st.columns([4, 1, 1])
+        with s_head_col:
+            st.write("### SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP")
+        
+        if s_add_col.form_submit_button("+ Add Shareholder"):
+            st.session_state.num_shareholders += 1
+            st.rerun()
+        if s_rem_col.form_submit_button("- Remove Shareholder"):
+            if st.session_state.num_shareholders > 1:
+                st.session_state.num_shareholders -= 1
+                st.rerun()
+
+        for j in range(st.session_state.num_shareholders):
+            st.markdown(f"#### Shareholder {j+1} Particulars")
+            s_c1, s_c2, s_c3 = st.columns([2, 1, 1])
+            with s_c1: st.text_input(f"Name as per Passport/NRIC (SH {j+1})", key=f"s_name_{j}")
+            with s_c2: st.text_input(f"NRIC/Passport (SH {j+1})", key=f"s_id_{j}")
+            with s_c3: st.date_input(f"Date of Birth (SH {j+1})", value=date(1990, 1, 1), key=f"s_dob_{j}")
+            
+            s_c4, s_c5, s_c6 = st.columns([2, 1, 1])
+            with s_c4: st.text_input(f"Email address (SH {j+1})", key=f"s_email_{j}")
+            with s_c5: st.text_input(f"Mobile Number (SH {j+1})", key=f"s_mobile_{j}")
+            with s_c6: st.text_input(f"Nationality (SH {j+1})", key=f"s_nat_{j}")
+            st.text_area(f"Address (SH {j+1})", key=f"s_address_{j}", height=70)
+            st.write("---")
+
         if st.form_submit_button("Save Form"):
-            st.success(f"Successfully saved details for {st.session_state.num_directors} director(s).")
+            st.success("Form Saved Successfully")
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
