@@ -15,6 +15,10 @@ if "view" not in st.session_state:
     st.session_state["view"] = "management"
 if "selected_client_name" not in st.session_state:
     st.session_state["selected_client_name"] = None
+if "num_directors" not in st.session_state:
+    st.session_state.num_directors = 1
+if "num_shareholders" not in st.session_state:
+    st.session_state.num_shareholders = 1
 
 def check_password():
     if "password_correct" not in st.session_state:
@@ -33,12 +37,6 @@ def check_password():
 
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
-    # Initialize counts in session state
-    if "num_directors" not in st.session_state:
-        st.session_state.num_directors = 1
-    if "num_shareholders" not in st.session_state:
-        st.session_state.num_shareholders = 1
-
     if st.button("Back to Client Database"):
         st.session_state["view"] = "management"
         st.rerun()
@@ -85,8 +83,7 @@ def master_kyc_form(client_name):
 
         # --- DIRECTORS DETAILS ---
         d_head_col, d_add_col, d_rem_col = st.columns([4, 1, 1])
-        with d_head_col:
-            st.write("### DIRECTORS DETAILS")
+        with d_head_col: st.write("### DIRECTORS DETAILS")
         
         if d_add_col.form_submit_button("+ Add Director"):
             st.session_state.num_directors += 1
@@ -99,23 +96,22 @@ def master_kyc_form(client_name):
         for i in range(st.session_state.num_directors):
             st.markdown(f"#### Director {i+1} Particulars")
             d_c1, d_c2, d_c3 = st.columns([2, 1, 1])
-            with d_c1: st.text_input(f"Name as per Passport/NRIC (Dir {i+1})", key=f"d_name_{i}")
-            with d_c2: st.text_input(f"NRIC/Passport no. (Dir {i+1})", key=f"d_id_{i}")
-            with d_c3: st.date_input(f"Date of birth (Dir {i+1})", value=date(1990, 1, 1), key=f"d_dob_{i}")
+            with d_c1: st.text_input(f"Name as per Passport/NRIC", key=f"d_name_{i}")
+            with d_c2: st.text_input(f"NRIC/Passport no.", key=f"d_id_{i}")
+            with d_c3: st.date_input(f"Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}")
             
             d_c4, d_c5, d_c6 = st.columns([2, 1, 1])
-            with d_c4: st.text_input(f"Email address (Dir {i+1})", key=f"d_email_{i}")
-            with d_c5: st.text_input(f"Mobile number (Dir {i+1})", key=f"d_mobile_{i}")
-            with d_c6: st.text_input(f"Nationality (Dir {i+1})", key=f"d_nat_{i}")
-            st.text_area(f"Address (Dir {i+1})", key=f"d_address_{i}", height=70)
+            with d_c4: st.text_input(f"Email address", key=f"d_email_{i}")
+            with d_c5: st.text_input(f"Mobile number", key=f"d_mobile_{i}")
+            with d_c6: st.text_input(f"Nationality", key=f"d_nat_{i}")
+            st.text_area(f"Address", key=f"d_address_{i}", height=70)
             st.write("---")
 
         st.divider()
 
         # --- SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP ---
         s_head_col, s_add_col, s_rem_col = st.columns([4, 1, 1])
-        with s_head_col:
-            st.write("### SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP")
+        with s_head_col: st.write("### SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP")
         
         if s_add_col.form_submit_button("+ Add Shareholder"):
             st.session_state.num_shareholders += 1
@@ -130,16 +126,16 @@ def master_kyc_form(client_name):
             st.markdown(f"#### Shareholder {j+1} Particulars")
             s_c1, s_c2, s_c3 = st.columns([2, 1, 1])
             with s_c1: 
-                sh_name = st.text_input(f"Name as per Passport/NRIC (SH {j+1})", key=f"s_name_{j}")
-                sh_names.append(sh_name if sh_name else f"Shareholder {j+1}")
-            with s_c2: st.text_input(f"NRIC/Passport (SH {j+1})", key=f"s_id_{j}")
-            with s_c3: st.date_input(f"Date of Birth (SH {j+1})", value=date(1990, 1, 1), key=f"s_dob_{j}")
+                name = st.text_input(f"Name as per Passport/NRIC", key=f"s_name_{j}")
+                sh_names.append(name if name else f"Shareholder {j+1}")
+            with s_c2: st.text_input(f"NRIC/Passport", key=f"s_id_{j}")
+            with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}")
             
             s_c4, s_c5, s_c6 = st.columns([2, 1, 1])
-            with s_c4: st.text_input(f"Email address (SH {j+1})", key=f"s_email_{j}")
-            with s_c5: st.text_input(f"Mobile Number (SH {j+1})", key=f"s_mobile_{j}")
-            with s_c6: st.text_input(f"Nationality (SH {j+1})", key=f"s_nat_{j}")
-            st.text_area(f"Address (SH {j+1})", key=f"s_address_{j}", height=70)
+            with s_c4: st.text_input(f"Email address", key=f"s_email_{j}")
+            with s_c5: st.text_input(f"Mobile Number", key=f"s_mobile_{j}")
+            with s_c6: st.text_input(f"Nationality", key=f"s_nat_{j}")
+            st.text_area(f"Address", key=f"s_address_{j}", height=70)
             st.write("---")
 
         st.divider()
@@ -148,11 +144,11 @@ def master_kyc_form(client_name):
         st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
         for k in range(st.session_state.num_shareholders):
             st.write(f"#### {sh_names[k]}")
-            p_col1, p_col2 = st.columns(2)
-            with p_col1:
+            p_c1, p_c2 = st.columns(2)
+            with p_c1:
                 st.text_input(f"Share of percentage", key=f"p_perc_{k}")
                 st.text_input(f"No. of shares applied", key=f"p_applied_{k}")
-            with p_col2:
+            with p_c2:
                 st.text_input(f"No. of shares issued", key=f"p_issued_{k}")
                 st.text_input(f"Paid up amount", key=f"p_paid_{k}")
             st.write("---")
@@ -161,16 +157,31 @@ def master_kyc_form(client_name):
 
         # --- COMPANY SECRETARY ---
         st.write("### COMPANY SECRETARY")
-        sec_col1, sec_col2 = st.columns([2, 1])
-        with sec_col1:
+        sec_c1, sec_c2 = st.columns([2, 1])
+        with sec_c1:
             st.text_input("Name as per passport/NRIC", key="sec_name")
             st.text_area("Address", key="sec_address", height=70)
-        with sec_col2:
+        with sec_c2:
             st.text_input("NRIC/Passport no.", key="sec_id")
             st.text_input("Nationality", key="sec_nat")
 
+        st.divider()
+
+        # --- CEO DETAILS ---
+        st.write("### CEO DETAILS")
+        ceo_c1, ceo_c2 = st.columns([2, 1])
+        with ceo_c1:
+            st.text_input("Name as per Passport/NRIC", key="ceo_name")
+        with ceo_c2:
+            st.text_input("NRIC/Passport", key="ceo_id")
+        ceo_c3, ceo_c4 = st.columns(2)
+        with ceo_c3: st.text_input("Mobile Number", key="ceo_mobile")
+        with ceo_c4: st.text_input("Email address", key="ceo_email")
+        st.text_area("Address", key="ceo_address", height=70)
+
         if st.form_submit_button("Save Form"):
             st.success("Form Saved Successfully")
+
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
@@ -255,13 +266,13 @@ if check_password():
                         s_idx = stat_list.index(curr_stat) if curr_stat in stat_list else 0
                         edit_status = st.selectbox("Client Status", stat_list, index=s_idx)
 
-                    btn_col1, btn_col2, _ = st.columns([1, 1, 2])
-                    if btn_col1.button("Update Details", type="primary"):
+                    btn_c1, btn_c2, _ = st.columns([1, 1, 2])
+                    if btn_c1.button("Update Details", type="primary"):
                         update_client(int(selected_id), edit_num, edit_name, edit_uen, edit_month, edit_status)
                         st.success("Updated!")
                         st.rerun()
                         
-                    if btn_col2.button("Delete Client"):
+                    if btn_c2.button("Delete Client"):
                         delete_client(int(selected_id))
                         st.warning("Deleted.")
                         st.rerun()
