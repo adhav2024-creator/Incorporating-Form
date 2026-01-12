@@ -176,7 +176,38 @@ def master_kyc_form(client_name):
 
         if st.form_submit_button("SUBMIT NOW"):
             st.success("Master KYC Form Saved Successfully")
+        st.divider()
 
+        # --- DECLARATION/UNDERTAKING ---
+        st.write("### DECLARATION/UNDERTAKING")
+        declaration_text = """
+        1. I/We confirm that the above information is true and accurate, and hereby authorise to supply any or all of such information for due diligence purpose to the Regulators if so requested by them without notification to you.
+        2. I/We understand the legal and tax reporting requirements and other responsibilities in my/our country of residence and/or other applicable jurisdictions and will company with all the elevant reporting requirements of my /our own. We strongly suggest to seek independent tax advice from a third party tax professional not associated with our company with respect the incorporation or investments.
+        3. I/We understand and agree that all documents supplied including this form will not be returned to me/us.
+        4. I/We also undertake to notify us of any future changes to the above information.
+        5. I/We understand and that we reserves the right to request for additional documentation/information.
+        """
+        st.info(declaration_text)
+        
+        st.write("**Name of the Beneficial Owner**")
+        st.text_input("Beneficial Owner Name", value="Janakiraman Ayyappan", key="decl_bo_name", label_visibility="collapsed")
+
+        st.divider()
+
+        # --- SIGNATURE SECTION ---
+        st.write("### SIGNATURE")
+        sig_col1, sig_col2 = st.columns(2)
+        with sig_col1:
+            st.write("__________________________________________")
+            st.caption("Signature")
+        
+        # Bottom Buttons
+        btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
+        with btn_col1:
+            st.form_submit_button("SAVE AS DRAFT")
+        with btn_col3:
+            if st.form_submit_button("SUBMIT NOW"):
+                st.success("Form Submitted Successfully")
 # --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
