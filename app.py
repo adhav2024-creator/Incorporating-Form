@@ -155,7 +155,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- COMPANY SECRETARY & CEO ---
+        # --- COMPANY SECRETARY ---
         st.write("### COMPANY SECRETARY")
         sec_c1, sec_c2 = st.columns([2, 1])
         with sec_c1:
@@ -166,6 +166,8 @@ def master_kyc_form(client_name):
             st.text_input("Nationality", key="sec_nat")
 
         st.divider()
+
+        # --- CEO DETAILS ---
         st.write("### CEO DETAILS")
         ceo_c1, ceo_c2 = st.columns([2, 1])
         with ceo_c1: st.text_input("Name as per Passport/NRIC", key="ceo_name")
@@ -201,8 +203,6 @@ def master_kyc_form(client_name):
             st.write("#### Secretarial Records")
             st.text_area("Secretarial Records Address", key="sec_records_address", height=100)
 
-        if st.form_submit_button("Save Form"):
-            st.success("Form Saved Successfully")
         st.divider()
 
         # --- BANK ACCOUNT ---
@@ -211,7 +211,11 @@ def master_kyc_form(client_name):
         with bank_col1:
             st.text_input("Preferred Bank Name", key="bank_name")
         with bank_col2:
-            st.text_input("Currency of Account", key="bank_account_currency", placeholder="e.g. SGD, USD")
+            st.text_input("Currency of Account", key="bank_account_currency")
+
+        if st.form_submit_button("Save Form"):
+            st.success("Form Saved Successfully")
+
 # --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
@@ -237,7 +241,6 @@ if check_password():
             st.subheader("Client Database")
             search_query = st.text_input("Search", "")
             
-            # (Filtering and Data Editor logic as before)
             filtered_df = df.copy()
             filtered_df["NEW FORM"] = False
             cols = ["NEW FORM"] + [c for c in filtered_df.columns if c != "NEW FORM"]
@@ -253,4 +256,3 @@ if check_password():
 
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
-        
