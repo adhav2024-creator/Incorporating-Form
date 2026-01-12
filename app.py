@@ -31,23 +31,36 @@ def create_pdf_report(client_name):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "BASIC INFORMATION REQUEST FORM & KYC", ln=True, align='C')
-    pdf.ln(5)
-
-    # 1. Company Details
+    # --- SECTION HEADER ---
     pdf.set_font("Arial", 'B', 11)
-    pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 8, " Company Details", ln=True, fill=True)
-    pdf.set_font("Arial", '', 9)
-    pdf.cell(50, 8, "Company Name", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
-    pdf.cell(50, 8, "UEN No.", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_co_no', '')), border=1, ln=True)
-    pdf.cell(50, 8, "Inc. Date", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_inc_date', '')), border=1, ln=True)
+    pdf.set_fill_color(240, 240, 240) # Light grey fill
+    pdf.cell(0, 10, " Company Details", ln=True, fill=True)
     
-    # Logic to loop through and add Director/Shareholder data to PDF goes here...
+    # --- TABLE ROWS ---
+    pdf.set_font("Arial", '', 9)
+    
+    # Row 1: Company Name
+    pdf.cell(60, 10, " Company Name", border=1)
+    pdf.cell(130, 10, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
+    
+    # Row 2: Co No & Inc Date (Combined as per your PDF)
+    pdf.cell(60, 15, " Company No. & Date of incorporation", border=1)
+    # Using multi_cell inside a cell to handle the multi-line date/UEN
+    x = pdf.get_x()
+    y = pdf.get_y()
+    pdf.multi_cell(130, 7.5, f"{st.session_state.get('kyc_inc_date', '')}\n{st.session_state.get('kyc_co_no', '')}", border=1)
+    pdf.set_xy(x + 190, y + 15) # Move cursor to next row
+    pdf.ln(0)
+
+    # Row 3: Year End Date
+    pdf.cell(60, 10, " Year End Date", border=1)
+    pdf.cell(130, 10, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
+    
+    # Row 4: Proposed Activity
+    pdf.cell(60, 20, " Proposed Company Activity", border=1)
+    pdf.multi_cell(130, 10, str(st.session_state.get('kyc_activity', '')), border=1)
     
     return pdf.output(dest='S').encode('latin-1')
-
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
     if st.button("Back to Client Database"):
