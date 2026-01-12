@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from database import init_db, get_clients, add_client, delete_client, update_client
 from datetime import date
+from fpdf import FPDF # Requires: pip install fpdf
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="Audit and Incorporation Portal", layout="wide")
@@ -9,6 +10,39 @@ init_db()
 
 MONTHS = ["January", "February", "March", "April", "May", "June", 
           "July", "August", "September", "October", "November", "December"]
+
+# --- PDF GENERATOR FUNCTION ---
+def create_pdf_report(client_name):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    
+    # Header mirroring the PDF
+    pdf.cell(200, 10, txt="BASIC INFORMATION REQUEST FORM & KYC", ln=True, align='C')
+    pdf.set_font("Arial", size=10)
+    pdf.cell(200, 10, txt=f"Date: {date.today().strftime('%d/%m/%Y')}", ln=True, align='L')
+    pdf.ln(5)
+
+    # Company Section
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, " COMPANY DETAILS", ln=True, fill=True)
+    pdf.set_font("Arial", size=10)
+    pdf.cell(100, 10, f"Company Name: {st.session_state.get('kyc_co_name', client_name)}", border=1)
+    pdf.cell(90, 10, f"UEN: {st.session_state.get('kyc_co_no', '')}", border=1, ln=True)
+    pdf.ln(10)
+
+    # Directors Section
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, " DIRECTORS DETAILS", ln=True, fill=True)
+    pdf.set_font("Arial", size=10)
+    for i in range(st.session_state.num_directors):
+        name = st.session_state.get(f"d_name_{i}", "N/A")
+        passport = st.session_state.get(f"d_id_{i}", "N/A")
+        pdf.cell(0, 10, f"Director {i+1}: {name} ({passport})", border=1, ln=True)
+    
+    # Finalize PDF
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- 2. STATE MANAGEMENT ---
 if "view" not in st.session_state:
@@ -260,15 +294,26 @@ def master_kyc_form(client_name):
         """)
         
         # --- SUBMISSION BUTTONS ---
-        btn_col1, _, btn_col3 = st.columns([1, 4, 1])
+        btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
         with btn_col1:
             if st.form_submit_button("SAVE AS DRAFT"):
                 st.info("Form saved as draft.")
+        with btn_col2:
+            # Generate PDF data from the current session state
+            pdf_bytes = create_pdf_report(client_name)
+            st.download_button(
+                label="📥 DOWNLOAD KYC PDF",
+                data=pdf_bytes,
+                file_name=f"KYC_{client_name}.pdf",
+                mime="application/pdf",
+                key="download_kyc_btn"
+            )
         with btn_col3:
             if st.form_submit_button("SUBMIT NOW"):
                 st.session_state["view"] = "bg_sec_file"
                 st.rerun()
 
+# (Rest of the code for bg_sec_file_form and main logic remains the same)
 # --- 4. BG SEC FILE SECTION ---
 
 def bg_sec_file_form(client_name):
