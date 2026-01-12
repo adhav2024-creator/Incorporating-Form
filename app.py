@@ -4,7 +4,7 @@ from database import init_db, get_clients, add_client, delete_client, update_cli
 from datetime import date
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="Audit & Incorporation Portal", layout="wide")
+st.set_page_config(page_title="Audit and Incorporation Portal", layout="wide")
 init_db()
 
 MONTHS = ["January", "February", "March", "April", "May", "June", 
@@ -21,7 +21,7 @@ def check_password():
         st.session_state["password_correct"] = False
     if st.session_state["password_correct"]:
         return True
-    st.title("🔒 Corporate Secure Login")
+    st.title("Corporate Secure Login")
     password = st.text_input("Enter Office Password", type="password")
     if st.button("Login"):
         if password == "Awesome2050@": 
@@ -33,7 +33,7 @@ def check_password():
 
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
-    if st.button("⬅️ Back to Client Database"):
+    if st.button("Back to Client Database"):
         st.session_state["view"] = "management"
         st.rerun()
 
@@ -56,13 +56,17 @@ def master_kyc_form(client_name):
         </div>
         """, unsafe_allow_html=True)
 
-    st.title("BASIC INFORMATION REQUEST FORM & KYC")
+    st.title("BASIC INFORMATION REQUEST FORM AND KYC")
 
+    # STEP 1: Place the counter OUTSIDE the form so it updates the UI immediately
+    st.subheader("Director Configuration")
+    num_directors = st.number_input("Number of Directors to enter", min_value=1, max_value=20, value=1, step=1)
+
+    # STEP 2: Start the form
     with st.form("kyc_form_exact"):
-        st.write("### BASIC INFORMATION REQUEST FORM & KYC")
+        st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
         st.date_input("Date", value=date(2020, 1, 1))
         
-        # --- COMPANY DETAILS ---
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name)
         col1, col2, col3 = st.columns([2, 2, 1])
@@ -77,17 +81,12 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- DIRECTORS DETAILS ---
         st.write("### DIRECTORS DETAILS")
         
-        # Step 1: Increase this number to reveal more director slots
-        num_directors = st.number_input("How many directors do you need to enter?", min_value=1, max_value=20, value=1)
-        
-        # Step 2: Loop creates a fresh set of the 7 required fields for each director
+        # STEP 3: Loop runs based on the number selected above
         for i in range(int(num_directors)):
-            st.markdown(f"#### 👤 Director {i+1} Particulars")
+            st.markdown(f"#### Director {i+1} Particulars")
             
-            # Row 1: Name, ID, DOB
             d_col1, d_col2, d_col3 = st.columns([2, 1, 1])
             with d_col1:
                 st.text_input(f"Name as per Passport/NRIC (Dir {i+1})", key=f"d_name_{i}")
@@ -96,7 +95,6 @@ def master_kyc_form(client_name):
             with d_col3:
                 st.date_input(f"Date of birth (Dir {i+1})", value=date(1990, 1, 1), key=f"d_dob_{i}")
             
-            # Row 2: Email, Mobile, Nationality
             d_col4, d_col5, d_col6 = st.columns([2, 1, 1])
             with d_col4:
                 st.text_input(f"Email address (Dir {i+1})", key=f"d_email_{i}")
@@ -105,19 +103,18 @@ def master_kyc_form(client_name):
             with d_col6:
                 st.text_input(f"Nationality (Dir {i+1})", key=f"d_nat_{i}")
             
-            # Row 3: Address
             st.text_area(f"Address (Dir {i+1})", key=f"d_address_{i}", height=70)
             st.write("---")
 
         if st.form_submit_button("Save Form"):
             st.success(f"Successfully saved details for {num_directors} director(s).")
+
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("Client Management System")
         df = get_clients()
 
-        # Sidebar logic
         st.sidebar.header("Add New Client")
         with st.sidebar.form("add_form", clear_on_submit=True):
             new_num = st.number_input("Client Number", min_value=1, step=1)
@@ -134,7 +131,7 @@ if check_password():
             df['client_num'] = pd.to_numeric(df['client_num'], errors='coerce')
             df.columns = [col.replace('_', ' ').upper() for col in df.columns]
 
-            st.subheader("📊 Practice Overview")
+            st.subheader("Practice Overview")
             m_col1, m_col2, m_col3 = st.columns(3)
             m_col1.metric("Total Clients", len(df))
             m_col2.metric("Active Portfolios", len(df[df['STATUS'] == 'Active']))
@@ -142,8 +139,8 @@ if check_password():
 
             st.divider()
 
-            st.subheader("📋 Client Database")
-            search_query = st.text_input("🔍 Search by Client Name or UEN", "")
+            st.subheader("Client Database")
+            search_query = st.text_input("Search by Client Name or UEN", "")
             
             filtered_df = df.copy()
             if search_query:
@@ -172,7 +169,7 @@ if check_password():
 
             st.divider()
 
-            st.subheader("📝 Edit or Delete Client Details")
+            st.subheader("Edit or Delete Client Details")
             client_options = {f"{row['NAME']} (ID: {row['ID']})": row['ID'] for _, row in filtered_df.iterrows()}
             
             if client_options:
@@ -197,12 +194,12 @@ if check_password():
                         edit_status = st.selectbox("Client Status", stat_list, index=s_idx)
 
                     btn_col1, btn_col2, _ = st.columns([1, 1, 2])
-                    if btn_col1.button("✅ Update Details", type="primary"):
+                    if btn_col1.button("Update Details", type="primary"):
                         update_client(int(selected_id), edit_num, edit_name, edit_uen, edit_month, edit_status)
                         st.success("Updated!")
                         st.rerun()
                         
-                    if btn_col2.button("🗑️ Delete Client"):
+                    if btn_col2.button("Delete Client"):
                         delete_client(int(selected_id))
                         st.warning("Deleted.")
                         st.rerun()
