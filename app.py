@@ -215,7 +215,11 @@ def master_kyc_form(client_name):
 
         if st.form_submit_button("Save Form"):
             st.success("Form Saved Successfully")
+        st.divider()
 
+        # --- CORRESPONDENCE ADDRESS ---
+        st.write("### CORRESPONDENCE ADDRESS")
+        st.text_area("Correspondence Address Details", key="correspondence_address", height=100)
 # --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
