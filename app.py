@@ -62,7 +62,6 @@ def master_kyc_form(client_name):
 
     st.title("BASIC INFORMATION REQUEST FORM AND KYC")
 
-    # The main form
     with st.form("kyc_form_exact"):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
         st.date_input("Date", value=date(2020, 1, 1))
@@ -81,15 +80,27 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- DIRECTORS DETAILS HEADER WITH ADD BUTTON ---
-        head_col1, head_col2 = st.columns([3, 1])
-        with head_col1:
+        # --- DIRECTORS DETAILS HEADER WITH ACTION BUTTONS ---
+        head_col, add_col, rem_col = st.columns([4, 1, 1])
+        with head_col:
             st.write("### DIRECTORS DETAILS")
         
-        # NOTE: Form submit buttons inside forms don't rerun immediately for logic changes, 
-        # but we can use a small trick by defining the number of fields based on state.
-        # To make "Add" work perfectly, we use the session state value.
+        # Action Buttons inside the form
+        add_clicked = add_col.form_submit_button("+ Add Director")
+        rem_clicked = rem_col.form_submit_button("- Remove Director")
+
+        if add_clicked:
+            st.session_state.num_directors += 1
+            st.rerun()
         
+        if rem_clicked:
+            if st.session_state.num_directors > 1:
+                st.session_state.num_directors -= 1
+                st.rerun()
+            else:
+                st.error("At least one director is required.")
+
+        # Display Director Inputs
         for i in range(st.session_state.num_directors):
             st.markdown(f"#### Director {i+1} Particulars")
             
@@ -112,17 +123,7 @@ def master_kyc_form(client_name):
             st.text_area(f"Address (Dir {i+1})", key=f"d_address_{i}", height=70)
             st.write("---")
 
-        # Submission and Increment logic
-        btn_col1, btn_col2 = st.columns([1, 4])
-        # We use form submit buttons for both to satisfy Streamlit requirements
-        add_clicked = btn_col1.form_submit_button("+ Add Director")
-        save_clicked = btn_col2.form_submit_button("Save Form")
-
-        if add_clicked:
-            st.session_state.num_directors += 1
-            st.rerun()
-
-        if save_clicked:
+        if st.form_submit_button("Save Form"):
             st.success(f"Successfully saved details for {st.session_state.num_directors} director(s).")
 # --- 4. MAIN APP ---
 if check_password():
