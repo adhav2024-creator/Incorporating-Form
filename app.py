@@ -282,14 +282,15 @@ def master_kyc_form(client_name):
 
 # --- 4. MAIN APP LOGIC ---
 # --- 4. MAIN APP LOGIC ---
+# --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("🏢 Client Management System")
         
-        # Pull data from DB
-        raw_df = get_clients()
+        # 1. Get data and keep a clean copy of the original column names
+        df = get_clients()
 
-        # SIDEBAR: ADD CLIENT
+        # SIDEBAR: ADD CLIENT (No changes here)
         st.sidebar.header("Add New Client")
         with st.sidebar.form("add_form", clear_on_submit=True):
             new_num = st.number_input("Client Number", min_value=1, step=1)
@@ -302,39 +303,25 @@ if check_password():
                     add_client(new_num, new_name, new_uen, new_month, new_status)
                     st.rerun()
 
-        # MAIN TABLE
-        if not raw_df.empty:
-            # 1. Standardize column names to prevent KeyErrors
-            # This maps DB names (client_num, year_end) to Display names
-            df = raw_df.copy()
-            df.columns = [col.upper() for col in df.columns]
-            
-            # Map common variations to a single standard for the UI
-            rename_map = {
-                "CLIENT_NUM": "CLIENT NO.",
-                "YEAR_END": "YEAR END",
-                "YEAR_END_MONTH": "YEAR END"
-            }
-            df = df.rename(columns=rename_map)
-            
+        if not df.empty:
             st.subheader("📋 Client Database")
-            search_query = st.text_input("Search", placeholder="Search by name or UEN...")
             
+            # 2. Search Logic
+            search_query = st.text_input("Search", placeholder="Search name or UEN...")
+            display_df = df.copy()
             if search_query:
-                df = df[df['NAME'].str.contains(search_query, case=False, na=False) | 
-                        df['UEN'].str.contains(search_query, case=False, na=False)]
+                display_df = display_df[display_df['name'].str.contains(search_query, case=False, na=False)]
 
-            # 2. Add the interactive "NEW FORM" column
-            df["NEW FORM"] = False
+            # 3. Table Display
+            # Add 'NEW FORM' column temporarily for the editor
+            display_df["NEW FORM"] = False
             
-            # Select only columns we want to show (Safe list)
-            display_cols = ["NEW FORM", "NAME", "UEN", "YEAR END", "STATUS"]
-            # Add CLIENT NO. if it exists in the data
-            if "CLIENT NO." in df.columns:
-                display_cols.insert(1, "CLIENT NO.")
+            # Map columns for a clean UI
+            ui_df = display_df[["NEW FORM", "client_num", "name", "uen", "status"]].copy()
+            ui_df.columns = ["NEW FORM", "CLIENT NO", "NAME", "UEN", "STATUS"]
 
             edited_df = st.data_editor(
-                df[display_cols], 
+                ui_df, 
                 hide_index=True, 
                 use_container_width=True, 
                 key="main_table_editor"
@@ -342,48 +329,49 @@ if check_password():
 
             # Navigation to KYC
             if edited_df["NEW FORM"].any():
-                selected_row = edited_df[edited_df["NEW FORM"] == True].iloc[0]
-                st.session_state["selected_client_name"] = selected_row["NAME"]
+                selected_row_idx = edited_df.index[edited_df["NEW FORM"] == True][0]
+                st.session_state["selected_client_name"] = ui_df.iloc[selected_row_idx]["NAME"]
                 st.session_state["view"] = "kyc_form"
                 st.rerun()
 
             st.divider()
 
-            # --- EDIT & DELETE SECTION ---
+            # --- 4. FIXED EDIT & DELETE SECTION ---
             st.subheader("🛠️ Management Tools")
-            col_sel, col_edit = st.columns([1, 2])
             
-            with col_sel:
-                # Use names from the standard dataframe
-                client_names = df['NAME'].tolist()
-                client_to_manage = st.selectbox("Select Client to Edit/Delete", options=client_names)
-                # Get original data row for ID and values
-                client_data = df[df['NAME'] == client_to_manage].iloc[0]
+            # Selection Dropdown
+            client_names = df['name'].tolist()
+            selected_name = st.selectbox("Select Client to Manage", options=client_names)
             
-            with col_edit:
-                with st.expander(f"Edit Details for {client_to_manage}", expanded=True):
-                    # Find the correct keys based on your DB columns
-                    curr_uen = client_data.get("UEN", "")
-                    curr_status = client_data.get("STATUS", "Active")
-                    
-                    e_name = st.text_input("Update Company Name", value=str(client_to_manage))
-                    e_uen = st.text_input("Update UEN", value=str(curr_uen))
-                    e_status = st.selectbox("Update Status", ["Active", "Terminated"], 
-                                            index=0 if curr_status == "Active" else 1)
-                    
-                    c1, c2, _ = st.columns([1, 1, 1])
-                    if c1.button("💾 Save Changes"):
-                        # Uses original ID from the hidden ID column in df
-                        update_client(client_data['ID'], client_data.get('CLIENT NO.', 0), e_name, e_uen, client_data['YEAR END'], e_status)
-                        st.success("Changes saved!")
-                        st.rerun()
-                        
-                    if c2.button("🗑️ Delete Client", type="primary"):
-                        delete_client(client_data['ID'])
-                        st.success("Client deleted.")
-                        st.rerun()
+            # Pull the specific row from the ORIGINAL dataframe (df) to get the correct 'id'
+            target_row = df[df['name'] == selected_name].iloc[0]
+            db_id = target_row['id']
+
+            with st.expander(f"Modify: {selected_name}", expanded=True):
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    edit_name = st.text_input("Company Name", value=target_row['name'])
+                    edit_uen = st.text_input("UEN", value=target_row['uen'])
+                with col_b:
+                    edit_status = st.selectbox("Status", ["Active", "Terminated"], 
+                                             index=0 if target_row['status'] == "Active" else 1)
+                    edit_num = st.number_input("Client Number", value=int(target_row['client_num']))
+
+                st.write("")
+                btn_save, btn_del, _ = st.columns([1, 1, 2])
+                
+                if btn_save.button("💾 Save All Changes"):
+                    # Pass the correct id and existing year_end
+                    update_client(db_id, edit_num, edit_name, edit_uen, target_row['year_end'], edit_status)
+                    st.success(f"Updated {edit_name} successfully!")
+                    st.rerun()
+
+                if btn_del.button("🗑️ Permanent Delete", type="primary"):
+                    delete_client(db_id)
+                    st.warning("Client deleted.")
+                    st.rerun()
         else:
-            st.info("The database is currently empty.")
+            st.info("No clients found.")
 
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
