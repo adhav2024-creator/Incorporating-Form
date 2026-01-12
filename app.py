@@ -64,7 +64,7 @@ def master_kyc_form(client_name):
 
     with st.form("kyc_form_exact"):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
-        st.date_input("Date", value=date(2020, 1, 1))
+        st.date_input("Date", value=date.today())
         
         # --- COMPANY DETAILS ---
         st.write("### Company Details")
@@ -231,8 +231,58 @@ def master_kyc_form(client_name):
             st.text_input("Years of experience in the industry", key="emp_years_exp")
             st.file_uploader("Addition of CV", type=["pdf", "doc", "docx"], key="emp_cv")
 
-        if st.form_submit_button("Save Form"):
-            st.success("Form Saved Successfully")
+        st.divider()
+
+        # --- BO'S SOURCE OF WEALTH ---
+        st.write("### BO'S SOURCE OF WEALTH")
+        sow_options = [
+            ("Salary/Bonus Income (Annual) Name of the employer, position and annual salary", "salary"),
+            ("Owner of Shares in Business Name of the company, website, annual salary", "shares"),
+            ("Inheritance or Gift Name of the deceased/donor, type of business/investment, relationship, amount received", "inheritance"),
+            ("Investment Name of the investment manager, value of portfolio, origin of investment funds", "investment"),
+            ("Sale of Assets/Shares Type of assets/shares, date of sale, value of sale", "sale"),
+            ("Others (Please provide details )", "others")
+        ]
+
+        for label, key in sow_options:
+            c1, c2 = st.columns([2, 1])
+            with c1: st.checkbox(label, key=f"sow_check_{key}")
+            with c2: st.text_area("Details", key=f"sow_text_{key}", height=68, label_visibility="collapsed")
+
+        st.divider()
+
+        # --- DECLARATION/UNDERTAKING ---
+        st.write("### DECLARATION/UNDERTAKING")
+        declaration_text = """
+        1. I/We confirm that the above information is true and accurate, and hereby authorise to supply any or all of such information for due diligence purpose to the Regulators if so requested by them without notification to you.
+        2. I/We understand the legal and tax reporting requirements and other responsibilities in my/our country of residence and/or other applicable jurisdictions and will comply with all the relevant reporting requirements of my /our own. We strongly suggest to seek independent tax advice from a third party tax professional not associated with our company with respect the incorporation or investments.
+        3. I/we understand and agree that all documents supplied including this form will not be returned to me/us.
+        4. I/we also undertake to notify us of any future changes to the above information.
+        5. I/we understand and that we reserves the right to request for additional documentation/information.
+        """
+        st.info(declaration_text)
+        
+        st.text_input("Name of the Beneficial Owner", key="decl_bo_name")
+        
+        st.write("### SIGNATURE")
+        sig_col1, sig_col2 = st.columns(2)
+        with sig_col1:
+            st.write("")
+            st.write("__________________________________________")
+        with sig_col2:
+            st.write("")
+            st.write("__________________________________________")
+
+        st.divider()
+        
+        # --- SUBMISSION BUTTONS ---
+        btn_col1, btn_col2, btn_col3 = st.columns([1, 4, 1])
+        with btn_col1:
+            if st.form_submit_button("SAVE AS DRAFT"):
+                st.info("Form saved as draft.")
+        with btn_col3:
+            if st.form_submit_button("SUBMIT NOW"):
+                st.success("Master KYC Submitted Successfully")
 
 # --- 4. MAIN APP LOGIC ---
 if check_password():
@@ -271,6 +321,5 @@ if check_password():
                 st.rerun()
         else:
             st.info("No clients found.")
-
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
