@@ -48,7 +48,7 @@ def master_kyc_form(client_name):
         .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
         .step { text-align: center; z-index: 2; flex: 1; }
         .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
-        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .inactive-circle { background-color: white; color: #2E7D32; }
         .label { margin-top: 10px; font-weight: bold; font-size: 13px; color: #2E7D32; }
         </style>
         <div class="progress-container">
@@ -71,14 +71,14 @@ def master_kyc_form(client_name):
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name, key="kyc_comp_name")
         col1, col2, col3 = st.columns([2, 2, 1])
-        with col1: st.text_input("Company No.", key="kyc_comp_no")
+        with col1: st.text_input("Company No.", value="200517609N", key="kyc_comp_no")
         with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), key="kyc_incorp_date")
         with col3: st.text_input("Year End Date", value="31 Dec", key="kyc_year_end")
 
         st.write("#### Proposed Company Activity")
         act_col1, act_col2 = st.columns(2)
-        with act_col1: st.text_input("Main Activity", key="kyc_main_act")
-        with act_col2: st.text_input("Secondary Activity", key="kyc_sec_act")
+        with act_col1: st.text_input("Main Activity", value="Accounting, Audits", key="kyc_main_act")
+        with act_col2: st.text_input("Secondary Activity", value="Tax", key="kyc_sec_act")
 
         st.divider()
 
@@ -159,6 +159,9 @@ def master_kyc_form(client_name):
         with bank_c1: st.text_input("Preferred Bank Name", key="bk_name")
         with bank_c2: st.text_input("Currency of Account", key="bk_currency")
 
+        st.write("### CORRESPONDENCE ADDRESS")
+        st.text_area("Correspondence Address", key="correspond_addr", height=80)
+
         st.divider()
 
         # --- EMPLOYMENT & SOURCE OF WEALTH ---
@@ -170,17 +173,17 @@ def master_kyc_form(client_name):
             st.text_input("Business Nature/Industry", key="emp_industry")
         with emp_c2:
             st.text_input("Years in employment", key="emp_years")
-            st.text_input("Years in industry", key="emp_exp")
-            st.file_uploader("Upload CV", type=["pdf", "doc", "docx"], key="emp_cv_upload")
+            st.text_input("Years of experience in industry", key="emp_exp")
+            st.file_uploader("Addition of CV", type=["pdf", "doc", "docx"], key="emp_cv_upload")
 
         st.divider()
         st.write("### BO'S SOURCE OF WEALTH")
         sow_items = [
-            ("Salary/Bonus Income (Annual)", "salary"),
-            ("Owner of Shares in Business", "shares"),
-            ("Inheritance or Gift", "inheritance"),
-            ("Investment", "invest"),
-            ("Sale of Assets/Shares", "sale_assets"),
+            ("Salary/Bonus Income (Annual) Name of the employer, position and annual salary", "salary"),
+            ("Owner of Shares in Business Name of the company, website, annual salary", "shares"),
+            ("Inheritance or Gift Name of the deceased/donor, type of business/investment, relationship, amount received", "inheritance"),
+            ("Investment Name of the investment manager, value of portfolio, origin of investment funds", "invest"),
+            ("Sale of Assets/Shares Type of assets/shares, date of sale, value of sale", "sale_assets"),
             ("Others (Please provide details )", "others_wealth")
         ]
         for label, k in sow_items:
@@ -190,63 +193,57 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- DECLARATION ---
+        # --- DECLARATION & SIGNATURE ---
         st.write("### DECLARATION/UNDERTAKING")
-        st.info("1. I/We confirm information is true. 2. I understand tax requirements. 3. Documents won't be returned.")
-        st.text_input("Name of Beneficial Owner", key="final_decl_name")
-        st.write("________________________________")
-        st.caption("Signature Line")
+        st.info("""1. I/We confirm that the above information is true and accurate...
+2. I/We understand the legal and tax reporting requirements...
+3. I/We understand and agree that all documents supplied will not be returned...
+4. I/We undertake to notify us of any future changes...
+5. I/We understand the right to request additional documentation.""")
+        
+        st.write("**Name of the Beneficial Owner**")
+        st.text_input("BO Name", value="Janakiraman Ayyappan", key="final_decl_name", label_visibility="collapsed")
 
-        # Fixed Button Keys
-        b_col1, _, b_col3 = st.columns([1, 4, 1])
-        with b_col1: st.form_submit_button("SAVE AS DRAFT", key="kyc_save_draft")
+        st.write("### SIGNATURE")
+        st.write("__________________________________________")
+        st.caption("Signature")
+
+        st.write("")
+        b_col1, b_col2, b_col3 = st.columns([1, 4, 1])
+        with b_col1: st.form_submit_button("SAVE AS DRAFT", key="btn_save_draft")
         with b_col3: 
-            if st.form_submit_button("SUBMIT NOW", key="kyc_submit_final"):
-                st.success("Master KYC Submitted")
+            if st.form_submit_button("SUBMIT NOW", key="btn_submit_final"):
+                st.success("Master KYC Submitted Successfully")
 
-# --- 4. MAIN APP LOGIC (ORIGINAL MANAGEMENT UI) ---
+# --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("Client Management System")
+        df = get_clients()
         
-        # SIDEBAR: ADD CLIENT
-        st.sidebar.header("Add New Client")
-        with st.sidebar.form("sidebar_add_form", clear_on_submit=True):
-            n_num = st.number_input("Client No.", min_value=1)
-            n_name = st.text_input("Name of Customer")
+        # Sidebar for new client
+        with st.sidebar.form("add_client_form"):
+            st.header("Add New Client")
+            n_num = st.number_input("No.", min_value=1)
+            n_name = st.text_input("Customer Name")
             n_uen = st.text_input("UEN")
-            n_mon = st.selectbox("Year End Month", MONTHS)
+            n_mon = st.selectbox("Year End", MONTHS)
             n_stat = st.selectbox("Status", ["Active", "Terminated"])
-            if st.form_submit_button("Save New Client"):
+            if st.form_submit_button("Add Client"):
                 add_client(n_num, n_name, n_uen, n_mon, n_stat)
                 st.rerun()
 
-        # MAIN PANEL
-        df = get_clients()
         if not df.empty:
-            search_query = st.text_input("Search", placeholder="Search by name or UEN...")
-            if search_query:
-                df = df[df['name'].str.contains(search_query, case=False) | df['uen'].str.contains(search_query, case=False)]
-
             df.columns = [col.upper() for col in df.columns]
             df["NEW FORM"] = False
+            cols = ["NEW FORM"] + [c for c in df.columns if c != "NEW FORM"]
+            edited_df = st.data_editor(df[cols], hide_index=True, use_container_width=True, key="client_table")
             
-            # Interactive Table
-            edited_df = st.data_editor(
-                df[["NEW FORM", "CLIENT_NUM", "NAME", "UEN", "YEAR_END_MONTH", "STATUS"]],
-                hide_index=True,
-                use_container_width=True,
-                key="client_main_editor"
-            )
-            
-            # Check for click on "NEW FORM"
-            if edited_df["NEW FORM"].any():
-                selected = edited_df[edited_df["NEW FORM"] == True].iloc[0]["NAME"]
-                st.session_state["selected_client_name"] = selected
+            clicked = edited_df[edited_df["NEW FORM"] == True]
+            if not clicked.empty:
+                st.session_state["selected_client_name"] = clicked.iloc[0]["NAME"]
                 st.session_state["view"] = "kyc_form"
                 st.rerun()
-        else:
-            st.info("No clients found.")
-
+    
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
