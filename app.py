@@ -37,74 +37,22 @@ def master_kyc_form(client_name):
         st.session_state["view"] = "management"
         st.rerun()
 
-    # --- PROGRESS BAR (MATCHING YOUR IMAGE) ---
+    # --- PROGRESS BAR ---
     st.markdown("""
         <style>
-        .progress-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 20px 0;
-            position: relative;
-        }
-        .progress-line {
-            position: absolute;
-            top: 45px;
-            left: 5%;
-            right: 5%;
-            height: 4px;
-            background-color: #2E7D32;
-            z-index: 1;
-        }
-        .step {
-            text-align: center;
-            z-index: 2;
-            flex: 1;
-        }
-        .circle {
-            width: 50px;
-            height: 50px;
-            background-color: #2E7D32;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            font-weight: bold;
-            font-size: 20px;
-            border: 3px solid #2E7D32;
-        }
-        .inactive-circle {
-            background-color: white;
-            color: #2E7D32;
-        }
-        .label {
-            margin-top: 10px;
-            font-weight: bold;
-            font-size: 14px;
-            color: #2E7D32;
-        }
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .inactive-circle { background-color: white; color: #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
         </style>
         <div class="progress-container">
             <div class="progress-line"></div>
-            <div class="step">
-                <div class="circle">1</div>
-                <div class="label">Master KYC Form</div>
-            </div>
-            <div class="step">
-                <div class="circle inactive-circle">2</div>
-                <div class="label">BG Sec File</div>
-            </div>
-            <div class="step">
-                <div class="circle inactive-circle">3</div>
-                <div class="label">Customer Acceptance Form</div>
-            </div>
-            <div class="step">
-                <div class="circle inactive-circle">4</div>
-                <div class="label">Secretarial Engagement Letter</div>
-            </div>
+            <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -112,57 +60,56 @@ def master_kyc_form(client_name):
 
     with st.form("kyc_form_exact"):
         st.write("### BASIC INFORMATION REQUEST FORM & KYC")
-        
-        # Date field at the top
         st.date_input("Date", value=date(2020, 1, 1))
         
-        # --- SECTION: COMPANY DETAILS ---
+        # --- COMPANY DETAILS ---
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name)
-        
         col1, col2, col3 = st.columns([2, 2, 1])
-        with col1:
-            st.text_input("Company No.", value="200517609N")
-        with col2:
-            st.date_input("Date of incorporation", value=date(2005, 1, 1))
-        with col3:
-            st.text_input("Year End Date", value="31 Dec")
+        with col1: st.text_input("Company No.", value="200517609N")
+        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1))
+        with col3: st.text_input("Year End Date", value="31 Dec")
 
-        # --- SECTION: PROPOSED COMPANY ACTIVITY ---
-        st.write("### Proposed Company Activity")
+        st.write("#### Proposed Company Activity")
         act_col1, act_col2 = st.columns(2)
-        with act_col1:
-            st.text_input("Main Activity", value="Accounting, Audits")
-        with act_col2:
-            st.text_input("Secondary Activity", value="Tax")
+        with act_col1: st.text_input("Main Activity", value="Accounting, Audits")
+        with act_col2: st.text_input("Secondary Activity", value="Tax")
 
         st.divider()
 
-        # --- SECTION: DIRECTORS DETAILS ---
+        # --- DIRECTORS DETAILS ---
         st.write("### DIRECTORS DETAILS")
         
-        # Row 1: Name, ID, DOB
-        d_row1_col1, d_row1_col2, d_row1_col3 = st.columns([2, 1, 1])
-        with d_row1_col1:
-            st.text_input("Name as per Passport/NRIC")
-        with d_row1_col2:
-            st.text_input("NRIC/Passport No.")
-        with d_row1_col3:
-            st.date_input("Date of Birth", value=date(1980, 1, 1))
+        # Ability to increase number of directors
+        num_directors = st.number_input("Number of Directors", min_value=1, max_value=20, value=1)
         
-        # Row 2: Email, Phone/Other, Address
-        d_row2_col1, d_row2_col2, d_row2_col3 = st.columns([2, 1, 2])
-        with d_row2_col1:
-            st.text_input("Email Address")
-        with d_row2_col2:
-            st.text_input("Contact Details")
-        with d_row2_col3:
-            st.text_area("Residential Address", height=68)
+        for i in range(int(num_directors)):
+            st.write(f"**Director {i+1}**")
+            
+            # Row 1: Name, ID, DOB
+            d_col1, d_col2, d_col3 = st.columns([2, 1, 1])
+            with d_col1:
+                st.text_input("Name as per Passport/NRIC", key=f"d_name_{i}")
+            with d_col2:
+                st.text_input("NRIC/Passport no.", key=f"d_id_{i}")
+            with d_col3:
+                st.date_input("Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}")
+            
+            # Row 2: Email, Mobile, Nationality
+            d_col4, d_col5, d_col6 = st.columns([2, 1, 1])
+            with d_col4:
+                st.text_input("Email address", key=f"d_email_{i}")
+            with d_col5:
+                st.text_input("Mobile number", key=f"d_mobile_{i}")
+            with d_col6:
+                st.text_input("Nationality", key=f"d_nat_{i}")
+            
+            # Row 3: Address
+            st.text_area("Address", key=f"d_address_{i}", height=70)
+            st.write("---")
 
-        # Submit button
         if st.form_submit_button("Save Form"):
-            st.success("Form Saved")
-
+            st.success("Form Saved Successfully")
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
