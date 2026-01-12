@@ -36,6 +36,7 @@ def check_password():
     return False
 
 # --- 3. KYC FORM SECTION ---
+# --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
     if st.button("Back to Client Database"):
         st.session_state["view"] = "management"
@@ -136,6 +137,36 @@ def master_kyc_form(client_name):
             with s_c5: st.text_input(f"Mobile Number", key=f"s_mobile_{j}")
             with s_c6: st.text_input(f"Nationality", key=f"s_nat_{j}")
             st.text_area(f"Address", key=f"s_address_{j}", height=70)
+
+            # --- DYNAMIC EMPLOYMENT (PER SHAREHOLDER) ---
+            st.write(f"**CURRENT EMPLOYMENT/BUSINESS - {sh_names[j]}**")
+            emp_c1, emp_c2 = st.columns(2)
+            with emp_c1:
+                st.text_input("Company Name", key=f"emp_co_{j}")
+                st.text_input("Business Nature/Industry", key=f"emp_ind_{j}")
+            with emp_c2:
+                st.text_input("Years in employment", key=f"emp_yrs_{j}")
+                st.text_input("Years of experience in industry", key=f"emp_exp_{j}")
+                st.file_uploader("Upload CV", type=["pdf"], key=f"emp_cv_{j}")
+
+            # --- DYNAMIC SOURCE OF WEALTH (PER SHAREHOLDER) ---
+            st.write(f"**SOURCE OF WEALTH - {sh_names[j]}**")
+            sow_list = [
+                ("Salary/Bonus", "salary"), ("Business Owner", "shares"), 
+                ("Inheritance", "inheritance"), ("Investment", "investment"), 
+                ("Asset Sale", "sale"), ("Others", "others")
+            ]
+            for label, sow_key in sow_list:
+                sw_c1, sw_c2 = st.columns([2, 1])
+                with sw_c1: st.checkbox(label, key=f"sow_chk_{j}_{sow_key}")
+                with sw_c2: st.text_area("Details", key=f"sow_txt_{j}_{sow_key}", height=68, label_visibility="collapsed")
+
+            # --- DYNAMIC SIGNATURE (PER SHAREHOLDER) ---
+            st.write(f"**SIGNATURE OF BENEFICIAL OWNER - {sh_names[j]}**")
+            sig_file = st.file_uploader(f"Upload Signature for {sh_names[j]}", type=["png", "jpg"], key=f"sig_{j}")
+            if sig_file:
+                st.image(sig_file, width=250)
+            
             st.write("---")
 
         st.divider()
@@ -219,38 +250,6 @@ def master_kyc_form(client_name):
 
         st.divider()
 
-        # --- CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
-        st.write("### CURRENT EMPLOYMENT/BUSINESS PARTICULARS")
-        emp_c1, emp_c2 = st.columns(2)
-        with emp_c1:
-            st.text_input("BO's Name", key="emp_bo_name")
-            st.text_input("Company Name", key="emp_company")
-            st.text_input("Business Nature/Industry", key="emp_industry")
-        with emp_c2:
-            st.text_input("Years in employment", key="emp_years_employment")
-            st.text_input("Years of experience in the industry", key="emp_years_exp")
-            st.file_uploader("Addition of CV", type=["pdf", "doc", "docx"], key="emp_cv")
-
-        st.divider()
-
-        # --- BO'S SOURCE OF WEALTH ---
-        st.write("### BO'S SOURCE OF WEALTH")
-        sow_options = [
-            ("Salary/Bonus Income (Annual) Name of the employer, position and annual salary", "salary"),
-            ("Owner of Shares in Business Name of the company, website, annual salary", "shares"),
-            ("Inheritance or Gift Name of the deceased/donor, type of business/investment, relationship, amount received", "inheritance"),
-            ("Investment Name of the investment manager, value of portfolio, origin of investment funds", "investment"),
-            ("Sale of Assets/Shares Type of assets/shares, date of sale, value of sale", "sale"),
-            ("Others (Please provide details )", "others")
-        ]
-
-        for label, key in sow_options:
-            c1, c2 = st.columns([2, 1])
-            with c1: st.checkbox(label, key=f"sow_check_{key}")
-            with c2: st.text_area("Details", key=f"sow_text_{key}", height=68, label_visibility="collapsed")
-
-        st.divider()
-
         # --- DECLARATION/UNDERTAKING ---
         st.write("### DECLARATION/UNDERTAKING")
         st.info("""
@@ -259,17 +258,6 @@ def master_kyc_form(client_name):
         3. I/we understand that all documents supplied will not be returned.
         4. I/we undertake to notify of any future changes to the information.
         """)
-        
-        # --- SIGNATURE SECTION ---
-        st.write("### SIGNATURE OF BENEFICIAL OWNER")
-        st.text_input("Full Name of the Beneficial Owner", key="decl_bo_name")
-        
-        st.write("Upload Signature (Image from Dropbox or Local)")
-        signature_file = st.file_uploader("Upload PNG/JPG Signature", type=["png", "jpg", "jpeg"], key="sig_upload")
-        if signature_file:
-            st.image(signature_file, width=300, caption="Beneficial Owner Signature Preview")
-
-        st.divider()
         
         # --- SUBMISSION BUTTONS ---
         btn_col1, _, btn_col3 = st.columns([1, 4, 1])
