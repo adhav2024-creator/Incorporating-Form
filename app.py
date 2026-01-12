@@ -80,36 +80,37 @@ def master_kyc_form(client_name):
         # --- DIRECTORS DETAILS ---
         st.write("### DIRECTORS DETAILS")
         
-        # Ability to increase number of directors
-        num_directors = st.number_input("Number of Directors", min_value=1, max_value=20, value=1)
+        # Step 1: Increase this number to reveal more director slots
+        num_directors = st.number_input("How many directors do you need to enter?", min_value=1, max_value=20, value=1)
         
+        # Step 2: Loop creates a fresh set of the 7 required fields for each director
         for i in range(int(num_directors)):
-            st.write(f"**Director {i+1}**")
+            st.markdown(f"#### 👤 Director {i+1} Particulars")
             
             # Row 1: Name, ID, DOB
             d_col1, d_col2, d_col3 = st.columns([2, 1, 1])
             with d_col1:
-                st.text_input("Name as per Passport/NRIC", key=f"d_name_{i}")
+                st.text_input(f"Name as per Passport/NRIC (Dir {i+1})", key=f"d_name_{i}")
             with d_col2:
-                st.text_input("NRIC/Passport no.", key=f"d_id_{i}")
+                st.text_input(f"NRIC/Passport no. (Dir {i+1})", key=f"d_id_{i}")
             with d_col3:
-                st.date_input("Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}")
+                st.date_input(f"Date of birth (Dir {i+1})", value=date(1990, 1, 1), key=f"d_dob_{i}")
             
             # Row 2: Email, Mobile, Nationality
             d_col4, d_col5, d_col6 = st.columns([2, 1, 1])
             with d_col4:
-                st.text_input("Email address", key=f"d_email_{i}")
+                st.text_input(f"Email address (Dir {i+1})", key=f"d_email_{i}")
             with d_col5:
-                st.text_input("Mobile number", key=f"d_mobile_{i}")
+                st.text_input(f"Mobile number (Dir {i+1})", key=f"d_mobile_{i}")
             with d_col6:
-                st.text_input("Nationality", key=f"d_nat_{i}")
+                st.text_input(f"Nationality (Dir {i+1})", key=f"d_nat_{i}")
             
             # Row 3: Address
-            st.text_area("Address", key=f"d_address_{i}", height=70)
+            st.text_area(f"Address (Dir {i+1})", key=f"d_address_{i}", height=70)
             st.write("---")
 
         if st.form_submit_button("Save Form"):
-            st.success("Form Saved Successfully")
+            st.success(f"Successfully saved details for {num_directors} director(s).")
 # --- 4. MAIN APP ---
 if check_password():
     if st.session_state["view"] == "management":
