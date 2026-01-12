@@ -270,12 +270,13 @@ def master_kyc_form(client_name):
                 st.rerun()
 
 # --- 4. BG SEC FILE SECTION ---
+_# --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
     if st.button("Back to Master KYC"):
         st.session_state["view"] = "kyc_form"
         st.rerun()
 
-    # --- PROGRESS BAR (Step 2 Active) ---
+    # --- PROGRESS BAR ---
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -293,59 +294,67 @@ def bg_sec_file_form(client_name):
             <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
             <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
             <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
+            <div class="step"><div class="circle inactive-circle">5</div><div class="label">Terms and Conditions</div></div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.subheader("FIRST DIRECTORS' MINUTES")
-    
+    # --- FORM START ---
     with st.form("bg_sec_file_form"):
-        st.markdown(f"<h2 style='text-align: center;'>{client_name.upper()}</h2>", unsafe_allow_html=True)
-        st.write("---")
+        # Header matching image layout
+        col_header_1, col_header_2 = st.columns([1, 1])
+        with col_header_1:
+            st.write("**FIRST DIRECTORS' MINUTES**")
+        with col_header_2:
+            st.write(f"**{client_name.upper()}**")
+            
+        st.divider()
+
+        # 1. Name of Company
+        st.text_input("Name of Company", value=client_name)
         
-        # 2. Place of Meeting
+        # 2. Place of Meeting (Not relayed, manually editable)
         st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
         
-        # 3. Date and Time
+        # 3. Date and Time of Meeting
         dt_col1, dt_col2 = st.columns(2)
         with dt_col1:
-            # Relays Inc. Date from Step 1
-            inc_date = st.session_state.get("kyc_inc_date", date.today())
+            # Relays Incorporation Date as a default starting point
+            inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
             st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY")
         with dt_col2:
-            st.text_input("Time of Meeting", value="10:00 AM")
+            st.text_input("Time of Meeting", value="13:47")
 
-        # 4. Directors Present (Relayed)
-        st.write("**PRESENT**")
+        # 4. Directors Present
+        st.write("**Directors Present**")
         default_directors = []
         for i in range(st.session_state.num_directors):
             name = st.session_state.get(f"d_name_{i}", "")
             if name: default_directors.append(name)
         
-        st.text_area("Directors Present", value=", ".join(default_directors), height=70)
+        st.text_area("Directors Present", value=", ".join(default_directors), height=70, label_visibility="collapsed")
 
         st.divider()
 
         # 5. Chairman
         st.write("### 1. CHAIRMAN")
         first_dir = default_directors[0] if default_directors else ""
-        st.text_input("The Chair was taken by:", value=first_dir)
+        st.text_input("The Chair was taken by", value=first_dir)
 
         st.divider()
 
         # 6. Incorporation
         st.write("### 2. INCORPORATION")
-        st.write("It was noted that the company was incorporated under the companies ACT.(CAP.50).")
+        st.write("It was noted that the Company was incorporated under the COMPANIES ACT.(CAP.50).")
         
-        inc_no = st.session_state.get("kyc_co_no", "")
-        st.text_input("the certificate of Incorporation number was:", value=inc_no)
-        st.date_input("The date of incorporation was :", value=inc_date, format="DD/MM/YYYY")
+        inc_no = st.session_state.get("kyc_co_no", "200517609N")
+        st.text_input("The Certificate of Incorporation number was:", value=inc_no)
+        st.date_input("The Date of Incorporation was:", value=inc_date, format="DD/MM/YYYY")
         
-        st.divider()
-        
-        # Final Submit for Step 2
-        if st.form_submit_button("SUBMIT NOW"):
-            st.success("First Directors' Minutes Generated!")
+        st.write("A Copy of Constitution was also presented to the meeting.")
 
+        # --- SUBMIT ---
+        if st.form_submit_button("SUBMIT NOW"):
+            st.success("First Directors' Minutes Generated Successfully!")
 # --- 5. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
