@@ -280,7 +280,7 @@ def master_kyc_form(client_name):
             if st.form_submit_button("SUBMIT NOW"):
                 st.success("Master KYC Submitted Successfully")
 
-i# --- 4. MAIN APP LOGIC ---
+# --- 4. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("🏢 Client Management System")
