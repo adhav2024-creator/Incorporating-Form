@@ -48,12 +48,13 @@ def master_kyc_form(client_name):
         .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
         .step { text-align: center; z-index: 2; flex: 1; }
         .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
-        .inactive-circle { background-color: white; color: #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
         .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
         </style>
         <div class="progress-container">
             <div class="progress-line"></div>
-            <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
             <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
             <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
             <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
@@ -68,10 +69,10 @@ def master_kyc_form(client_name):
         
         # --- COMPANY DETAILS ---
         st.write("### Company Details")
-        st.text_input("Company Name", value=client_name)
+        st.text_input("Company Name", value=client_name, key="kyc_co_name")
         col1, col2, col3 = st.columns([2, 2, 1])
-        with col1: st.text_input("Company No.", value="200517609N")
-        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), format="DD/MM/YYYY")
+        with col1: st.text_input("Company No.", value="200517609N", key="kyc_co_no")
+        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), format="DD/MM/YYYY", key="kyc_inc_date")
         with col3: st.text_input("Year End Date", value="31 Dec")
 
         st.write("#### Proposed Company Activity")
@@ -265,9 +266,87 @@ def master_kyc_form(client_name):
                 st.info("Form saved as draft.")
         with btn_col3:
             if st.form_submit_button("SUBMIT NOW"):
-                st.success("Master KYC Submitted Successfully")
+                st.session_state["view"] = "bg_sec_file"
+                st.rerun()
 
-# --- 4. MAIN APP LOGIC ---
+# --- 4. BG SEC FILE SECTION ---
+def bg_sec_file_form(client_name):
+    if st.button("Back to Master KYC"):
+        st.session_state["view"] = "kyc_form"
+        st.rerun()
+
+    # --- PROGRESS BAR (Step 2 Active) ---
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .completed-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle completed-circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.subheader("FIRST DIRECTORS' MINUTES")
+    
+    with st.form("bg_sec_file_form"):
+        st.markdown(f"<h2 style='text-align: center;'>{client_name.upper()}</h2>", unsafe_allow_html=True)
+        st.write("---")
+        
+        # 2. Place of Meeting
+        st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+        
+        # 3. Date and Time
+        dt_col1, dt_col2 = st.columns(2)
+        with dt_col1:
+            # Relays Inc. Date from Step 1
+            inc_date = st.session_state.get("kyc_inc_date", date.today())
+            st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY")
+        with dt_col2:
+            st.text_input("Time of Meeting", value="10:00 AM")
+
+        # 4. Directors Present (Relayed)
+        st.write("**PRESENT**")
+        default_directors = []
+        for i in range(st.session_state.num_directors):
+            name = st.session_state.get(f"d_name_{i}", "")
+            if name: default_directors.append(name)
+        
+        st.text_area("Directors Present", value=", ".join(default_directors), height=70)
+
+        st.divider()
+
+        # 5. Chairman
+        st.write("### 1. CHAIRMAN")
+        first_dir = default_directors[0] if default_directors else ""
+        st.text_input("The Chair was taken by:", value=first_dir)
+
+        st.divider()
+
+        # 6. Incorporation
+        st.write("### 2. INCORPORATION")
+        st.write("It was noted that the company was incorporated under the companies ACT.(CAP.50).")
+        
+        inc_no = st.session_state.get("kyc_co_no", "")
+        st.text_input("the certificate of Incorporation number was:", value=inc_no)
+        st.date_input("The date of incorporation was :", value=inc_date, format="DD/MM/YYYY")
+        
+        st.divider()
+        
+        # Final Submit for Step 2
+        if st.form_submit_button("SUBMIT NOW"):
+            st.success("First Directors' Minutes Generated!")
+
+# --- 5. MAIN APP LOGIC ---
 if check_password():
     if st.session_state["view"] == "management":
         st.title("🏢 Client Management System")
@@ -370,3 +449,6 @@ if check_password():
 
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
+    
+    elif st.session_state["view"] == "bg_sec_file":
+        bg_sec_file_form(st.session_state["selected_client_name"])
