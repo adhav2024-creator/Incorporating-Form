@@ -63,12 +63,13 @@ def create_pdf_report(client_name):
     pdf.set_y(y_act + 20)
     pdf.ln(5)
 
-    # --- 2. DIRECTORS DETAILS ---
+    # --- 2. DIRECTORS DETAILS (Numbers Removed) ---
     num_dirs = st.session_state.get("num_directors", 1)
     for i in range(num_dirs):
         if pdf.get_y() > 190: pdf.add_page()
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
-        pdf.cell(0, 10, f" Director {i+1} Details", ln=True, fill=True, border=1)
+        # Heading changed from "Director {i+1} Details" to just "Director Details"
+        pdf.cell(0, 10, " Director Details", ln=True, fill=True, border=1)
         pdf.set_font("Arial", '', 9)
         
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
@@ -92,13 +93,13 @@ def create_pdf_report(client_name):
         pdf.set_y(y_addr + 20)
         pdf.ln(8)
 
-    # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP (Updated Name) ---
+    # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP (Numbers Removed) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
         if pdf.get_y() > 190: pdf.add_page()
-        
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(220, 235, 252)
-        pdf.cell(0, 10, f" Shareholder {j+1} and Beneficial Ownership", ln=True, fill=True, border=1)
+        # Heading changed from "Shareholder {j+1}..." to just "Shareholder and Beneficial Ownership"
+        pdf.cell(0, 10, " Shareholder and Beneficial Ownership", ln=True, fill=True, border=1)
         
         pdf.set_font("Arial", '', 9)
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
@@ -120,13 +121,11 @@ def create_pdf_report(client_name):
         pdf.set_y(y_saddr + 20)
         pdf.ln(8)
 
-    # --- 4. PERCENTAGE OF SHAREHOLDING DETAILS (Single Unified Table) ---
+    # --- 4. PERCENTAGE OF SHAREHOLDING DETAILS (Remains one table) ---
     if pdf.get_y() > 180: pdf.add_page()
-    
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Percentage of shareholding Details", ln=True, fill=True, border=1)
     
-    # Table Header
     pdf.set_font("Arial", 'B', 8)
     pdf.cell(12, 10, " S.NO.", border=1, align='C')
     pdf.cell(50, 10, " Shareholder Name", border=1, align='C')
@@ -135,7 +134,6 @@ def create_pdf_report(client_name):
     pdf.cell(32, 10, " No. of shares issued", border=1, align='C')
     pdf.cell(34, 10, " Paid Up Amount", border=1, align='C', ln=True)
     
-    # Table Content
     pdf.set_font("Arial", '', 8)
     for k in range(num_sh):
         name = str(st.session_state.get(f"s_name_{k}", f"Shareholder {k+1}"))
