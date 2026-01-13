@@ -471,10 +471,7 @@ def master_kyc_form(client_name):
             with sw_c1: st.checkbox(label, key=f"sow_chk_{j}_{sow_key}")
             with sw_c2: st.text_area("Details", key=f"sow_txt_{j}_{sow_key}", height=68, label_visibility="collapsed")
 
-        st.write(f"**SIGNATURE OF BENEFICIAL OWNER - {sh_names[j]}**")
-        sig_file = st.file_uploader(f"Upload Signature for {sh_names[j]}", type=["png", "jpg"], key=f"sig_{j}")
-        if sig_file: st.image(sig_file, width=250)
-        st.write("---")
+       
 
     st.divider()
 
