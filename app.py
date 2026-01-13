@@ -638,7 +638,14 @@ def master_kyc_form(client_name):
                 st.success("PDF Generated Successfully!")
             except Exception as e:
                 st.error(f"Error preparing PDF: {e}")
-
+    st.divider()
+    
+    # Simple navigation to the next section
+    col_left, col_right = st.columns([4, 1])
+    with col_right:
+        if st.button("Next: BG Sec File ➡️", key="next_step_btn"):
+            st.session_state["view"] = "bg_sec_file"
+            st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
     if st.button("Back to Master KYC"):
@@ -658,7 +665,10 @@ def bg_sec_file_form(client_name):
         default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(st.session_state.get("num_directors", 1))]
         st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
         if st.form_submit_button("SUBMIT NOW"): st.success("Generated!")
-
+    # Inside bg_sec_file_form function
+    if st.button("⬅️ Back to KYC Form", key="back_to_kyc"):
+        st.session_state["view"] = "kyc_form"
+        st.rerun()
 
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
