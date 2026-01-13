@@ -556,13 +556,7 @@ def master_kyc_form(client_name):
     """)
 
     # FORM ACTIONS
-    btn_col1, btn_col2 = st.columns([1, 1])
-    with btn_col1:
-        if st.button("SAVE AS DRAFT"): st.info("Form saved as draft.")
-    with btn_col2:
-        if st.button("SUBMIT NOW"):
-            st.session_state["view"] = "bg_sec_file"
-            st.rerun()
+    
 
     st.write("### Actions")
     try:
