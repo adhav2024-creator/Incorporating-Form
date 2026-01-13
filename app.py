@@ -422,22 +422,35 @@ def master_kyc_form(client_name):
 
     st.markdown("""
         <style>
-        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
-        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
-        .step { text-align: center; z-index: 2; flex: 1; }
-        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
-        .active-circle { background-color: #2E7D32; color: white; }
+        .progress-container { display: flex; justify-content: space-around; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 15%; right: 15%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; cursor: pointer; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; transition: 0.3s; }
+        .circle:hover { background-color: #1b5e20; transform: scale(1.1); }
         .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
         .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
         </style>
-        <div class="progress-container">
-            <div class="progress-line"></div>
-            <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
-            <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
-            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
-            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
-        </div>
         """, unsafe_allow_html=True)
+
+    # Creating three columns to act as the clickable buttons
+    prog_col1, prog_col2, prog_col3 = st.columns(3)
+    
+    with prog_col1:
+        # Step 1: Active
+        st.markdown('<div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>', unsafe_allow_html=True)
+    
+    with prog_col2:
+        # Step 2: Clickable Button
+        if st.button("2", key="nav_bg_sec", help="Go to BG Sec File"):
+            st.session_state["view"] = "bg_sec_file"
+            st.rerun()
+        st.markdown('<div style="text-align: center; margin-top: -40px;"><div class="label">BG Sec File</div></div>', unsafe_allow_html=True)
+
+    with prog_col3:
+        # Step 3: Inactive
+        st.markdown('<div class="step"><div class="inactive-circle" style="width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto; font-weight:bold; border:3px solid #2E7D32;">3</div><div class="label">Customer Acceptance</div></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="progress-line"></div>', unsafe_allow_html=True)
 
     st.title(f"KYC: {client_name}")
 
