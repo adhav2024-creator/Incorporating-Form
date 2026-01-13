@@ -558,7 +558,7 @@ def master_kyc_form(client_name):
     # FORM ACTIONS
     
 
-    st.write("### Actions")
+    st.write("### Generate KYC PDF Report")
     try:
         pdf_bytes = create_pdf_report(client_name)
         st.download_button("📥 DOWNLOAD KYC PDF", data=pdf_bytes, file_name=f"KYC_{client_name}.pdf", mime="application/pdf")
