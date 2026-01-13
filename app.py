@@ -3,7 +3,23 @@ import pandas as pd
 from database import init_db, get_clients, add_client, delete_client, update_client
 from datetime import date
 from fpdf import FPDF
-
+import sqlite3
+import json
+def save_client_data(client_name):
+    # This uses the 'sqlite3' module, satisfying Pylance
+    conn = sqlite3.connect('clients_kyc.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS kyc_records 
+                 (client_name TEXT PRIMARY KEY, data_json TEXT)''')
+    
+    # Filter out keys that aren't form data
+    save_data = {k: v for k, v in st.session_state.items() if not k.startswith('__')}
+    json_data = json.dumps(save_data, default=str)
+    
+    c.execute("INSERT OR REPLACE INTO kyc_records VALUES (?, ?)", (client_name, json_data))
+    conn.commit()
+    conn.close()
+    st.success(f"Successfully saved {client_name}")
 # --- 1. CONFIGURATION & DATABASE ---
 st.set_page_config(page_title="Audit Client Tracker", layout="wide")
 init_db()
@@ -557,13 +573,32 @@ def master_kyc_form(client_name):
 
     # FORM ACTIONS
     
+    st.divider()
 
-    st.write("### Generate KYC PDF Report")
-    try:
-        pdf_bytes = create_pdf_report(client_name)
-        st.download_button("📥 DOWNLOAD KYC PDF", data=pdf_bytes, file_name=f"KYC_{client_name}.pdf", mime="application/pdf")
-    except Exception as e:
-        st.error(f"Error preparing PDF: {e}")
+    # --- ADD THE SAVE AND PDF BUTTONS HERE ---
+    st.subheader("Finalize Application")
+    col_save, col_pdf = st.columns(2)
+
+    with col_save:
+        # This button triggers the function you added at the top
+        if st.button("💾 Save Client Information"):
+            current_client = st.session_state.get('kyc_co_name', client_name)
+            save_client_data(current_client)
+
+    with col_pdf:
+        # Trigger PDF generation and provide download button
+        if st.button("📄 Generate PDF Report"):
+            try:
+                pdf_bytes = create_pdf_report(client_name)
+                st.download_button(
+                    "📥 CLICK TO DOWNLOAD PDF", 
+                    data=pdf_bytes, 
+                    file_name=f"KYC_{client_name}.pdf", 
+                    mime="application/pdf"
+                )
+                st.success("PDF Generated Successfully!")
+            except Exception as e:
+                st.error(f"Error preparing PDF: {e}")
 
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
