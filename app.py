@@ -215,6 +215,24 @@ def create_pdf_report(client_name):
     pdf.cell(65, 12, str(st.session_state.get('auth_email', '')), border=1, ln=True)
     pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
+    
+    # --- 8. SHARE CAPITAL ---
+    if pdf.get_y() > 240: pdf.add_page()
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1)
+    
+    # Header Row
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 10, " Currency", border=1, align='C')
+    pdf.cell(95, 10, " Amount", border=1, align='C', ln=True)
+    
+    # Data Row
+    pdf.set_font("Arial", '', 9)
+    # Using a slightly larger height (12) to match the other tables
+    pdf.cell(95, 12, str(st.session_state.get('kyc_currency', 'SGD')), border=1, align='C')
+    pdf.cell(95, 12, str(st.session_state.get('kyc_amount', '')), border=1, align='C', ln=True)
+    
+    pdf.ln(10) # Final spacing
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
     if st.button("← Back to Client Database"):
