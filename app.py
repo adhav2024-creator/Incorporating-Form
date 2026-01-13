@@ -405,6 +405,55 @@ def create_pdf_report(client_name):
 
     # --- FINAL PDF OUTPUT ---
     return pdf.output(dest='S').encode('latin-1')
+def create_minutes_pdf(client_name):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 12)
+    
+    # Header
+    pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
+    pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
+    pdf.ln(5)
+    
+    # Table Styling
+    pdf.set_font("Arial", 'B', 10)
+    col_width_left = 60
+    col_width_right = 130
+    row_height = 10
+
+    # Row 1: Name of Company
+    pdf.cell(col_width_left, row_height, " Name of Company", border=1)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(col_width_right, row_height, f" {client_name}", border=1, ln=True)
+
+    # Row 2: Place of Meeting
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(col_width_left, row_height * 2, " Place of Meeting", border=1)
+    pdf.set_font("Arial", '', 10)
+    place = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    pdf.multi_cell(col_width_right, row_height, f" {place}", border=1)
+
+    # Row 3: Date and Time
+    pdf.set_xy(10, pdf.get_y())
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(col_width_left, row_height, " Date and Time of Meeting", border=1)
+    pdf.set_font("Arial", '', 10)
+    m_date = st.session_state.get('sec_meeting_date', date.today()).strftime('%d/%m/%Y')
+    m_time = st.session_state.get('sec_meeting_time', '13:47')
+    pdf.cell(col_width_right, row_height, f" {m_date} {m_time}", border=1, ln=True)
+
+    # Row 4: Directors Present
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(col_width_left, row_height * 2, " Directors Present", border=1)
+    pdf.set_font("Arial", '', 10)
+    
+    num_dirs = st.session_state.get("num_directors", 1)
+    dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
+    dirs_text = "\n ".join(dirs) if dirs else " None Listed"
+    
+    pdf.multi_cell(col_width_right, row_height, dirs_text, border=1)
+
+    return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
     if f"loaded_{client_name}" not in st.session_state:
@@ -709,6 +758,19 @@ def bg_sec_file_form(client_name):
         if st.button("Next Step ➡️", key="next_to_ca"):
             st.session_state["view"] = "customer_acceptance"
             st.rerun()
+    # ... inside bg_sec_file_form ...
+    if st.button("SUBMIT AND GENERATE PDF", key="bg_submit_btn"): 
+        try:
+            minutes_pdf = create_minutes_pdf(client_name)
+            st.download_button(
+                label="📥 Download Minutes PDF",
+                data=minutes_pdf,
+                file_name=f"Minutes_{client_name}.pdf",
+                mime="application/pdf"
+            )
+            st.success("PDF Ready for download!")
+        except Exception as e:
+            st.error(f"Error: {e}")
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
