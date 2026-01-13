@@ -63,32 +63,25 @@ def create_pdf_report(client_name):
     pdf.set_y(y_act + 20)
     pdf.ln(5)
 
-    # --- 2. DIRECTORS DETAILS (FIXED LOOP) ---
+    # --- 2. DIRECTORS DETAILS ---
     num_dirs = st.session_state.get("num_directors", 1)
     for i in range(num_dirs):
         if pdf.get_y() > 190: pdf.add_page()
-        
-        pdf.set_font("Arial", 'B', 11)
-        pdf.set_fill_color(240, 240, 240)
+        pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
         pdf.cell(0, 10, f" Director {i+1} Details", ln=True, fill=True, border=1)
-        
         pdf.set_font("Arial", '', 9)
+        
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_name_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " NRIC / Passport No.", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_id_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Date of Birth", border=1)
         d_dob = st.session_state.get(f"d_dob_{i}")
         pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
-        
         pdf.cell(65, 10, " Email address", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Mobile Number", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Nationality", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
         
@@ -99,29 +92,24 @@ def create_pdf_report(client_name):
         pdf.set_y(y_addr + 20)
         pdf.ln(8)
 
-    # --- 3. SHAREHOLDERS DETAILS (FIXED LOOP) ---
+    # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP (Updated Name) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
         if pdf.get_y() > 190: pdf.add_page()
         
-        pdf.set_font("Arial", 'B', 11)
-        pdf.set_fill_color(220, 235, 252) # Light blue to distinguish from directors
-        pdf.cell(0, 10, f" Shareholder {j+1} Details", ln=True, fill=True, border=1)
+        pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(220, 235, 252)
+        pdf.cell(0, 10, f" Shareholder {j+1} and Beneficial Ownership", ln=True, fill=True, border=1)
         
         pdf.set_font("Arial", '', 9)
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"s_name_{j}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " NRIC / Passport No.", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"s_id_{j}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Date of Birth", border=1)
         s_dob = st.session_state.get(f"s_dob_{j}")
         pdf.cell(125, 10, s_dob.strftime('%d/%m/%Y') if s_dob else "", border=1, ln=True)
-        
         pdf.cell(65, 10, " Email address", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"s_email_{j}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Nationality", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"s_nat_{j}", "")), border=1, ln=True)
 
@@ -131,7 +119,38 @@ def create_pdf_report(client_name):
         pdf.multi_cell(125, 10, str(st.session_state.get(f"s_address_{j}", "")), border=1)
         pdf.set_y(y_saddr + 20)
         pdf.ln(8)
+
+    # --- 4. PERCENTAGE OF SHAREHOLDING DETAILS (Single Unified Table) ---
+    if pdf.get_y() > 180: pdf.add_page()
     
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Percentage of shareholding Details", ln=True, fill=True, border=1)
+    
+    # Table Header
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(12, 10, " S.NO.", border=1, align='C')
+    pdf.cell(50, 10, " Shareholder Name", border=1, align='C')
+    pdf.cell(30, 10, " Share of %", border=1, align='C')
+    pdf.cell(32, 10, " No. of shares applied", border=1, align='C')
+    pdf.cell(32, 10, " No. of shares issued", border=1, align='C')
+    pdf.cell(34, 10, " Paid Up Amount", border=1, align='C', ln=True)
+    
+    # Table Content
+    pdf.set_font("Arial", '', 8)
+    for k in range(num_sh):
+        name = str(st.session_state.get(f"s_name_{k}", f"Shareholder {k+1}"))
+        perc = str(st.session_state.get(f"p_perc_{k}", ""))
+        applied = str(st.session_state.get(f"p_applied_{k}", ""))
+        issued = str(st.session_state.get(f"p_issued_{k}", ""))
+        paid = str(st.session_state.get(f"p_paid_{k}", ""))
+        
+        pdf.cell(12, 10, str(k+1), border=1, align='C')
+        pdf.cell(50, 10, name, border=1)
+        pdf.cell(30, 10, perc, border=1, align='C')
+        pdf.cell(32, 10, applied, border=1, align='C')
+        pdf.cell(32, 10, issued, border=1, align='C')
+        pdf.cell(34, 10, paid, border=1, align='C', ln=True)
+
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
