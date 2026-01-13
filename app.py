@@ -148,7 +148,7 @@ def create_pdf_report(client_name):
         pdf.cell(32, 10, applied, border=1, align='C')
         pdf.cell(32, 10, issued, border=1, align='C')
         pdf.cell(34, 10, paid, border=1, align='C', ln=True)
-        pdf.ln(8)
+    pdf.ln(8)
     # --- 5. COMPANY SECRETARY DETAILS ---
     if pdf.get_y() > 220: pdf.add_page()
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
