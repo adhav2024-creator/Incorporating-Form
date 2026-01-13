@@ -169,6 +169,7 @@ def create_pdf_report(client_name):
     # We fetch specifically from 'bank_account_currency'
     bank_curr = st.session_state.get('bank_account_currency', '')
     pdf.cell(125, 10, str(bank_curr), border=1, ln=True)
+    pdf.ln(8)
     # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
