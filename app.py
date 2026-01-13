@@ -23,7 +23,27 @@ def save_client_data(client_name):
 # --- 1. CONFIGURATION & DATABASE ---
 st.set_page_config(page_title="Audit Client Tracker", layout="wide")
 init_db()
-
+def load_client_data(client_name):
+    conn = sqlite3.connect('clients_kyc.db')
+    c = conn.cursor()
+    c.execute("SELECT data_json FROM kyc_records WHERE client_name=?", (client_name,))
+    row = c.fetchone()
+    conn.close()
+    
+    if row:
+        data = json.loads(row[0])
+        # Update session state with the saved values
+        for key, value in data.items():
+            # Special handling for dates (convert string back to date object)
+            if 'date' in key or 'dob' in key:
+                try:
+                    st.session_state[key] = date.fromisoformat(value)
+                except:
+                    st.session_state[key] = value
+            else:
+                st.session_state[key] = value
+        return True
+    return False
 MONTHS = ["January", "February", "March", "April", "May", "June", 
           "July", "August", "September", "October", "November", "December"]
 
@@ -377,6 +397,17 @@ def create_pdf_report(client_name):
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
+    if f"loaded_{client_name}" not in st.session_state:
+        if load_client_data(client_name):
+            st.session_state[f"loaded_{client_name}"] = True
+            st.rerun() # Refresh once to populate the inputs
+    
+    if st.button("← Back to Client Database"):
+        # Clear the 'loaded' flag so it can be re-loaded if we switch clients
+        if f"loaded_{client_name}" in st.session_state:
+            del st.session_state[f"loaded_{client_name}"]
+        st.session_state["view"] = "management"
+        st.rerun()
     if st.button("← Back to Client Database"):
         st.session_state["view"] = "management"
         st.rerun()
