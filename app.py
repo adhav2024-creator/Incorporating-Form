@@ -148,7 +148,71 @@ def create_pdf_report(client_name):
         pdf.cell(32, 10, applied, border=1, align='C')
         pdf.cell(32, 10, issued, border=1, align='C')
         pdf.cell(34, 10, paid, border=1, align='C', ln=True)
+    # --- 5. COMPANY SECRETARY DETAILS ---
+    if pdf.get_y() > 220: pdf.add_page()
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1)
+    
+    # Header Row
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(45, 10, " Name as per passport or NRIC", border=1, align='C')
+    pdf.cell(35, 10, " NRIC or Passport No.", border=1, align='C')
+    pdf.cell(75, 10, " Address", border=1, align='C')
+    pdf.cell(35, 10, " Nationality", border=1, align='C', ln=True)
+    
+    # Data Row
+    pdf.set_font("Arial", '', 8)
+    y_sec = pdf.get_y()
+    pdf.cell(45, 15, str(st.session_state.get('sec_name', '')), border=1)
+    pdf.cell(35, 15, str(st.session_state.get('sec_id', '')), border=1)
+    
+    # Multi-cell for Secretary Address to handle length
+    pdf.set_xy(90, y_sec)
+    pdf.multi_cell(75, 7.5, str(st.session_state.get('sec_address', '')), border=1)
+    
+    pdf.set_xy(165, y_sec)
+    pdf.cell(35, 15, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
+    pdf.ln(5)
 
+    # --- 6. CEO DETAILS ---
+    if pdf.get_y() > 220: pdf.add_page()
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " CEO Details", ln=True, fill=True, border=1)
+    
+    # Header Row
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(40, 10, " Name as per passport or NRIC", border=1, align='C')
+    pdf.cell(30, 10, " NRIC or Passport No.", border=1, align='C')
+    pdf.cell(30, 10, " Mobile Number", border=1, align='C')
+    pdf.cell(40, 10, " Email Address", border=1, align='C')
+    pdf.cell(50, 10, " Address", border=1, align='C', ln=True)
+    
+    # Data Row
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(40, 12, str(st.session_state.get('ceo_name', '')), border=1)
+    pdf.cell(30, 12, str(st.session_state.get('ceo_id', '')), border=1)
+    pdf.cell(30, 12, str(st.session_state.get('ceo_mobile', '')), border=1)
+    pdf.cell(40, 12, str(st.session_state.get('ceo_email', '')), border=1)
+    pdf.cell(50, 12, str(st.session_state.get('ceo_address', '')), border=1, ln=True)
+    pdf.ln(5)
+
+    # --- 7. AUTHORISED PERSON TO CONTACT ---
+    if pdf.get_y() > 220: pdf.add_page()
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Authorised person to contact", ln=True, fill=True, border=1)
+    
+    # Header Row
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(65, 10, " Name as per passport or NRIC", border=1, align='C')
+    pdf.cell(60, 10, " Mobile Number", border=1, align='C')
+    pdf.cell(65, 10, " Email Address", border=1, align='C', ln=True)
+    
+    # Data Row
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(65, 12, str(st.session_state.get('auth_name', '')), border=1)
+    pdf.cell(60, 12, str(st.session_state.get('auth_mobile', '')), border=1)
+    pdf.cell(65, 12, str(st.session_state.get('auth_email', '')), border=1, ln=True)
+    pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
