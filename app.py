@@ -408,9 +408,7 @@ def master_kyc_form(client_name):
             del st.session_state[f"loaded_{client_name}"]
         st.session_state["view"] = "management"
         st.rerun()
-    if st.button("← Back to Client Database"):
-        st.session_state["view"] = "management"
-        st.rerun()
+   
 
     st.markdown("""
         <style>
