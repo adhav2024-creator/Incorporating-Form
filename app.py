@@ -435,7 +435,7 @@ def master_kyc_form(client_name):
             <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
             <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
             <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
-            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
+            
         </div>
         """, unsafe_allow_html=True)
 
