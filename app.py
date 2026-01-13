@@ -11,10 +11,6 @@ init_db()
 MONTHS = ["January", "February", "March", "April", "May", "June", 
           "July", "August", "September", "October", "November", "December"]
 
-# Define universal date limits to prevent the 2015 restriction
-MIN_DATE = date(1900, 1, 1)
-MAX_DATE = date(2100, 12, 31)
-
 # --- 2. PDF GENERATOR ENGINE ---
 class KYC_PDF(FPDF):
     def header(self):
@@ -35,41 +31,20 @@ def create_pdf_report(client_name):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # --- COMPANY DETAILS SECTION (TABLE FORMAT) ---
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "BASIC INFORMATION REQUEST FORM & KYC", ln=True, align='C')
+    pdf.ln(5)
+
+    # 1. Company Details
     pdf.set_font("Arial", 'B', 11)
     pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
-    
+    pdf.cell(0, 8, " Company Details", ln=True, fill=True)
     pdf.set_font("Arial", '', 9)
+    pdf.cell(50, 8, "Company Name", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
+    pdf.cell(50, 8, "UEN No.", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_co_no', '')), border=1, ln=True)
+    pdf.cell(50, 8, "Inc. Date", border=1); pdf.cell(140, 8, str(st.session_state.get('kyc_inc_date', '')), border=1, ln=True)
     
-    # Row 1: Company Name
-    pdf.cell(65, 12, " Company Name", border=1)
-    pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
-    
-    # Row 2: Co No & Inc Date (Stacked multi-line as per PDF)
-    pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    x = pdf.get_x()
-    y = pdf.get_y()
-    
-    inc_date = st.session_state.get('kyc_inc_date')
-    fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
-    uen = st.session_state.get('kyc_co_no', '')
-    
-    pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
-    pdf.set_xy(x + 190, y + 18) 
-    pdf.ln(0)
-
-    # Row 3: Year End Date
-    pdf.cell(65, 12, " Year End Date", border=1)
-    pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
-    
-    # Row 4: Proposed Activity
-    pdf.cell(65, 20, " Proposed Company Activity", border=1)
-    # Combining activity fields for the PDF
-    act_main = st.session_state.get('kyc_act_main', '')
-    act_sec = st.session_state.get('kyc_act_sec', '')
-    full_act = f"{act_main}\n{act_sec}"
-    pdf.multi_cell(125, 10, full_act, border=1)
+    # Logic to loop through and add Director/Shareholder data to PDF goes here...
     
     return pdf.output(dest='S').encode('latin-1')
 
@@ -104,20 +79,20 @@ def master_kyc_form(client_name):
     # START FORM
     with st.form("kyc_form_exact"):
         st.write("### BASIC INFORMATION REQUEST FORM AND KYC")
-        st.date_input("Date", value=date.today(), format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
+        st.date_input("Date", value=date.today(), format="DD/MM/YYYY")
         
         # --- COMPANY DETAILS ---
         st.write("### Company Details")
         st.text_input("Company Name", value=client_name, key="kyc_co_name")
         col1, col2, col3 = st.columns([2, 2, 1])
         with col1: st.text_input("Company No.", value="200517609N", key="kyc_co_no")
-        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), format="DD/MM/YYYY", key="kyc_inc_date", min_value=MIN_DATE, max_value=MAX_DATE)
-        with col3: st.text_input("Year End Date", value="31 Dec", key="kyc_year_end")
+        with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), format="DD/MM/YYYY", key="kyc_inc_date")
+        with col3: st.text_input("Year End Date", value="31 Dec")
 
         st.write("#### Proposed Company Activity")
         act_col1, act_col2 = st.columns(2)
-        with act_col1: st.text_input("Main Activity", value="Accounting, Audits", key="kyc_act_main")
-        with act_col2: st.text_input("Secondary Activity", value="Tax", key="kyc_act_sec")
+        with act_col1: st.text_input("Main Activity", value="Accounting, Audits")
+        with act_col2: st.text_input("Secondary Activity", value="Tax")
 
         st.divider()
 
@@ -138,7 +113,7 @@ def master_kyc_form(client_name):
             d_c1, d_c2, d_c3 = st.columns([2, 1, 1])
             with d_c1: st.text_input(f"Name as per Passport/NRIC", key=f"d_name_{i}")
             with d_c2: st.text_input(f"NRIC/Passport no.", key=f"d_id_{i}")
-            with d_c3: st.date_input(f"Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}", format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
+            with d_c3: st.date_input(f"Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}", format="DD/MM/YYYY")
             
             d_c4, d_c5, d_c6 = st.columns([2, 1, 1])
             with d_c4: st.text_input(f"Email address", key=f"d_email_{i}")
@@ -169,7 +144,7 @@ def master_kyc_form(client_name):
                 name = st.text_input(f"Name as per Passport/NRIC", key=f"s_name_{j}")
                 sh_names.append(name if name else f"Shareholder {j+1}")
             with s_c2: st.text_input(f"NRIC/Passport", key=f"s_id_{j}")
-            with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}", format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
+            with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}", format="DD/MM/YYYY")
             
             s_c4, s_c5, s_c6 = st.columns([2, 1, 1])
             with s_c4: st.text_input(f"Email address", key=f"s_email_{j}")
@@ -289,7 +264,7 @@ def master_kyc_form(client_name):
         4. I/we undertake to notify of any future changes.
         """)
 
-        # --- FORM ACTIONS ---
+        # --- FORM ACTIONS (Download button is NOT here) ---
         btn_col1, btn_col2 = st.columns([1, 1])
         with btn_col1:
             if st.form_submit_button("SAVE AS DRAFT"):
@@ -299,7 +274,7 @@ def master_kyc_form(client_name):
                 st.session_state["view"] = "bg_sec_file"
                 st.rerun()
 
-    # --- DOWNLOAD BUTTON ---
+    # --- DOWNLOAD BUTTON (PLACED OUTSIDE FORM) ---
     st.write("### Actions")
     try:
         pdf_bytes = create_pdf_report(client_name)
@@ -351,7 +326,7 @@ def bg_sec_file_form(client_name):
         dt_col1, dt_col2 = st.columns(2)
         with dt_col1:
             inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
-            st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
+            st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY")
         with dt_col2:
             st.text_input("Time of Meeting", value="13:47")
 
@@ -367,10 +342,12 @@ if 'view' not in st.session_state: st.session_state["view"] = "management"
 if 'num_directors' not in st.session_state: st.session_state.num_directors = 1
 if 'num_shareholders' not in st.session_state: st.session_state.num_shareholders = 1
 
+# Assuming check_password() is provided elsewhere
 if st.session_state["view"] == "management":
     st.title("🏢 Client Management System")
     df = get_clients()
     if not df.empty:
+        # Client database table and search...
         search_query = st.text_input("🔍 Search by Client Name or UEN", "")
         filtered_df = df.copy()
         filtered_df.insert(0, "ENTER FORM", False)
