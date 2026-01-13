@@ -648,27 +648,53 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    if st.button("Back to Master KYC"):
-        st.session_state["view"] = "kyc_form"
+    # Match the top navigation style of KYC
+    if st.button("← Back to Client Database", key="bg_back_db"):
+        st.session_state["view"] = "management"
         st.rerun()
+
+    # Title and Header styling to match KYC
+    st.title(f"Secretarial File: {client_name}")
+    st.info("Section 2: First Directors' Minutes and Statutory Records")
     
-    with st.form("bg_sec_file_form"):
-        st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
-        st.text_input("Name of Company", value=client_name)
-        st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-        dt_col1, dt_col2 = st.columns(2)
-        with dt_col1:
-            inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
-            st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
-        with dt_col2: st.text_input("Time of Meeting", value="13:47")
-        st.write("**Directors Present**")
-        default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(st.session_state.get("num_directors", 1))]
-        st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
-        if st.form_submit_button("SUBMIT NOW"): st.success("Generated!")
-    # Inside bg_sec_file_form function
-    if st.button("⬅️ Back to KYC Form", key="back_to_kyc"):
-        st.session_state["view"] = "kyc_form"
-        st.rerun()
+    st.divider()
+
+    # Your original logic and inputs wrapped in the same spacing
+    st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
+    
+    # Keeping your inputs exactly as they were
+    st.text_input("Name of Company", value=client_name)
+    st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    
+    dt_col1, dt_col2 = st.columns(2)
+    with dt_col1:
+        inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
+        st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
+    with dt_col2: 
+        st.text_input("Time of Meeting", value="13:47")
+    
+    st.write("**Directors Present**")
+    num_dirs = st.session_state.get("num_directors", 1)
+    default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
+    st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
+    
+    # Original Form Submit button
+    if st.button("SUBMIT NOW", key="bg_submit"): 
+        st.success("Generated!")
+
+    st.divider()
+
+    # Navigation buttons at the bottom
+    col_prev, col_spacer, col_next = st.columns([1, 2, 1])
+    with col_prev:
+        if st.button("⬅️ Back to KYC Form", key="back_to_kyc"):
+            st.session_state["view"] = "kyc_form"
+            st.rerun()
+    with col_next:
+        if st.button("Next Step ➡️", key="next_to_step3"):
+            # Placeholder for next section
+            st.session_state["view"] = "customer_acceptance"
+            st.rerun()
 
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
