@@ -173,17 +173,25 @@ def create_pdf_report(client_name):
     pdf.cell(65, 10, str(st.session_state.get('auth_email', '')), border=1, ln=True)
 
     # --- 8. SHARE CAPITAL ---
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1)
+    if pdf.get_y() > 240: pdf.add_page()
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1)
+    
+    # Header Row
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 8, " Currency", border=1, align='C'); pdf.cell(95, 8, " Amount", border=1, align='C', ln=True)
+    pdf.cell(95, 10, " Currency", border=1, align='C')
+    pdf.cell(95, 10, " Amount", border=1, align='C', ln=True)
     
-    # Value check for currency/amount
-    curr = st.session_state.get('kyc_currency') or st.session_state.get('currency', 'SGD')
-    amt = st.session_state.get('kyc_amount') or st.session_state.get('amount', '0.00')
+    # Data Row Logic
+    # We check kyc_currency first, then currency, then default to "SGD"
+    curr_val = st.session_state.get('kyc_currency') or st.session_state.get('currency') or "SGD"
     
+    # We check kyc_amount first, then amount, then default to empty string
+    amt_val = st.session_state.get('kyc_amount') or st.session_state.get('amount') or ""
+
     pdf.set_font("Arial", '', 9)
-    pdf.cell(95, 12, str(curr), border=1, align='C')
-    pdf.cell(95, 12, str(amt), border=1, align='C', ln=True)
+    pdf.cell(95, 12, str(curr_val), border=1, align='C')
+    pdf.cell(95, 12, str(amt_val), border=1, align='C', ln=True)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
