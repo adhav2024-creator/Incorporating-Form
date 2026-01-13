@@ -280,6 +280,52 @@ def create_pdf_report(client_name):
             pdf.line(22, pdf.get_y() + 1, 200, pdf.get_y() + 1)
             pdf.set_draw_color(0, 0, 0) # Reset draw color
             pdf.ln(4)
+    # --- 15. DECLARATION/UNDERTAKING (EXACT PHOTO MATCH) ---
+    if pdf.get_y() > 180: pdf.add_page()
+    pdf.ln(10)
+    
+    # Section Header
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 10, "Declaration/Undertaking", ln=True)
+    pdf.ln(2)
+    
+    # The 5 specific legal clauses from the photo
+    declarations = [
+        "1. I/We confirm that the above information is true and accurate, and hereby authorise to supply any or all of such information for due diligence purpose to the Regulators if so requested by them without notification to you.",
+        "2. I/We understand the legal and tax reporting requirements and other responsibilities in my/our country of residence and/or other applicable jurisdictions and will company with all the elevant reporting requirements of my /our own. We strongly suggest to seek independent tax advice from a third party tax professional not associated with our company with respect the incorporation or investments.",
+        "3. I/we understand and agree that all documents supplied including this form will not be returned to me/us.",
+        "4. I/we also undertake to notify us of any future changes to the above information.",
+        "5. I/we understand and that we reserves the right to request for additional documentation/information."
+    ]
+    
+    pdf.set_font("Arial", '', 9)
+    for dec in declarations:
+        # Multi_cell handles the wrapping perfectly for long legal text
+        pdf.multi_cell(0, 6, dec)
+        # Light grey divider line between points
+        pdf.set_draw_color(220, 220, 220)
+        pdf.line(10, pdf.get_y() + 2, 200, pdf.get_y() + 2)
+        pdf.ln(6)
+    
+    # --- Name of Beneficial Owners Section ---
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 10, "Name of the Beneficial Owner", ln=True)
+    pdf.set_font("Arial", '', 10)
+    
+    num_sh = st.session_state.get("num_shareholders", 1)
+    for n in range(num_sh):
+        # Fetch name and convert to uppercase to match photo
+        bo_name = str(st.session_state.get(f"s_name_{n}", "")).upper()
+        if bo_name:
+            pdf.ln(2)
+            pdf.cell(0, 10, bo_name, ln=True)
+            # Underline for each name
+            pdf.set_draw_color(220, 220, 220)
+            pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+            pdf.ln(2)
+
+    # Final logic to close out the PDF
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
