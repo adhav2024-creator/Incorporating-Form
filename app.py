@@ -32,15 +32,25 @@ def load_client_data(client_name):
     
     if row:
         data = json.loads(row[0])
-        # Update session state with the saved values
         for key, value in data.items():
-            # Special handling for dates (convert string back to date object)
+            # --- THE FIX IS HERE ---
+            # 1. Skip any key that is a File Uploader (emp_cv_0, emp_cv_1, etc.)
+            if key.startswith("emp_cv_"):
+                continue
+            
+            # 2. Skip keys that are internal Streamlit state (starting with __)
+            if key.startswith("__"):
+                continue
+            
+            # 3. Handling Dates (convert string back to date object)
             if 'date' in key or 'dob' in key:
                 try:
-                    st.session_state[key] = date.fromisoformat(value)
+                    if isinstance(value, str) and value:
+                        st.session_state[key] = date.fromisoformat(value)
                 except:
                     st.session_state[key] = value
             else:
+                # 4. For everything else (text, checkboxes), set the value
                 st.session_state[key] = value
         return True
     return False
