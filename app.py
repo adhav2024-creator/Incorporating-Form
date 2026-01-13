@@ -34,17 +34,15 @@ def create_pdf_report(client_name):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # --- COMPANY DETAILS SECTION ---
+    # --- 1. COMPANY DETAILS ---
     pdf.set_font("Arial", 'B', 11)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
     pdf.set_font("Arial", '', 9)
     
-    # Company Name Row
     pdf.cell(65, 12, " Company Name", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     
-    # Company No & Incorporation Row
     y_start = pdf.get_y()
     pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
     pdf.set_xy(75, y_start) 
@@ -54,63 +52,86 @@ def create_pdf_report(client_name):
     pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
     pdf.set_y(y_start + 18)
 
-    # Year End Row
     pdf.cell(65, 12, " Year End Date", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
     
-    # Proposed Activity Row
     y_act = pdf.get_y()
     pdf.cell(65, 20, " Proposed Company Activity", border=1)
     pdf.set_xy(75, y_act)
-    act_main = st.session_state.get('kyc_act_main', '')
-    act_sec = st.session_state.get('kyc_act_sec', '')
-    pdf.multi_cell(125, 10, f"{act_main}\n{act_sec}", border=1)
+    act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
+    pdf.multi_cell(125, 10, act_full, border=1)
     pdf.set_y(y_act + 20)
-    pdf.ln(10)
+    pdf.ln(5)
 
-    # --- DIRECTORS DETAILS ---
+    # --- 2. DIRECTORS DETAILS ---
     num_dirs = st.session_state.get("num_directors", 1)
-    
     for i in range(num_dirs):
-        # Page break check: if less than 85mm left, start a new page
-        if pdf.get_y() > 190: 
-            pdf.add_page()
-            
-        # Individual Header for each Director
-        pdf.set_font("Arial", 'B', 11)
-        pdf.set_fill_color(240, 240, 240)
+        if pdf.get_y() > 200: pdf.add_page()
+        pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
         pdf.cell(0, 10, f" Director {i+1} Details", ln=True, fill=True, border=1)
-        
         pdf.set_font("Arial", '', 9)
-        # Individual rows to prevent the "merged field" error seen in current PDFs
+        
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_name_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " NRIC / Passport No.", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_id_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Date of Birth", border=1)
         d_dob = st.session_state.get(f"d_dob_{i}")
         pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
-        
         pdf.cell(65, 10, " Email address", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Mobile Number", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
-        
         pdf.cell(65, 10, " Nationality", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
         
-        # Address Row (Multi-line)
         y_addr = pdf.get_y()
-        pdf.cell(65, 20, " Address", border=1)
+        pdf.cell(65, 15, " Address", border=1)
         pdf.set_xy(75, y_addr)
-        pdf.multi_cell(125, 10, str(st.session_state.get(f"d_address_{i}", "")), border=1)
-        pdf.set_y(y_addr + 20)
+        pdf.multi_cell(125, 7.5, str(st.session_state.get(f"d_address_{i}", "")), border=1)
+        pdf.set_y(y_addr + 15)
+        pdf.ln(5)
+
+    # --- 3. SHAREHOLDERS DETAILS (NEW) ---
+    num_sh = st.session_state.get("num_shareholders", 1)
+    for j in range(num_sh):
+        if pdf.get_y() > 180: pdf.add_page() # Safeguard for new page
         
-        pdf.ln(10) # Gap before the next Director
-    
+        pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(220, 235, 252) # Slight blue tint for Shareholders
+        pdf.cell(0, 10, f" Shareholder {j+1} Details & Beneficial Ownership", ln=True, fill=True, border=1)
+        pdf.set_font("Arial", '', 9)
+        
+        # Basic Particulars
+        pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"s_name_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " NRIC / Passport No.", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"s_id_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Date of Birth", border=1)
+        s_dob = st.session_state.get(f"s_dob_{j}")
+        pdf.cell(125, 10, s_dob.strftime('%d/%m/%Y') if s_dob else "", border=1, ln=True)
+        pdf.cell(65, 10, " Email address", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"s_email_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Nationality", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"s_nat_{j}", "")), border=1, ln=True)
+
+        # Shareholder Address
+        y_saddr = pdf.get_y()
+        pdf.cell(65, 15, " Residential Address", border=1)
+        pdf.set_xy(75, y_saddr)
+        pdf.multi_cell(125, 7.5, str(st.session_state.get(f"s_address_{j}", "")), border=1)
+        pdf.set_y(y_saddr + 15)
+
+        # Employment Information
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(0, 8, f" Current Employment / Business - {st.session_state.get(f's_name_{j}', '')}", border=1, ln=True, fill=True)
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(65, 8, " Company Name", border=1)
+        pdf.cell(125, 8, str(st.session_state.get(f"emp_co_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 8, " Nature of Business", border=1)
+        pdf.cell(125, 8, str(st.session_state.get(f"emp_ind_{j}", "")), border=1, ln=True)
+        
+        pdf.ln(5)
+
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
