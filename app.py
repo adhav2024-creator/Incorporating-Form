@@ -648,21 +648,33 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # Match the top navigation style of KYC
-    if st.button("← Back to Client Database", key="bg_back_db"):
+    # --- 1. Navigation CSS & Circles ---
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 15%; right: 15%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: white; color: #2E7D32; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle">3</div><div class="label">Customer Acceptance</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Back to Database Button
+    if st.button("← Back to Client Database", key="bg_sec_back"):
         st.session_state["view"] = "management"
         st.rerun()
 
-    # Title and Header styling to match KYC
-    st.title(f"Secretarial File: {client_name}")
-    st.info("Section 2: First Directors' Minutes and Statutory Records")
-    
     st.divider()
 
-    # Your original logic and inputs wrapped in the same spacing
-    st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
-    
-    # Keeping your inputs exactly as they were
+    # --- 2. Your Original Inputs (Unchanged) ---
+    st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
     st.text_input("Name of Company", value=client_name)
     st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
     
@@ -672,30 +684,27 @@ def bg_sec_file_form(client_name):
         st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
     with dt_col2: 
         st.text_input("Time of Meeting", value="13:47")
-    
+        
     st.write("**Directors Present**")
     num_dirs = st.session_state.get("num_directors", 1)
     default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
     st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
     
-    # Original Form Submit button
-    if st.button("SUBMIT NOW", key="bg_submit"): 
+    if st.button("SUBMIT NOW", key="bg_submit_btn"): 
         st.success("Generated!")
 
     st.divider()
 
-    # Navigation buttons at the bottom
-    col_prev, col_spacer, col_next = st.columns([1, 2, 1])
+    # --- 3. Bottom Navigation ---
+    col_prev, col_next = st.columns([1, 1])
     with col_prev:
-        if st.button("⬅️ Back to KYC Form", key="back_to_kyc"):
+        if st.button("⬅️ Back to KYC Form", key="back_to_kyc_footer"):
             st.session_state["view"] = "kyc_form"
             st.rerun()
     with col_next:
-        if st.button("Next Step ➡️", key="next_to_step3"):
-            # Placeholder for next section
+        if st.button("Next Step ➡️", key="next_to_ca"):
             st.session_state["view"] = "customer_acceptance"
             st.rerun()
-
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
