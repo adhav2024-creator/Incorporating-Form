@@ -652,7 +652,7 @@ def bg_sec_file_form(client_name):
         st.session_state["view"] = "management"
         st.rerun()
 
-    st.divider()
+  
     # --- 1. Navigation CSS & Circles ---
     st.markdown("""
         <style>
