@@ -11,7 +11,7 @@ init_db()
 MONTHS = ["January", "February", "March", "April", "May", "June", 
           "July", "August", "September", "October", "November", "December"]
 
-# Define universal date limits to prevent the 2015 restriction
+# Universal date limits to ensure no restrictions on DOB or Incorporation dates
 MIN_DATE = date(1900, 1, 1)
 MAX_DATE = date(2100, 12, 31)
 
@@ -39,33 +39,26 @@ def create_pdf_report(client_name):
     pdf.set_font("Arial", 'B', 11)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
-    
     pdf.set_font("Arial", '', 9)
-    # Row 1: Company Name
+    
     pdf.cell(65, 12, " Company Name", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     
-    # Row 2: Co No & Inc Date
     pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    x = pdf.get_x()
-    y = pdf.get_y()
+    x_pos, y_pos = pdf.get_x(), pdf.get_y()
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
     uen = st.session_state.get('kyc_co_no', '')
     pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
-    pdf.set_xy(x + 190, y + 18) 
+    pdf.set_xy(x_pos + 190, y_pos + 18) 
     pdf.ln(0)
 
-    # Row 3: Year End Date
     pdf.cell(65, 12, " Year End Date", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
     
-    # Row 4: Proposed Activity
     pdf.cell(65, 20, " Proposed Company Activity", border=1)
-    act_main = st.session_state.get('kyc_act_main', '')
-    act_sec = st.session_state.get('kyc_act_sec', '')
-    full_act = f"{act_main}\n{act_sec}"
-    pdf.multi_cell(125, 10, full_act, border=1)
+    act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
+    pdf.multi_cell(125, 10, act_full, border=1)
     pdf.ln(10)
 
     # --- DIRECTORS DETAILS (SEPARATE TABLE PER DIRECTOR) ---
@@ -73,32 +66,26 @@ def create_pdf_report(client_name):
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Directors Details", ln=True, fill=True, border=1)
     
-    num_d = st.session_state.get("num_directors", 1)
-    for i in range(num_d):
+    
+    
+    for i in range(st.session_state.get("num_directors", 1)):
         pdf.set_font("Arial", '', 9)
-        # Name
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
         pdf.cell(125, 10, st.session_state.get(f"d_name_{i}", ""), border=1, ln=True)
-        # NRIC
         pdf.cell(65, 10, " NRIC/ Passport No.", border=1)
         pdf.cell(125, 10, st.session_state.get(f"d_id_{i}", ""), border=1, ln=True)
-        # DOB
         pdf.cell(65, 10, " Date of Birth", border=1)
         d_dob = st.session_state.get(f"d_dob_{i}")
         pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
-        # Email
         pdf.cell(65, 10, " Email address", border=1)
         pdf.cell(125, 10, st.session_state.get(f"d_email_{i}", ""), border=1, ln=True)
-        # Mobile
         pdf.cell(65, 10, " Mobile Number", border=1)
         pdf.cell(125, 10, st.session_state.get(f"d_mobile_{i}", ""), border=1, ln=True)
-        # Nationality
         pdf.cell(65, 10, " Nationality", border=1)
         pdf.cell(125, 10, st.session_state.get(f"d_nat_{i}", ""), border=1, ln=True)
-        # Address
         pdf.cell(65, 15, " Address", border=1)
         pdf.multi_cell(125, 7.5, st.session_state.get(f"d_address_{i}", ""), border=1)
-        pdf.ln(5) # Gap between director tables
+        pdf.ln(5)
     
     return pdf.output(dest='S').encode('latin-1')
 
@@ -147,9 +134,9 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # DIRECTORS
         d_head_col, d_add_col, d_rem_col = st.columns([4, 1, 1])
         with d_head_col: st.write("### DIRECTORS DETAILS")
-        
         if d_add_col.form_submit_button("+ Add Director"):
             st.session_state.num_directors += 1
             st.rerun()
@@ -164,7 +151,6 @@ def master_kyc_form(client_name):
             with d_c1: st.text_input(f"Name as per Passport/NRIC", key=f"d_name_{i}")
             with d_c2: st.text_input(f"NRIC/Passport no.", key=f"d_id_{i}")
             with d_c3: st.date_input(f"Date of birth", value=date(1990, 1, 1), key=f"d_dob_{i}", format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
-            
             d_c4, d_c5, d_c6 = st.columns([2, 1, 1])
             with d_c4: st.text_input(f"Email address", key=f"d_email_{i}")
             with d_c5: st.text_input(f"Mobile number", key=f"d_mobile_{i}")
@@ -174,9 +160,9 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # SHAREHOLDERS
         s_head_col, s_add_col, s_rem_col = st.columns([4, 1, 1])
         with s_head_col: st.write("### SHAREHOLDER DETAILS & BENEFICIAL OWNERSHIP")
-        
         if s_add_col.form_submit_button("+ Add Shareholder"):
             st.session_state.num_shareholders += 1
             st.rerun()
@@ -194,7 +180,6 @@ def master_kyc_form(client_name):
                 sh_names.append(name if name else f"Shareholder {j+1}")
             with s_c2: st.text_input(f"NRIC/Passport", key=f"s_id_{j}")
             with s_c3: st.date_input(f"Date of Birth", value=date(1990, 1, 1), key=f"s_dob_{j}", format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
-            
             s_c4, s_c5, s_c6 = st.columns([2, 1, 1])
             with s_c4: st.text_input(f"Email address", key=f"s_email_{j}")
             with s_c5: st.text_input(f"Mobile Number", key=f"s_mobile_{j}")
@@ -225,6 +210,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # PERCENTAGE
         st.write("### PERCENTAGE OF SHAREHOLDING DETAILS")
         for k in range(st.session_state.num_shareholders):
             st.write(f"#### {sh_names[k]}")
@@ -239,6 +225,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # SECRETARY
         st.write("### COMPANY SECRETARY")
         sec_c1, sec_c2 = st.columns([2, 1])
         with sec_c1:
@@ -250,6 +237,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # CEO
         st.write("### CEO DETAILS")
         ceo_c1, ceo_c2 = st.columns([2, 1])
         with ceo_c1: st.text_input("Name as per Passport/NRIC", key="ceo_name")
@@ -261,6 +249,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # AUTHORISED PERSON
         st.write("### AUTHORISED PERSON TO CONTACT")
         auth_c1, auth_c2, auth_c3 = st.columns([2, 1, 1])
         with auth_c1: st.text_input("Name as per passport/NRIC", key="auth_name")
@@ -274,6 +263,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # OFFICE
         st.write("### REGISTERED OFFICE AND SECRETARIAL RECORDS")
         reg_c1, reg_c2 = st.columns(2)
         with reg_c1:
@@ -285,6 +275,7 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # BANK
         st.write("### BANK ACCOUNT")
         bank_col1, bank_col2 = st.columns(2)
         with bank_col1: st.text_input("Preferred Bank Name", key="bank_name")
@@ -292,17 +283,25 @@ def master_kyc_form(client_name):
 
         st.divider()
 
+        # CORRESPONDENCE
         st.write("### CORRESPONDENCE ADDRESS")
         st.text_area("Correspondence Address Details", key="correspondence_address", height=100)
 
         st.divider()
 
+        # DECLARATION
         st.write("### DECLARATION/UNDERTAKING")
-        st.info("1. I/We confirm information is true... 2. Legal/tax reporting... 3. No returns... 4. Future changes...")
+        st.info("""
+        1. I/We confirm information is true and accurate.
+        2. I/We understand the legal and tax reporting requirements.
+        3. I/we understand that all documents supplied will not be returned.
+        4. I/we undertake to notify of any future changes.
+        """)
 
+        # FORM ACTIONS
         btn_col1, btn_col2 = st.columns([1, 1])
         with btn_col1:
-            if st.form_submit_button("SAVE AS DRAFT"): st.info("Form saved.")
+            if st.form_submit_button("SAVE AS DRAFT"): st.info("Form saved as draft.")
         with btn_col2:
             if st.form_submit_button("SUBMIT NOW"):
                 st.session_state["view"] = "bg_sec_file"
@@ -313,7 +312,7 @@ def master_kyc_form(client_name):
         pdf_bytes = create_pdf_report(client_name)
         st.download_button(label="📥 DOWNLOAD KYC PDF", data=pdf_bytes, file_name=f"KYC_{client_name}.pdf", mime="application/pdf", key="download_kyc_btn_unique")
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error preparing PDF: {e}")
 
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
@@ -321,16 +320,47 @@ def bg_sec_file_form(client_name):
         st.session_state["view"] = "kyc_form"
         st.rerun()
 
-    # Progress bar and form logic kept same...
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .completed-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle completed-circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with st.form("bg_sec_file_form"):
-        st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
+        col_header_1, col_header_2 = st.columns([1, 1])
+        with col_header_1: st.write("**FIRST DIRECTORS' MINUTES**")
+        with col_header_2: st.write(f"**{client_name.upper()}**")
+            
+        st.divider()
         st.text_input("Name of Company", value=client_name)
+        st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+        
         dt_col1, dt_col2 = st.columns(2)
         with dt_col1:
             inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
             st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
         with dt_col2: st.text_input("Time of Meeting", value="13:47")
-        if st.form_submit_button("SUBMIT NOW"): st.success("Generated!")
+
+        st.write("**Directors Present**")
+        default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(st.session_state.get("num_directors", 1))]
+        st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
+
+        if st.form_submit_button("SUBMIT NOW"):
+            st.success("First Directors' Minutes Generated Successfully!")
 
 # --- 5. MAIN LOGIC ---
 if 'view' not in st.session_state: st.session_state["view"] = "management"
@@ -341,10 +371,12 @@ if st.session_state["view"] == "management":
     st.title("🏢 Client Management System")
     df = get_clients()
     if not df.empty:
-        search_query = st.text_input("🔍 Search", "")
+        # SEARCH AND DATA EDITOR LAYOUT RESTORED EXACTLY
+        search_query = st.text_input("🔍 Search by Client Name or UEN", "")
         filtered_df = df.copy()
         filtered_df.insert(0, "ENTER FORM", False)
         edited_df = st.data_editor(filtered_df, hide_index=True, use_container_width=True, key="main_table")
+
         clicked_rows = edited_df[edited_df["ENTER FORM"] == True]
         if not clicked_rows.empty:
             st.session_state["selected_client_name"] = clicked_rows.iloc[0]["NAME"]
