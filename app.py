@@ -173,37 +173,39 @@ def create_pdf_report(client_name):
     pdf.cell(95, 12, str(val_curr), border=1, align='C')
     pdf.cell(95, 12, str(val_amt), border=1, align='C', ln=True)
 
-    # --- 9. REGISTERED OFFICE ---
-    if pdf.get_y() > 240: pdf.add_page()
+ # --- 9. REGISTERED OFFICE (Key Fixed) ---
+    if pdf.get_y() > 230: pdf.add_page()
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Registered Office", ln=True, fill=True, border=1)
     
     # Header
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 10, " Address", border=1, align='C', ln=True)
+    pdf.cell(0, 8, " Address", border=1, align='C', ln=True)
     
-    # Data Row
+    # Data Row - Using multi_cell to handle multi-line text areas
     pdf.set_font("Arial", '', 9)
-    reg_office = str(st.session_state.get('reg_office_addr', ''))
-    # Using multi_cell in case the address is long
-    y_reg = pdf.get_y()
-    pdf.multi_cell(0, 10, reg_office, border=1, align='L')
+    reg_office_val = str(st.session_state.get('reg_office_address', ''))
+    
+    # We use multi_cell(0, ...) so it takes the full width and expands vertically
+    pdf.multi_cell(0, 8, reg_office_val, border=1, align='L')
     pdf.ln(5)
 
-    # --- 10. SECRETARIAL RECORDS ---
-    if pdf.get_y() > 240: pdf.add_page()
+    # --- 10. SECRETARIAL RECORDS (Key Fixed) ---
+    if pdf.get_y() > 230: pdf.add_page()
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Secretarial Records", ln=True, fill=True, border=1)
     
     # Header
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 10, " Address", border=1, align='C', ln=True)
+    pdf.cell(0, 8, " Address", border=1, align='C', ln=True)
     
     # Data Row
     pdf.set_font("Arial", '', 9)
-    sec_records = str(st.session_state.get('sec_records_addr', ''))
-    pdf.multi_cell(0, 10, sec_records, border=1, align='L')
+    sec_records_val = str(st.session_state.get('sec_records_address', ''))
     
+    pdf.multi_cell(0, 8, sec_records_val, border=1, align='L')
+    pdf.ln(5)
+
     # --- FINAL RETURN ---
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
