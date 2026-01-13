@@ -373,36 +373,46 @@ def create_pdf_report(client_name):
 
     # Final logic to close out the PDF
     # --- 16. SIGNATURE SECTION (EXACT PHOTO MATCH) ---
+    # --- 16. UPDATED SIGNATURE SECTION ---
     if pdf.get_y() > 230: pdf.add_page()
     pdf.ln(10)
-    
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 10, "Signature", ln=True)
+    pdf.cell(0, 10, "Signature of Directors / Beneficial Owners", ln=True)
     pdf.ln(5)
+
+    # Collect all unique names from both lists
+    all_signatories = []
     
-    num_sh = st.session_state.get("num_shareholders", 1)
-    
-    # We loop through shareholders and place them 2-across (side-by-side)
-    for i in range(0, num_sh, 2):
+    # Get Directors
+    for i in range(st.session_state.get("num_directors", 1)):
+        name = st.session_state.get(f"d_name_{i}", "").strip().upper()
+        if name and name not in all_signatories:
+            all_signatories.append(name)
+            
+    # Get Shareholders (only add if not already in the list)
+    for j in range(st.session_state.get("num_shareholders", 1)):
+        name = st.session_state.get(f"s_name_{j}", "").strip().upper()
+        if name and name not in all_signatories:
+            all_signatories.append(name)
+
+    # Draw signatures 2-across
+    for i in range(0, len(all_signatories), 2):
         curr_y = pdf.get_y()
         
         # Left Signature Block
-        name_left = str(st.session_state.get(f"s_name_{i}", "")).upper()
         pdf.set_xy(10, curr_y)
-        pdf.line(10, curr_y + 10, 95, curr_y + 10) # Signature line
+        pdf.line(10, curr_y + 10, 95, curr_y + 10)
         pdf.set_xy(10, curr_y + 12)
-        pdf.cell(85, 10, name_left)
+        pdf.cell(85, 10, all_signatories[i])
         
-        # Right Signature Block (if there's a next shareholder)
-        if i + 1 < num_sh:
-            name_right = str(st.session_state.get(f"s_name_{i+1}", "")).upper()
+        # Right Signature Block
+        if i + 1 < len(all_signatories):
             pdf.set_xy(105, curr_y)
-            pdf.line(105, curr_y + 10, 190, curr_y + 10) # Signature line
+            pdf.line(105, curr_y + 10, 190, curr_y + 10)
             pdf.set_xy(105, curr_y + 12)
-            pdf.cell(85, 10, name_right)
+            pdf.cell(85, 10, all_signatories[i+1])
         
-        pdf.ln(25) # Space before the next row of signatures
-
+        pdf.ln(25)
     # --- FINAL PDF OUTPUT ---
     return pdf.output(dest='S').encode('latin-1')
 def create_minutes_pdf(client_name):
@@ -766,7 +776,7 @@ def bg_sec_file_form(client_name):
             
             # This creates the download link
             st.download_button(
-                label="📥 Click here to Download Minutes",
+                label="Download ",
                 data=minutes_pdf,
                 file_name=f"Minutes_{client_name}.pdf",
                 mime="application/pdf",
