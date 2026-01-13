@@ -35,21 +35,20 @@ def create_pdf_report(client_name):
     pdf.add_page()
     
     # --- 1. COMPANY DETAILS ---
-    pdf.set_font("Arial", 'B', 11)
-    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
     pdf.set_font("Arial", '', 9)
     pdf.cell(65, 12, " Company Name", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     
-    y_start = pdf.get_y()
+    y_co = pdf.get_y()
     pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    pdf.set_xy(75, y_start) 
+    pdf.set_xy(75, y_co)
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
     uen = st.session_state.get('kyc_co_no', '')
     pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
-    pdf.set_y(y_start + 18)
+    pdf.set_y(y_co + 18)
     
     pdf.cell(65, 12, " Year End Date", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
@@ -59,8 +58,7 @@ def create_pdf_report(client_name):
     pdf.set_xy(75, y_act)
     act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
     pdf.multi_cell(125, 10, act_full, border=1)
-    pdf.set_y(y_act + 20)
-    pdf.ln(5)
+    pdf.set_y(y_act + 20); pdf.ln(5)
 
     # --- 2. DIRECTORS DETAILS ---
     num_dirs = st.session_state.get("num_directors", 1)
@@ -76,18 +74,13 @@ def create_pdf_report(client_name):
         pdf.cell(65, 10, " Date of Birth", border=1)
         d_dob = st.session_state.get(f"d_dob_{i}")
         pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
-        pdf.cell(65, 10, " Email address", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Mobile Number", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Nationality", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
-        y_addr = pdf.get_y()
-        pdf.cell(65, 20, " Address", border=1)
-        pdf.set_xy(75, y_addr)
+        pdf.cell(65, 10, " Email address", border=1); pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Mobile Number", border=1); pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Nationality", border=1); pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
+        y_daddr = pdf.get_y()
+        pdf.cell(65, 20, " Address", border=1); pdf.set_xy(75, y_daddr)
         pdf.multi_cell(125, 10, str(st.session_state.get(f"d_address_{i}", "")), border=1)
-        pdf.set_y(y_addr + 20)
-        pdf.ln(8)
+        pdf.set_y(y_daddr + 20); pdf.ln(8)
 
     # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP ---
     num_sh = st.session_state.get("num_shareholders", 1)
@@ -96,35 +89,26 @@ def create_pdf_report(client_name):
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(220, 235, 252)
         pdf.cell(0, 10, " Shareholder and Beneficial Ownership", ln=True, fill=True, border=1)
         pdf.set_font("Arial", '', 9)
-        pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"s_name_{j}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " NRIC / Passport No.", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"s_id_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Name as per Passport / NRIC", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_name_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " NRIC / Passport No.", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_id_{j}", "")), border=1, ln=True)
         pdf.cell(65, 10, " Date of Birth", border=1)
         s_dob = st.session_state.get(f"s_dob_{j}")
         pdf.cell(125, 10, s_dob.strftime('%d/%m/%Y') if s_dob else "", border=1, ln=True)
-        pdf.cell(65, 10, " Email address", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"s_email_{j}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Nationality", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"s_nat_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Email address", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_email_{j}", "")), border=1, ln=True)
+        pdf.cell(65, 10, " Nationality", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_nat_{j}", "")), border=1, ln=True)
         y_saddr = pdf.get_y()
-        pdf.cell(65, 20, " Residential Address", border=1)
-        pdf.set_xy(75, y_saddr)
+        pdf.cell(65, 20, " Residential Address", border=1); pdf.set_xy(75, y_saddr)
         pdf.multi_cell(125, 10, str(st.session_state.get(f"s_address_{j}", "")), border=1)
-        pdf.set_y(y_saddr + 20)
-        pdf.ln(8)
+        pdf.set_y(y_saddr + 20); pdf.ln(8)
 
-    # --- 4. PERCENTAGE OF SHAREHOLDING DETAILS ---
+    # --- 4. PERCENTAGE OF SHAREHOLDING ---
     if pdf.get_y() > 180: pdf.add_page()
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Percentage of shareholding Details", ln=True, fill=True, border=1)
     pdf.set_font("Arial", 'B', 8)
-    pdf.cell(12, 10, " S.NO.", border=1, align='C')
-    pdf.cell(50, 10, " Shareholder Name", border=1, align='C')
-    pdf.cell(30, 10, " Share of %", border=1, align='C')
-    pdf.cell(32, 10, " No. of shares applied", border=1, align='C')
-    pdf.cell(32, 10, " No. of shares issued", border=1, align='C')
-    pdf.cell(34, 10, " Paid Up Amount", border=1, align='C', ln=True)
+    pdf.cell(12, 10, " S.NO.", border=1, align='C'); pdf.cell(50, 10, " Shareholder Name", border=1, align='C')
+    pdf.cell(30, 10, " Share of %", border=1, align='C'); pdf.cell(32, 10, " No. applied", border=1, align='C')
+    pdf.cell(32, 10, " No. issued", border=1, align='C'); pdf.cell(34, 10, " Paid Up Amount", border=1, align='C', ln=True)
     pdf.set_font("Arial", '', 8)
     for k in range(num_sh):
         pdf.cell(12, 10, str(k+1), border=1, align='C')
@@ -134,79 +118,42 @@ def create_pdf_report(client_name):
         pdf.cell(32, 10, str(st.session_state.get(f"p_issued_{k}", "")), border=1, align='C')
         pdf.cell(34, 10, str(st.session_state.get(f"p_paid_{k}", "")), border=1, align='C', ln=True)
 
-    # --- 5. COMPANY SECRETARY, CEO, AUTH PERSON ---
-    if pdf.get_y() > 200: pdf.add_page()
-    
-    # Secretary
+    # --- 5. CONTACTS & CAP (Secretary, CEO, Auth, Capital) ---
+    if pdf.get_y() > 180: pdf.add_page()
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1)
-    pdf.set_font("Arial", 'B', 8)
+    # Secretary
+    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
     pdf.cell(45, 8, " Name", border=1); pdf.cell(35, 8, " ID No.", border=1); pdf.cell(75, 8, " Address", border=1); pdf.cell(35, 8, " Nationality", border=1, ln=True)
     pdf.set_font("Arial", '', 8)
     pdf.cell(45, 10, str(st.session_state.get('sec_name', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_id', '')), border=1); pdf.cell(75, 10, str(st.session_state.get('sec_address', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
-
     # CEO
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " CEO Details", ln=True, fill=True, border=1)
-    pdf.set_font("Arial", 'B', 8)
-    pdf.cell(40, 8, " Name", border=1); pdf.cell(30, 8, " ID No.", border=1); pdf.cell(30, 8, " Mobile", border=1); pdf.cell(40, 8, " Email", border=1); pdf.cell(50, 8, " Address", border=1, ln=True)
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " CEO Details", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
+    pdf.cell(40, 8, " Name", border=1); pdf.cell(30, 8, " ID", border=1); pdf.cell(30, 8, " Mobile", border=1); pdf.cell(40, 8, " Email", border=1); pdf.cell(50, 8, " Address", border=1, ln=True)
     pdf.set_font("Arial", '', 8)
     pdf.cell(40, 10, str(st.session_state.get('ceo_name', '')), border=1); pdf.cell(30, 10, str(st.session_state.get('ceo_id', '')), border=1); pdf.cell(30, 10, str(st.session_state.get('ceo_mobile', '')), border=1); pdf.cell(40, 10, str(st.session_state.get('ceo_email', '')), border=1); pdf.cell(50, 10, str(st.session_state.get('ceo_address', '')), border=1, ln=True)
-
-    # Authorised Person
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Authorised person to contact", ln=True, fill=True, border=1)
-    pdf.set_font("Arial", 'B', 8)
+    # Authorised
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Authorised person to contact", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
     pdf.cell(65, 8, " Name", border=1); pdf.cell(60, 8, " Mobile", border=1); pdf.cell(65, 8, " Email", border=1, ln=True)
     pdf.set_font("Arial", '', 8)
     pdf.cell(65, 10, str(st.session_state.get('auth_name', '')), border=1); pdf.cell(60, 10, str(st.session_state.get('auth_mobile', '')), border=1); pdf.cell(65, 10, str(st.session_state.get('auth_email', '')), border=1, ln=True)
+    # Share Capital
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 8, " Currency", border=1, align='C'); pdf.cell(95, 8, " Amount", border=1, align='C', ln=True); pdf.set_font("Arial", '', 9)
+    pdf.cell(95, 10, str(st.session_state.get('cap_currency', 'SGD')), border=1, align='C'); pdf.cell(95, 10, str(st.session_state.get('cap_amount', '')), border=1, align='C', ln=True)
 
-    # --- 8. SHARE CAPITAL (USING YOUR KEYS) ---
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1)
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 8, " Currency", border=1, align='C')
-    pdf.cell(95, 8, " Amount", border=1, align='C', ln=True)
-    
-    # Corrected value fetching from your specific keys
-    val_curr = st.session_state.get('cap_currency', 'SGD')
-    val_amt = st.session_state.get('cap_amount', '')
-    
-    pdf.set_font("Arial", '', 9)
-    pdf.cell(95, 12, str(val_curr), border=1, align='C')
-    pdf.cell(95, 12, str(val_amt), border=1, align='C', ln=True)
+    # --- 6. OFFICE & BANK ---
+    if pdf.get_y() > 200: pdf.add_page()
+    # Registered Office
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Registered Office", ln=True, fill=True, border=1); pdf.set_font("Arial", '', 9)
+    pdf.multi_cell(0, 8, str(st.session_state.get('reg_office_address', '')), border=1)
+    # Secretarial Records
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Secretarial Records", ln=True, fill=True, border=1); pdf.set_font("Arial", '', 9)
+    pdf.multi_cell(0, 8, str(st.session_state.get('sec_records_address', '')), border=1)
+    # Bank
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Bank Account", ln=True, fill=True, border=1); pdf.set_font("Arial", '', 9)
+    pdf.cell(65, 10, " Preferred bank account name", border=1); pdf.cell(125, 10, str(st.session_state.get('bank_name', '')), border=1, ln=True)
+    pdf.cell(65, 10, " Currency of account", border=1); pdf.cell(125, 10, str(st.session_state.get('bank_account_currency', '')), border=1, ln=True)
 
- # --- 9. REGISTERED OFFICE (Key Fixed) ---
-    if pdf.get_y() > 230: pdf.add_page()
-    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 10, " Registered Office", ln=True, fill=True, border=1)
-    
-    # Header
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 8, " Address", border=1, align='C', ln=True)
-    
-    # Data Row - Using multi_cell to handle multi-line text areas
-    pdf.set_font("Arial", '', 9)
-    reg_office_val = str(st.session_state.get('reg_office_address', ''))
-    
-    # We use multi_cell(0, ...) so it takes the full width and expands vertically
-    pdf.multi_cell(0, 8, reg_office_val, border=1, align='L')
-    pdf.ln(5)
-
-    # --- 10. SECRETARIAL RECORDS (Key Fixed) ---
-    if pdf.get_y() > 230: pdf.add_page()
-    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 10, " Secretarial Records", ln=True, fill=True, border=1)
-    
-    # Header
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 8, " Address", border=1, align='C', ln=True)
-    
-    # Data Row
-    pdf.set_font("Arial", '', 9)
-    sec_records_val = str(st.session_state.get('sec_records_address', ''))
-    
-    pdf.multi_cell(0, 8, sec_records_val, border=1, align='L')
-    pdf.ln(5)
-
-    # --- FINAL RETURN ---
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
