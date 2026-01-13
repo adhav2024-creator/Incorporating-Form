@@ -41,26 +41,46 @@ def create_pdf_report(client_name):
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
     pdf.set_font("Arial", '', 9)
     
+    # Row 1: Company Name
     pdf.cell(65, 12, " Company Name", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     
-    # Stacked Date/UEN
+    # Row 2: Company No & Date (Stacked)
+    # 1. Save top Y position
+    y_start = pdf.get_y()
+    x_start = pdf.get_x() # This should be the left margin (10)
+    
+    # 2. Draw Left Label Cell
     pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    x_pos, y_pos = pdf.get_x(), pdf.get_y()
+    
+    # 3. Move cursor to the right of the label to draw the value
+    pdf.set_xy(x_start + 65, y_start)
+    
+    # 4. Draw the MultiCell Value
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
     uen = st.session_state.get('kyc_co_no', '')
     pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
-    pdf.set_xy(x_pos + 190, y_pos + 18) 
-    pdf.ln(0)
+    
+    # 5. Reset cursor to left margin and down 18 units for next row
+    pdf.set_xy(x_start, y_start + 18)
 
+    # Row 3: Year End Date
     pdf.cell(65, 12, " Year End Date", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
     
+    # Row 4: Activity (Stacked)
+    y_start = pdf.get_y()
+    x_start = pdf.get_x()
+    
     pdf.cell(65, 20, " Proposed Company Activity", border=1)
+    
+    pdf.set_xy(x_start + 65, y_start)
     act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
     pdf.multi_cell(125, 10, act_full, border=1)
-    pdf.ln(10)
+    
+    pdf.set_xy(x_start, y_start + 20)
+    pdf.ln(10) # Gap before Directors
 
     # --- DIRECTORS DETAILS (SEPARATE TABLES) ---
     pdf.set_font("Arial", 'B', 11)
@@ -82,9 +102,16 @@ def create_pdf_report(client_name):
         pdf.cell(125, 10, st.session_state.get(f"d_mobile_{i}", ""), border=1, ln=True)
         pdf.cell(65, 10, " Nationality", border=1)
         pdf.cell(125, 10, st.session_state.get(f"d_nat_{i}", ""), border=1, ln=True)
+        
+        # Address Row (MultiCell)
+        y_addr = pdf.get_y()
+        x_addr = pdf.get_x()
         pdf.cell(65, 15, " Address", border=1)
+        pdf.set_xy(x_addr + 65, y_addr)
         pdf.multi_cell(125, 7.5, st.session_state.get(f"d_address_{i}", ""), border=1)
-        pdf.ln(5)
+        pdf.set_xy(x_addr, y_addr + 15)
+        
+        pdf.ln(5) # Gap between directors
     
     return pdf.output(dest='S').encode('latin-1')
 
@@ -94,7 +121,7 @@ def master_kyc_form(client_name):
         st.session_state["view"] = "management"
         st.rerun()
 
-    # Progress Bar Style
+    # Progress Bar
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -310,7 +337,6 @@ def bg_sec_file_form(client_name):
         st.session_state["view"] = "kyc_form"
         st.rerun()
     
-    # [Same BG Sec content]
     with st.form("bg_sec_file_form"):
         st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
         st.text_input("Name of Company", value=client_name)
@@ -403,7 +429,6 @@ if check_password():
             df_sorted = filtered_df.sort_values(by=sort_col)
             
             # --- KYC SELECTION LOGIC ADDED HERE ---
-            # We add a "Select" column to let user pick a client for KYC
             df_sorted.insert(0, "SELECT FOR KYC", False)
             edited_df = st.data_editor(df_sorted, hide_index=True, use_container_width=True)
 
