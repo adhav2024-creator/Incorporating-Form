@@ -326,6 +326,38 @@ def create_pdf_report(client_name):
             pdf.ln(2)
 
     # Final logic to close out the PDF
+    # --- 16. SIGNATURE SECTION (EXACT PHOTO MATCH) ---
+    if pdf.get_y() > 230: pdf.add_page()
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 10, "Signature", ln=True)
+    pdf.ln(5)
+    
+    num_sh = st.session_state.get("num_shareholders", 1)
+    
+    # We loop through shareholders and place them 2-across (side-by-side)
+    for i in range(0, num_sh, 2):
+        curr_y = pdf.get_y()
+        
+        # Left Signature Block
+        name_left = str(st.session_state.get(f"s_name_{i}", "")).upper()
+        pdf.set_xy(10, curr_y)
+        pdf.line(10, curr_y + 10, 95, curr_y + 10) # Signature line
+        pdf.set_xy(10, curr_y + 12)
+        pdf.cell(85, 10, name_left)
+        
+        # Right Signature Block (if there's a next shareholder)
+        if i + 1 < num_sh:
+            name_right = str(st.session_state.get(f"s_name_{i+1}", "")).upper()
+            pdf.set_xy(105, curr_y)
+            pdf.line(105, curr_y + 10, 190, curr_y + 10) # Signature line
+            pdf.set_xy(105, curr_y + 12)
+            pdf.cell(85, 10, name_right)
+        
+        pdf.ln(25) # Space before the next row of signatures
+
+    # --- FINAL PDF OUTPUT ---
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
