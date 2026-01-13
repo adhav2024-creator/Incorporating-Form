@@ -49,15 +49,11 @@ def create_pdf_report(client_name):
     y_start = pdf.get_y()
     x_start = pdf.get_x()
     pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    
-    # Move cursor for value column
     pdf.set_xy(x_start + 65, y_start)
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
     uen = st.session_state.get('kyc_co_no', '')
     pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
-    
-    # Reset cursor for next row
     pdf.set_xy(x_start, y_start + 18)
 
     # Row 3: Year End Date
@@ -68,47 +64,59 @@ def create_pdf_report(client_name):
     y_start = pdf.get_y()
     x_start = pdf.get_x()
     pdf.cell(65, 20, " Proposed Company Activity", border=1)
-    
     pdf.set_xy(x_start + 65, y_start)
     act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
     pdf.multi_cell(125, 10, act_full, border=1)
-    
     pdf.set_xy(x_start, y_start + 20)
     pdf.ln(10)
 
-    # --- DIRECTORS DETAILS (SEPARATE TABLES) ---
-    pdf.set_font("Arial", 'B', 11)
-    pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 10, " Directors Details", ln=True, fill=True, border=1)
+    # --- DIRECTORS DETAILS (INDIVIDUAL HEADINGS & TABLES) ---
+    num_dirs = st.session_state.get("num_directors", 1)
     
-    for i in range(st.session_state.get("num_directors", 1)):
+    for i in range(num_dirs):
+        # Specific Heading for each Director
+        pdf.set_font("Arial", 'B', 11)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(0, 10, f" Director {i+1} Details", ln=True, fill=True, border=1)
+        
         pdf.set_font("Arial", '', 9)
+        # Name Row
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
-        pdf.cell(125, 10, st.session_state.get(f"d_name_{i}", ""), border=1, ln=True)
+        pdf.cell(125, 10, str(st.session_state.get(f"d_name_{i}", "")), border=1, ln=True)
+        
+        # ID Row
         pdf.cell(65, 10, " NRIC/ Passport No.", border=1)
-        pdf.cell(125, 10, st.session_state.get(f"d_id_{i}", ""), border=1, ln=True)
+        pdf.cell(125, 10, str(st.session_state.get(f"d_id_{i}", "")), border=1, ln=True)
+        
+        # Date of Birth Row
         pdf.cell(65, 10, " Date of Birth", border=1)
         d_dob = st.session_state.get(f"d_dob_{i}")
-        pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
-        pdf.cell(65, 10, " Email address", border=1)
-        pdf.cell(125, 10, st.session_state.get(f"d_email_{i}", ""), border=1, ln=True)
-        pdf.cell(65, 10, " Mobile Number", border=1)
-        pdf.cell(125, 10, st.session_state.get(f"d_mobile_{i}", ""), border=1, ln=True)
-        pdf.cell(65, 10, " Nationality", border=1)
-        pdf.cell(125, 10, st.session_state.get(f"d_nat_{i}", ""), border=1, ln=True)
+        dob_str = d_dob.strftime('%d/%m/%Y') if d_dob else ""
+        pdf.cell(125, 10, dob_str, border=1, ln=True)
         
-        # Address Row
+        # Email Row
+        pdf.cell(65, 10, " Email address", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
+        
+        # Mobile Row
+        pdf.cell(65, 10, " Mobile Number", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
+        
+        # Nationality Row
+        pdf.cell(65, 10, " Nationality", border=1)
+        pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
+        
+        # Address Row (Multi-line)
         y_addr = pdf.get_y()
         x_addr = pdf.get_x()
         pdf.cell(65, 15, " Address", border=1)
         pdf.set_xy(x_addr + 65, y_addr)
-        pdf.multi_cell(125, 7.5, st.session_state.get(f"d_address_{i}", ""), border=1)
+        pdf.multi_cell(125, 7.5, str(st.session_state.get(f"d_address_{i}", "")), border=1)
         pdf.set_xy(x_addr, y_addr + 15)
         
-        pdf.ln(5) # Gap between directors
+        pdf.ln(8) # Gap before the next Director's heading
     
     return pdf.output(dest='S').encode('latin-1')
-
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
     if st.button("← Back to Client Database"):
