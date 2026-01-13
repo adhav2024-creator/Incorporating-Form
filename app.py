@@ -40,25 +40,25 @@ def create_pdf_report(client_name):
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
     pdf.set_font("Arial", '', 9)
     
-    # Company Name [cite: 4]
+    # Company Name
     pdf.cell(65, 12, " Company Name", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     
-    # Company No & Incorporation [cite: 4]
+    # Company No & Date
     y_start = pdf.get_y()
     pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    pdf.set_xy(75, y_start) # 10 (margin) + 65
+    pdf.set_xy(75, y_start) 
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
     uen = st.session_state.get('kyc_co_no', '')
     pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
     pdf.set_y(y_start + 18)
 
-    # Year End [cite: 4]
+    # Year End
     pdf.cell(65, 12, " Year End Date", border=1)
     pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
     
-    # Activity [cite: 4]
+    # Activity
     y_act = pdf.get_y()
     pdf.cell(65, 20, " Proposed Company Activity", border=1)
     pdf.set_xy(75, y_act)
@@ -67,47 +67,55 @@ def create_pdf_report(client_name):
     pdf.set_y(y_act + 20)
     pdf.ln(5)
 
-    # --- DIRECTORS DETAILS --- 
+    # --- DIRECTORS DETAILS ---
+    # We loop through the number of directors in session state
     num_dirs = st.session_state.get("num_directors", 1)
     
     for i in range(num_dirs):
-        # CHECK FOR PAGE BREAK: Ensure at least 80mm space for a director block
-        if pdf.get_y() > 200: 
+        # Prevent table from being split awkwardly across pages
+        if pdf.get_y() > 200:
             pdf.add_page()
-            
+
+        # Heading for each specific director
         pdf.set_font("Arial", 'B', 11)
         pdf.set_fill_color(240, 240, 240)
-        pdf.cell(0, 10, f" Director {i+1} Details", ln=True, fill=True, border=1) [cite: 5, 6, 12]
+        pdf.cell(0, 10, f" Director {i+1} Details", ln=True, fill=True, border=1)
         
         pdf.set_font("Arial", '', 9)
-        # Standard Rows 
+        # 1. Name
         pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_name_{i}", "")), border=1, ln=True)
         
+        # 2. ID
         pdf.cell(65, 10, " NRIC/ Passport No.", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_id_{i}", "")), border=1, ln=True)
         
+        # 3. DOB
         pdf.cell(65, 10, " Date of Birth", border=1)
         d_dob = st.session_state.get(f"d_dob_{i}")
-        pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
+        dob_val = d_dob.strftime('%d/%m/%Y') if d_dob else ""
+        pdf.cell(125, 10, dob_val, border=1, ln=True)
         
+        # 4. Email
         pdf.cell(65, 10, " Email address", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
         
+        # 5. Mobile
         pdf.cell(65, 10, " Mobile Number", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
         
+        # 6. Nationality
         pdf.cell(65, 10, " Nationality", border=1)
         pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
         
-        # Address Row (Multi-line fix) 
+        # 7. Address (Using multi_cell for long addresses)
         y_addr = pdf.get_y()
         pdf.cell(65, 15, " Address", border=1)
         pdf.set_xy(75, y_addr)
         pdf.multi_cell(125, 7.5, str(st.session_state.get(f"d_address_{i}", "")), border=1)
         pdf.set_y(y_addr + 15)
         
-        pdf.ln(5) 
+        pdf.ln(5) # Space before next director
     
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
