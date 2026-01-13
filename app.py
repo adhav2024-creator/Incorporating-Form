@@ -759,18 +759,22 @@ def bg_sec_file_form(client_name):
             st.session_state["view"] = "customer_acceptance"
             st.rerun()
     # ... inside bg_sec_file_form ...
-    if st.button("SUBMIT AND GENERATE PDF", key="bg_submit_btn"): 
+    if st.button("SUBMIT AND GENERATE PDF", key=f"btn_gen_minutes_{client_name}"): 
         try:
+            # This calls the PDF function we created
             minutes_pdf = create_minutes_pdf(client_name)
+            
+            # This creates the download link
             st.download_button(
-                label="📥 Download Minutes PDF",
+                label="📥 Click here to Download Minutes",
                 data=minutes_pdf,
                 file_name=f"Minutes_{client_name}.pdf",
-                mime="application/pdf"
+                mime="application/pdf",
+                key=f"dl_btn_{client_name}" # Unique key here too!
             )
-            st.success("PDF Ready for download!")
+            st.success("Minutes generated successfully!")
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Could not generate PDF: {e}")
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
