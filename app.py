@@ -219,6 +219,67 @@ def create_pdf_report(client_name):
         pdf.cell(33, row_height, yrs_exp, border=1, align='C', ln=True)
         
         pdf.ln(10)
+    # --- 14. BO'S SOURCE OF WEALTH (EXACT PHOTO MATCH) ---
+    num_sh = st.session_state.get("num_shareholders", 1)
+    for j in range(num_sh):
+        if pdf.get_y() > 200: pdf.add_page()
+        
+        # Header: BO'S SOURCE OF WEALTH (NAME)
+        sh_name = str(st.session_state.get(f"s_name_{j}", "")).upper()
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 10, f"BO'S SOURCE OF WEALTH ({sh_name})", ln=True)
+        pdf.ln(2)
+
+        # Exact labels and descriptions from the photo
+        sow_items = [
+            ("salary", "Salary/Bonus Income (Annual) Name of the employer, position and annual salary"),
+            ("shares", "Owner of Shares in Business Name of the company, website, annual salary"),
+            ("inheritance", "Inheritance or Gift Name of the deceased/donor, type of business/investment,\nrelationship, amount received"),
+            ("investment", "Investment Name of the investment manager, value of portfolio, origin of investment\nfunds"),
+            ("sale", "Sale of Assets/Shares Type of assets/shares, date of sale, value of sale"),
+            ("others", "Others (Please provide details )")
+        ]
+
+        for sow_key, full_label in sow_items:
+            # Check if this item was selected in your Streamlit app
+            is_checked = st.session_state.get(f"sow_chk_{j}_{sow_key}", False)
+            detail_text = st.session_state.get(f"sow_txt_{j}_{sow_key}", "")
+
+            curr_y = pdf.get_y()
+            
+            # Draw Checkbox Square
+            pdf.set_line_width(0.3)
+            if is_checked:
+                # Teal background for checked boxes as seen in photo
+                pdf.set_fill_color(70, 160, 150) 
+                pdf.rect(12, curr_y + 1, 5, 5, 'DF')
+                # White Checkmark (simple 'v')
+                pdf.set_text_color(255, 255, 255)
+                pdf.set_font("Arial", 'B', 8)
+                pdf.text(13, curr_y + 4.5, "v")
+                pdf.set_text_color(0, 0, 0) # Reset
+            else:
+                # Empty box
+                pdf.set_fill_color(255, 255, 255)
+                pdf.rect(12, curr_y + 1, 5, 5, 'D')
+
+            # Render the Label and the Details
+            pdf.set_font("Arial", '', 9)
+            pdf.set_xy(22, curr_y)
+            
+            # Combine label and detail if box is checked
+            display_text = full_label
+            if is_checked and detail_text:
+                display_text += f"\nDetails: {detail_text}"
+            
+            # Use multi_cell to handle the long descriptive text
+            pdf.multi_cell(0, 6, display_text)
+            
+            # Draw a light underline divider as seen in photo
+            pdf.set_draw_color(220, 220, 220)
+            pdf.line(22, pdf.get_y() + 1, 200, pdf.get_y() + 1)
+            pdf.set_draw_color(0, 0, 0) # Reset draw color
+            pdf.ln(4)
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
