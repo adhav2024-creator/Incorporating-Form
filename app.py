@@ -150,9 +150,25 @@ def create_pdf_report(client_name):
     pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Secretarial Records", ln=True, fill=True, border=1); pdf.set_font("Arial", '', 9)
     pdf.multi_cell(0, 8, str(st.session_state.get('sec_records_address', '')), border=1)
     # Bank
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Bank Account", ln=True, fill=True, border=1); pdf.set_font("Arial", '', 9)
-    pdf.cell(65, 10, " Preferred bank account name", border=1); pdf.cell(125, 10, str(st.session_state.get('bank_name', '')), border=1, ln=True)
-    pdf.cell(65, 10, " Currency of account", border=1); pdf.cell(125, 10, str(st.session_state.get('bank_account_currency', '')), border=1, ln=True)
+    if pdf.get_y() > 220: pdf.add_page()
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Bank Account", ln=True, fill=True, border=1)
+    
+    pdf.set_font("Arial", '', 9)
+    
+    # Row 1: Preferred Bank Name
+    # Matches your key: "bank_name"
+    pdf.cell(65, 10, " Preferred bank account name", border=1)
+    pdf.cell(125, 10, str(st.session_state.get('bank_name', '')), border=1, ln=True)
+    
+    # Row 2: Currency of Account
+    # Matches your key: "bank_account_currency"
+    pdf.cell(65, 10, " Currency of account", border=1)
+    
+    # We fetch specifically from 'bank_account_currency'
+    bank_curr = st.session_state.get('bank_account_currency', '')
+    pdf.cell(125, 10, str(bank_curr), border=1, ln=True)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
