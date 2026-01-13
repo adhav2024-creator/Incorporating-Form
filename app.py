@@ -648,28 +648,32 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
+    if st.button("← Back to Client Database", key="bg_sec_back"):
+        st.session_state["view"] = "management"
+        st.rerun()
+
+    st.divider()
     # --- 1. Navigation CSS & Circles ---
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
-        .progress-line { position: absolute; top: 45px; left: 15%; right: 15%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
         .step { text-align: center; z-index: 2; flex: 1; }
-        .circle { width: 50px; height: 50px; background-color: white; color: #2E7D32; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
         .active-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
         .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
         </style>
         <div class="progress-container">
             <div class="progress-line"></div>
-            <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
-            <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
-            <div class="step"><div class="circle">3</div><div class="label">Customer Acceptance</div></div>
+            <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+            
         </div>
         """, unsafe_allow_html=True)
-
     # Back to Database Button
-    if st.button("← Back to Client Database", key="bg_sec_back"):
-        st.session_state["view"] = "management"
-        st.rerun()
+    
 
     st.divider()
 
