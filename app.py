@@ -6,6 +6,7 @@ from fpdf import FPDF
 import sqlite3
 import json
 # --- HELPER FOR PERFECT RECTANGLE TABLES ---
+st.set_page_config(page_title="Audit Client Tracker", layout="wide")
 def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
     """Draws a table row where both cells have the same height even with text wrapping."""
     curr_x = pdf.get_x()
