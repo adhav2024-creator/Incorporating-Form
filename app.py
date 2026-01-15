@@ -5,6 +5,30 @@ from datetime import date
 from fpdf import FPDF
 import sqlite3
 import json
+# --- HELPER FOR PERFECT RECTANGLE TABLES ---
+def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=10):
+    curr_x = pdf.get_x()
+    curr_y = pdf.get_y()
+    
+    # Draw Left Label (Bold)
+    pdf.set_font("Arial", 'B', 9)
+    # Check for page break before drawing
+    if curr_y > 250:
+        pdf.add_page()
+        curr_y = pdf.get_y()
+
+    pdf.multi_cell(label_w, h, f" {label}", border=1)
+    end_y_label = pdf.get_y()
+    
+    # Reset to top of the row to draw Right Value
+    pdf.set_xy(curr_x + label_w, curr_y)
+    pdf.set_font("Arial", '', 9)
+    pdf.multi_cell(value_w, h, f" {value}", border=1)
+    end_y_value = pdf.get_y()
+    
+    # Set Y to the bottom of the tallest box so the NEXT row is aligned
+    final_y = max(end_y_label, end_y_value)
+    pdf.set_xy(curr_x, final_y)
 def save_client_data(client_name):
     # This uses the 'sqlite3' module, satisfying Pylance
     conn = sqlite3.connect('clients_kyc.db')
