@@ -286,22 +286,24 @@ def create_pdf_report(client_name):
     pdf.cell(125, 10, str(bank_curr), border=1, ln=True)
     pdf.ln(8)
     # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
+  # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed Multi-Column) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
-        if pdf.get_y() > 220: pdf.add_page()
+        if pdf.get_y() > 210: pdf.add_page()
         
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
         pdf.cell(0, 10, " Current Employment/Business particulars", ln=True, fill=True, border=1)
         
-        # Table Header Row
-        pdf.set_font("Arial", 'B', 7) # Smaller font to fit all 5 columns comfortably
-        pdf.cell(35, 10, " BO'S Name", border=1, align='C')
-        pdf.cell(45, 10, " Company Name", border=1, align='C')
-        pdf.cell(45, 10, " Business Nature / Industry", border=1, align='C')
-        pdf.cell(32, 10, " Years in employment", border=1, align='C')
-        pdf.cell(33, 10, " Years of experience", border=1, align='C', ln=True)
+        # Table Header Row (Fixed Height)
+        pdf.set_font("Arial", 'B', 7)
+        h_head = 10
+        pdf.cell(35, h_head, " BO'S Name", border=1, align='C')
+        pdf.cell(45, h_head, " Company Name", border=1, align='C')
+        pdf.cell(45, h_head, " Business Nature / Industry", border=1, align='C')
+        pdf.cell(32, h_head, " Years in employment", border=1, align='C')
+        pdf.cell(33, h_head, " Years of experience", border=1, align='C', ln=True)
         
-        # Data Row
+        # Data Row Preparation
         pdf.set_font("Arial", '', 8)
         sh_name = str(st.session_state.get(f"s_name_{j}", "")).upper()
         co_name = str(st.session_state.get(f"emp_co_{j}", ""))
@@ -309,31 +311,32 @@ def create_pdf_report(client_name):
         yrs_emp = str(st.session_state.get(f"emp_yrs_{j}", ""))
         yrs_exp = str(st.session_state.get(f"emp_exp_{j}", ""))
 
-        # We use a fixed height for the row; multi_cell is used for wrapped text
-        row_height = 12
+        # --- DYNAMIC HEIGHT CALCULATION ---
+        # We check how many lines 'Company Name' and 'Nature' take
+        col2_lines = len(pdf.multi_cell(45, 5, co_name, split_only=True))
+        col3_lines = len(pdf.multi_cell(45, 5, nature, split_only=True))
+        
+        # Calculate row height based on the maximum lines (minimum 10)
+        row_h = max(10, col2_lines * 5, col3_lines * 5)
         curr_y = pdf.get_y()
-        
-        # BO Name
+
+        # Draw each cell using the calculated maximum height
         pdf.set_xy(10, curr_y)
-        pdf.multi_cell(35, row_height, sh_name, border=1, align='C')
+        pdf.multi_cell(35, row_h, sh_name, border=1, align='C')
         
-        # Company Name
         pdf.set_xy(45, curr_y)
-        pdf.multi_cell(45, 6, co_name, border=1, align='C') # 6 height because multi_cell wraps
+        pdf.multi_cell(45, row_h / col2_lines if col2_lines > 0 else row_h, co_name, border=1, align='C')
         
-        # Business Nature
         pdf.set_xy(90, curr_y)
-        pdf.multi_cell(45, 6, nature, border=1, align='C')
+        pdf.multi_cell(45, row_h / col3_lines if col3_lines > 0 else row_h, nature, border=1, align='C')
         
-        # Years in Employment
         pdf.set_xy(135, curr_y)
-        pdf.cell(32, row_height, yrs_emp, border=1, align='C')
+        pdf.cell(32, row_h, yrs_emp, border=1, align='C')
         
-        # Years of Experience
         pdf.set_xy(167, curr_y)
-        pdf.cell(33, row_height, yrs_exp, border=1, align='C', ln=True)
+        pdf.cell(33, row_h, yrs_exp, border=1, align='C', ln=True)
         
-        pdf.ln(10)
+        pdf.ln(5)
     # --- 14. BO'S SOURCE OF WEALTH (EXACT PHOTO MATCH) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
