@@ -6,29 +6,38 @@ from fpdf import FPDF
 import sqlite3
 import json
 # --- HELPER FOR PERFECT RECTANGLE TABLES ---
-def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=10):
+def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
+    """Draws a table row where both cells have the same height even with text wrapping."""
     curr_x = pdf.get_x()
     curr_y = pdf.get_y()
     
-    # Draw Left Label (Bold)
-    pdf.set_font("Arial", 'B', 9)
-    # Check for page break before drawing
-    if curr_y > 250:
+    # Check for page break
+    if curr_y > 260:
         pdf.add_page()
         curr_y = pdf.get_y()
 
-    pdf.multi_cell(label_w, h, f" {label}", border=1)
-    end_y_label = pdf.get_y()
+    # 1. Calculate height for the Right Value first (it's usually longer)
+    pdf.set_font("Arial", '', 9)
+    # We use multi_cell with split_only=True to calculate height without drawing
+    # In standard FPDF, we calculate lines manually:
+    lines = pdf.multi_cell(value_w, h, f" {value}", border=0, split_only=True)
+    val_height = len(lines) * h
     
-    # Reset to top of the row to draw Right Value
+    # 2. Determine final row height (at least 'h')
+    row_height = max(h, val_height)
+    
+    # 3. Draw Left Label
+    pdf.set_font("Arial", 'B', 9)
+    pdf.set_xy(curr_x, curr_y)
+    pdf.multi_cell(label_w, row_height, f" {label}", border=1)
+    
+    # 4. Draw Right Value
     pdf.set_xy(curr_x + label_w, curr_y)
     pdf.set_font("Arial", '', 9)
     pdf.multi_cell(value_w, h, f" {value}", border=1)
-    end_y_value = pdf.get_y()
     
-    # Set Y to the bottom of the tallest box so the NEXT row is aligned
-    final_y = max(end_y_label, end_y_value)
-    pdf.set_xy(curr_x, final_y)
+    # 5. Reset position for next row
+    pdf.set_xy(curr_x, curr_y + row_height)
 def save_client_data(client_name):
     # This uses the 'sqlite3' module, satisfying Pylance
     conn = sqlite3.connect('clients_kyc.db')
@@ -132,18 +141,27 @@ def create_pdf_report(client_name):
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
     
+    # Row: Company Name
     draw_rect_row(pdf, "Company Name", str(st.session_state.get('kyc_co_name', client_name)))
     
+    # Row: Date of Incorporation (SEPARATE)
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
-    uen = st.session_state.get('kyc_co_no', '')
-    draw_rect_row(pdf, "Company No. & Date of Incorporation", f"{fmt_date}\n{uen}")
+    draw_rect_row(pdf, "Date of Incorporation", fmt_date)
     
+    # Row: Company Number (UEN) (SEPARATE)
+    uen = st.session_state.get('kyc_co_no', '')
+    draw_rect_row(pdf, "Company Number (UEN)", uen)
+    
+    # Row: Year End Date
     draw_rect_row(pdf, "Year End Date", str(st.session_state.get('kyc_year_end', '')))
     
+    # Row: Proposed Company Activity
     act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
     draw_rect_row(pdf, "Proposed Company Activity", act_full)
+    
     pdf.ln(5)
+   
 
     # --- 2. DIRECTORS DETAILS ---
     num_dirs = st.session_state.get("num_directors", 1)
