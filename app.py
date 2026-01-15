@@ -237,11 +237,10 @@ def create_pdf_report(client_name):
     if pdf.get_y() > 180: pdf.add_page()
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     # Secretary
-    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
-    pdf.cell(45, 8, " Name", border=1); pdf.cell(35, 8, " ID No.", border=1); pdf.cell(75, 8, " Address", border=1); pdf.cell(35, 8, " Nationality", border=1, ln=True)
-    pdf.set_font("Arial", '', 8)
-    pdf.cell(45, 10, str(st.session_state.get('sec_name', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_id', '')), border=1); pdf.cell(75, 10, str(st.session_state.get('sec_address', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
-    # CEO
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 8, " Currency", border=1, align='C'); pdf.cell(95, 8, " Amount", border=1, align='C', ln=True); pdf.set_font("Arial", '', 9)
+    pdf.cell(95, 10, str(st.session_state.get('cap_currency', 'SGD')), border=1, align='C'); pdf.cell(95, 10, str(st.session_state.get('cap_amount', '')), border=1, align='C', ln=True)
+    
     pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " CEO Details", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
     pdf.cell(40, 8, " Name", border=1); pdf.cell(30, 8, " ID", border=1); pdf.cell(30, 8, " Mobile", border=1); pdf.cell(40, 8, " Email", border=1); pdf.cell(50, 8, " Address", border=1, ln=True)
     pdf.set_font("Arial", '', 8)
@@ -252,9 +251,11 @@ def create_pdf_report(client_name):
     pdf.set_font("Arial", '', 8)
     pdf.cell(65, 10, str(st.session_state.get('auth_name', '')), border=1); pdf.cell(60, 10, str(st.session_state.get('auth_mobile', '')), border=1); pdf.cell(65, 10, str(st.session_state.get('auth_email', '')), border=1, ln=True)
     # Share Capital
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 8, " Currency", border=1, align='C'); pdf.cell(95, 8, " Amount", border=1, align='C', ln=True); pdf.set_font("Arial", '', 9)
-    pdf.cell(95, 10, str(st.session_state.get('cap_currency', 'SGD')), border=1, align='C'); pdf.cell(95, 10, str(st.session_state.get('cap_amount', '')), border=1, align='C', ln=True)
+    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
+    pdf.cell(45, 8, " Name", border=1); pdf.cell(35, 8, " ID No.", border=1); pdf.cell(75, 8, " Address", border=1); pdf.cell(35, 8, " Nationality", border=1, ln=True)
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(45, 10, str(st.session_state.get('sec_name', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_id', '')), border=1); pdf.cell(75, 10, str(st.session_state.get('sec_address', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
+    # CEO
 
     # --- 6. OFFICE & BANK ---
     if pdf.get_y() > 200: pdf.add_page()
