@@ -5,7 +5,7 @@ from datetime import date
 from fpdf import FPDF
 import sqlite3
 import json
-
+st.set_page_config(layout="centered")
 # --- HELPER FOR PERFECT RECTANGLE TABLES ---
 def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
     """Draws a table row where both cells have the same height even with text wrapping."""
