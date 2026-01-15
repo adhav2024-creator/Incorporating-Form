@@ -237,30 +237,76 @@ def create_pdf_report(client_name):
         pdf.cell(32, 10, str(st.session_state.get(f"p_applied_{k}", "")), border=1, align='C')
         pdf.cell(32, 10, str(st.session_state.get(f"p_issued_{k}", "")), border=1, align='C')
         pdf.cell(34, 10, str(st.session_state.get(f"p_paid_{k}", "")), border=1, align='C', ln=True)
-
-    # --- 5. CONTACTS & CAP (Secretary, CEO, Auth, Capital) ---
+# --- 5. CONTACTS & CAP (Secretary, CEO, Auth, Capital) ---
     if pdf.get_y() > 180: pdf.add_page()
-    pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
-    # Secretary
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 8, " Currency", border=1, align='C'); pdf.cell(95, 8, " Amount", border=1, align='C', ln=True); pdf.set_font("Arial", '', 9)
-    pdf.cell(95, 10, str(st.session_state.get('cap_currency', 'SGD')), border=1, align='C'); pdf.cell(95, 10, str(st.session_state.get('cap_amount', '')), border=1, align='C', ln=True)
     
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " CEO Details", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
-    pdf.cell(40, 8, " Name", border=1); pdf.cell(30, 8, " ID", border=1); pdf.cell(30, 8, " Mobile", border=1); pdf.cell(40, 8, " Email", border=1); pdf.cell(50, 8, " Address", border=1, ln=True)
+    # 5a. Share Capital (2-column layout)
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, " Share Capital", ln=True, fill=True, border=1)
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(95, 8, " Currency", border=1, align='C')
+    pdf.cell(95, 8, " Amount", border=1, align='C', ln=True)
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(95, 10, f" {st.session_state.get('cap_currency', 'SGD')}", border=1, align='C')
+    pdf.cell(95, 10, f" {st.session_state.get('cap_amount', '')}", border=1, align='C', ln=True)
+
+    # 5b. CEO Details (Multi-column with Address wrapping)
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 10, " CEO Details", ln=True, fill=True, border=1)
+    pdf.set_font("Arial", 'B', 8)
+    h_head = 8
+    pdf.cell(35, h_head, " Name", border=1); pdf.cell(30, h_head, " ID", border=1)
+    pdf.cell(30, h_head, " Mobile", border=1); pdf.cell(40, h_head, " Email", border=1)
+    pdf.cell(55, h_head, " Address", border=1, ln=True)
+
+    # Calculate Height for CEO Row
     pdf.set_font("Arial", '', 8)
-    pdf.cell(40, 10, str(st.session_state.get('ceo_name', '')), border=1); pdf.cell(30, 10, str(st.session_state.get('ceo_id', '')), border=1); pdf.cell(30, 10, str(st.session_state.get('ceo_mobile', '')), border=1); pdf.cell(40, 10, str(st.session_state.get('ceo_email', '')), border=1); pdf.cell(50, 10, str(st.session_state.get('ceo_address', '')), border=1, ln=True)
-    # Authorised
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, " Authorised person to contact", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
+    c_addr = str(st.session_state.get('ceo_address', ''))
+    # Calculate how many lines the address takes
+    c_lines = pdf.multi_cell(55, 5, c_addr, split_only=True)
+    c_row_h = max(10, len(c_lines) * 5)
+    c_y = pdf.get_y()
+
+    pdf.cell(35, c_row_h, str(st.session_state.get('ceo_name', '')), border=1)
+    pdf.cell(30, c_row_h, str(st.session_state.get('ceo_id', '')), border=1)
+    pdf.cell(30, c_row_h, str(st.session_state.get('ceo_mobile', '')), border=1)
+    pdf.cell(40, c_row_h, str(st.session_state.get('ceo_email', '')), border=1)
+    # The address cell
+    pdf.multi_cell(55, 5 if len(c_lines) > 1 else c_row_h, c_addr, border=1)
+    pdf.set_y(c_y + c_row_h)
+
+    # 5c. Authorised Person
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 10, " Authorised person to contact", ln=True, fill=True, border=1)
+    pdf.set_font("Arial", 'B', 8)
     pdf.cell(65, 8, " Name", border=1); pdf.cell(60, 8, " Mobile", border=1); pdf.cell(65, 8, " Email", border=1, ln=True)
     pdf.set_font("Arial", '', 8)
-    pdf.cell(65, 10, str(st.session_state.get('auth_name', '')), border=1); pdf.cell(60, 10, str(st.session_state.get('auth_mobile', '')), border=1); pdf.cell(65, 10, str(st.session_state.get('auth_email', '')), border=1, ln=True)
-    # Share Capital
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11);pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
-    pdf.cell(45, 8, " Name", border=1); pdf.cell(35, 8, " ID No.", border=1); pdf.cell(75, 8, " Address", border=1); pdf.cell(35, 8, " Nationality", border=1, ln=True)
+    pdf.cell(65, 10, str(st.session_state.get('auth_name', '')), border=1)
+    pdf.cell(60, 10, str(st.session_state.get('auth_mobile', '')), border=1)
+    pdf.cell(65, 10, str(st.session_state.get('auth_email', '')), border=1, ln=True)
+
+    # 5d. Company Secretary (Multi-column with Address wrapping)
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1)
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(40, 8, " Name", border=1); pdf.cell(30, 8, " ID No.", border=1)
+    pdf.cell(85, 8, " Address", border=1); pdf.cell(35, 8, " Nationality", border=1, ln=True)
+
+    # Calculate Height for Secretary Row
     pdf.set_font("Arial", '', 8)
-    pdf.cell(45, 10, str(st.session_state.get('sec_name', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_id', '')), border=1); pdf.cell(75, 10, str(st.session_state.get('sec_address', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
-    # CEO
+    s_addr = str(st.session_state.get('sec_address', ''))
+    s_lines = pdf.multi_cell(85, 5, s_addr, split_only=True)
+    s_row_h = max(10, len(s_lines) * 5)
+    s_y = pdf.get_y()
+
+    pdf.cell(40, s_row_h, str(st.session_state.get('sec_name', '')), border=1)
+    pdf.cell(30, s_row_h, str(st.session_state.get('sec_id', '')), border=1)
+    # The multi-line address cell
+    pdf.set_xy(80, s_y) # Move to start of address column
+    pdf.multi_cell(85, 5 if len(s_lines) > 1 else s_row_h, s_addr, border=1)
+    # Nationality
+    pdf.set_xy(165, s_y)
+    pdf.cell(35, s_row_h, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
 
     # --- 6. OFFICE & BANK ---
     if pdf.get_y() > 200: pdf.add_page()
