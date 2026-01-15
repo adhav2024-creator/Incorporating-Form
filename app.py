@@ -580,7 +580,7 @@ def master_kyc_form(client_name):
     st.write("### Company Details")
     st.text_input("Company Name", value=client_name, key="kyc_co_name")
     col1, col2, col3 = st.columns([2, 2, 1])
-    with col1: st.text_input("Company No.", value="200517609N", key="kyc_co_no")
+    with col1: st.text_input("Company No.", value="", key="kyc_co_no")
     with col2: st.date_input("Date of incorporation", value=date(2005, 1, 1), format="DD/MM/YYYY", key="kyc_inc_date", min_value=MIN_DATE, max_value=MAX_DATE)
     with col3: st.text_input("Year End Date", value="31 Dec", key="kyc_year_end")
 
