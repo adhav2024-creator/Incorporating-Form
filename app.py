@@ -39,23 +39,29 @@ def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
     # 5. Reset position for next row
     pdf.set_xy(curr_x, curr_y + row_height)
 def save_client_data(client_name):
-    # This uses the 'sqlite3' module, satisfying Pylance
     conn = sqlite3.connect('clients_kyc.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS kyc_records 
                  (client_name TEXT PRIMARY KEY, data_json TEXT)''')
     
-    # Filter out keys that aren't form data
-    save_data = {k: v for k, v in st.session_state.items() if not k.startswith('__')}
+    # --- IMPROVED FILTER ---
+    # We exclude internal keys, file uploaders, and buttons
+    excluded_types = ('btn', 'next', 'back', 'submit', 'gen_')
+    
+    save_data = {
+        k: v for k, v in st.session_state.items() 
+        if not k.startswith('__') 
+        and not k.startswith('emp_cv_')
+        and not any(word in k.lower() for word in excluded_types)
+        and k != "view" # Don't save the current page view
+    }
+    
     json_data = json.dumps(save_data, default=str)
     
     c.execute("INSERT OR REPLACE INTO kyc_records VALUES (?, ?)", (client_name, json_data))
     conn.commit()
     conn.close()
     st.success(f"Successfully saved {client_name}")
-# --- 1. CONFIGURATION & DATABASE ---
-st.set_page_config(page_title="Audit Client Tracker", layout="wide")
-init_db()
 def load_client_data(client_name):
     conn = sqlite3.connect('clients_kyc.db')
     c = conn.cursor()
@@ -68,16 +74,11 @@ def load_client_data(client_name):
     if row:
         data = json.loads(row[0])
         for key, value in data.items():
-            # --- THE FIX IS HERE ---
-            # 1. Skip any key that is a File Uploader (emp_cv_0, emp_cv_1, etc.)
-            if key.startswith("emp_cv_"):
+            # 1. Skip internal/file/navigation keys
+            if key.startswith("__") or key.startswith("emp_cv_") or "btn" in key:
                 continue
             
-            # 2. Skip keys that are internal Streamlit state (starting with __)
-            if key.startswith("__"):
-                continue
-            
-            # 3. Handling Dates (convert string back to date object)
+            # 2. Handling Dates
             if 'date' in key or 'dob' in key:
                 try:
                     if isinstance(value, str) and value:
@@ -85,8 +86,12 @@ def load_client_data(client_name):
                 except:
                     st.session_state[key] = value
             else:
-                # 4. For everything else (text, checkboxes), set the value
-                st.session_state[key] = value
+                # 3. SAFETY WRAPPER: Prevents crashing on widget keys
+                try:
+                    st.session_state[key] = value
+                except st.errors.StreamlitAPIException:
+                    # If this is a widget key we can't set, just skip it
+                    continue
         return True
     return False
 MONTHS = ["January", "February", "March", "April", "May", "June", 
