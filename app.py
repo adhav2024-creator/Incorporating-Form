@@ -812,7 +812,7 @@ def bg_sec_file_form(client_name):
     # --- 2. Your Original Inputs (Unchanged) ---
     st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
     st.text_input("Name of Company", value=client_name)
-    st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    st.text_input("Place of Meeting", value="")
     
     dt_col1, dt_col2 = st.columns(2)
     with dt_col1:
