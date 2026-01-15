@@ -26,6 +26,8 @@ init_db()
 def load_client_data(client_name):
     conn = sqlite3.connect('clients_kyc.db')
     c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS kyc_records 
+                 (client_name TEXT PRIMARY KEY, data_json TEXT)''')
     c.execute("SELECT data_json FROM kyc_records WHERE client_name=?", (client_name,))
     row = c.fetchone()
     conn.close()
@@ -63,6 +65,28 @@ MAX_DATE = date(2100, 12, 31)
 
 # --- 2. PDF GENERATOR ENGINE ---
 class KYC_PDF(FPDF):
+    def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=10):
+      curr_x = pdf.get_x()
+      curr_y = pdf.get_y()
+    
+    # Draw Left Label (Bold)
+      pdf.set_font("Arial", 'B', 9)
+      pdf.multi_cell(label_w, h, f" {label}", border=1)
+    
+    # Calculate how tall the left box became
+      end_y_label = pdf.get_y()
+    
+    # Reset to draw Right Value
+      pdf.set_xy(curr_x + label_w, curr_y)
+      pdf.set_font("Arial", '', 9)
+      pdf.multi_cell(value_w, h, f" {value}", border=1)
+     
+    # Calculate how tall the right box became
+      end_y_value = pdf.get_y()
+     
+    # Set Y to the bottom of the tallest box to prevent overlapping the next row
+      final_y = max(end_y_label, end_y_value)
+      pdf.set_xy(curr_x, final_y)
     def header(self):
         if self.page_no() == 1:
             self.set_font("Arial", 'B', 10)
@@ -83,28 +107,19 @@ def create_pdf_report(client_name):
     # --- 1. COMPANY DETAILS ---
     pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 10, " Company Details", ln=True, fill=True, border=1)
-    pdf.set_font("Arial", '', 9)
-    pdf.cell(65, 12, " Company Name", border=1)
-    pdf.cell(125, 12, str(st.session_state.get('kyc_co_name', client_name)), border=1, ln=True)
     
-    y_co = pdf.get_y()
-    pdf.cell(65, 18, " Company No. & Date of incorporation", border=1)
-    pdf.set_xy(75, y_co)
+    draw_rect_row(pdf, "Company Name", str(st.session_state.get('kyc_co_name', client_name)))
+    
     inc_date = st.session_state.get('kyc_inc_date')
     fmt_date = inc_date.strftime('%d/%m/%Y') if inc_date else ""
     uen = st.session_state.get('kyc_co_no', '')
-    pdf.multi_cell(125, 9, f"{fmt_date}\n{uen}", border=1)
-    pdf.set_y(y_co + 18)
+    draw_rect_row(pdf, "Company No. & Date of Incorporation", f"{fmt_date}\n{uen}")
     
-    pdf.cell(65, 12, " Year End Date", border=1)
-    pdf.cell(125, 12, str(st.session_state.get('kyc_year_end', '')), border=1, ln=True)
+    draw_rect_row(pdf, "Year End Date", str(st.session_state.get('kyc_year_end', '')))
     
-    y_act = pdf.get_y()
-    pdf.cell(65, 20, " Proposed Company Activity", border=1)
-    pdf.set_xy(75, y_act)
     act_full = f"{st.session_state.get('kyc_act_main', '')}\n{st.session_state.get('kyc_act_sec', '')}"
-    pdf.multi_cell(125, 10, act_full, border=1)
-    pdf.set_y(y_act + 20); pdf.ln(5)
+    draw_rect_row(pdf, "Proposed Company Activity", act_full)
+    pdf.ln(5)
 
     # --- 2. DIRECTORS DETAILS ---
     num_dirs = st.session_state.get("num_directors", 1)
