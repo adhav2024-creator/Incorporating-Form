@@ -341,50 +341,51 @@ def create_pdf_report(client_name):
   # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed Multi-Column) ---
     # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed) ---
    # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Final Fix) ---
+    # --- 13. CURRENT EMPLOYMENT (Locked Borders Fix) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
-        if pdf.get_y() > 210: pdf.add_page()
+        if pdf.get_y() > 200: pdf.add_page()
         
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
         pdf.cell(0, 10, " Current Employment/Business particulars", ln=True, fill=True, border=1)
         
-        # Table Header Row
+        # Table Header
         pdf.set_font("Arial", 'B', 7)
         h_head = 10
-        widths = [35, 45, 45, 32, 33] # Precise column widths
+        widths = [35, 45, 45, 32, 33] 
         pdf.cell(widths[0], h_head, " BO'S Name", border=1, align='C')
         pdf.cell(widths[1], h_head, " Company Name", border=1, align='C')
         pdf.cell(widths[2], h_head, " Business Nature", border=1, align='C')
         pdf.cell(widths[3], h_head, " Years in emp.", border=1, align='C')
         pdf.cell(widths[4], h_head, " Years of exp.", border=1, align='C', ln=True)
         
-        # Data
+        # 1. Prepare Data & Calculate Dynamic Row Height
+        pdf.set_font("Arial", '', 8)
         sh_name = str(st.session_state.get(f"s_name_{j}", "")).upper()
         co_name = str(st.session_state.get(f"emp_co_{j}", ""))
         nature = str(st.session_state.get(f"emp_ind_{j}", ""))
-        yrs_emp = str(st.session_state.get(f"emp_yrs_{j}", ""))
-        yrs_exp = str(st.session_state.get(f"emp_exp_{j}", ""))
-
-        # 1. Calculate the Max Height needed for this specific row
-        pdf.set_font("Arial", '', 8)
+        
+        # Ghost render to find tallest cell
+        lines_name = len(pdf.multi_cell(widths[0], 5, sh_name, split_only=True))
         lines_co = len(pdf.multi_cell(widths[1], 5, co_name, split_only=True))
         lines_nat = len(pdf.multi_cell(widths[2], 5, nature, split_only=True))
-        row_h = max(10, lines_co * 5, lines_nat * 5)
         
+        # Set unified height (ensures all boxes match the longest text)
+        row_h = max(12, lines_name * 5, lines_co * 5, lines_nat * 5)
         start_y = pdf.get_y()
-        start_x = 10 # Standard margin
+        start_x = 10 
 
-        # 2. Draw Every Border Cell first (This forces the rectangle shape)
+        # 2. DRAW ALL BORDERS FIRST (This locks the rectangle)
         pdf.cell(widths[0], row_h, "", border=1)
         pdf.cell(widths[1], row_h, "", border=1)
         pdf.cell(widths[2], row_h, "", border=1)
         pdf.cell(widths[3], row_h, "", border=1)
         pdf.cell(widths[4], row_h, "", border=1)
 
-        # 3. Go back and place the Text inside those borders using set_xy
+        # 3. OVERLAY TEXT (Using set_xy to put text inside the locked boxes)
         # BO Name
         pdf.set_xy(start_x, start_y)
-        pdf.multi_cell(widths[0], row_h, sh_name, align='C')
+        pdf.multi_cell(widths[0], 5 if lines_name > 1 else row_h, sh_name, align='C')
         
         # Company Name
         pdf.set_xy(start_x + widths[0], start_y)
@@ -394,15 +395,14 @@ def create_pdf_report(client_name):
         pdf.set_xy(start_x + widths[0] + widths[1], start_y)
         pdf.multi_cell(widths[2], 5 if lines_nat > 1 else row_h, nature, align='C')
         
-        # Years Emp
+        # Years Emp & Exp (Simple text)
         pdf.set_xy(start_x + widths[0] + widths[1] + widths[2], start_y)
-        pdf.cell(widths[3], row_h, yrs_emp, align='C')
+        pdf.cell(widths[3], row_h, str(st.session_state.get(f"emp_yrs_{j}", "")), align='C')
         
-        # Years Exp
-        pdf.set_xy(start_x + widths[0] + widths[1] + widths[2] + widths[3], start_y)
-        pdf.cell(widths[4], row_h, yrs_exp, align='C')
+        pdf.set_xy(start_x + sum(widths[:4]), start_y)
+        pdf.cell(widths[4], row_h, str(st.session_state.get(f"emp_exp_{j}", "")), align='C')
         
-        # 4. Final cursor reset to bottom of row
+        # 4. Reset cursor to next section
         pdf.set_y(start_y + row_h)
         pdf.ln(5)
     # --- 14. BO'S SOURCE OF WEALTH (EXACT PHOTO MATCH) ---
