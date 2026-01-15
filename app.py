@@ -164,27 +164,31 @@ def create_pdf_report(client_name):
    
 
     # --- 2. DIRECTORS DETAILS ---
+    # --- 2. DIRECTORS DETAILS (Fixed Table) ---
     num_dirs = st.session_state.get("num_directors", 1)
     for i in range(num_dirs):
-        if pdf.get_y() > 190: pdf.add_page()
+        # Header check for page break
+        if pdf.get_y() > 200: pdf.add_page()
+        
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(240, 240, 240)
         pdf.cell(0, 10, " Director Details", ln=True, fill=True, border=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(65, 10, " Name as per Passport / NRIC", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"d_name_{i}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " NRIC / Passport No.", border=1)
-        pdf.cell(125, 10, str(st.session_state.get(f"d_id_{i}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Date of Birth", border=1)
+        
+        # Using the helper to ensure perfect rectangles
+        draw_rect_row(pdf, "Name as per Passport / NRIC", str(st.session_state.get(f"d_name_{i}", "")))
+        draw_rect_row(pdf, "NRIC / Passport No.", str(st.session_state.get(f"d_id_{i}", "")))
+        
         d_dob = st.session_state.get(f"d_dob_{i}")
-        pdf.cell(125, 10, d_dob.strftime('%d/%m/%Y') if d_dob else "", border=1, ln=True)
-        pdf.cell(65, 10, " Email address", border=1); pdf.cell(125, 10, str(st.session_state.get(f"d_email_{i}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Mobile Number", border=1); pdf.cell(125, 10, str(st.session_state.get(f"d_mobile_{i}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Nationality", border=1); pdf.cell(125, 10, str(st.session_state.get(f"d_nat_{i}", "")), border=1, ln=True)
-        y_daddr = pdf.get_y()
-        pdf.cell(65, 20, " Address", border=1); pdf.set_xy(75, y_daddr)
-        pdf.multi_cell(125, 10, str(st.session_state.get(f"d_address_{i}", "")), border=1)
-        pdf.set_y(y_daddr + 20); pdf.ln(8)
-
+        fmt_dob = d_dob.strftime('%d/%m/%Y') if d_dob else ""
+        draw_rect_row(pdf, "Date of Birth", fmt_dob)
+        
+        draw_rect_row(pdf, "Email address", str(st.session_state.get(f"d_email_{i}", "")))
+        draw_rect_row(pdf, "Mobile Number", str(st.session_state.get(f"d_mobile_{i}", "")))
+        draw_rect_row(pdf, "Nationality", str(st.session_state.get(f"d_nat_{i}", "")))
+        
+        # Address (Helper handles long addresses without breaking the rectangle)
+        draw_rect_row(pdf, "Address", str(st.session_state.get(f"d_address_{i}", "")))
+        
+        pdf.ln(8)
     # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
