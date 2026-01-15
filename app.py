@@ -491,50 +491,32 @@ def create_pdf_report(client_name):
 def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 12)
     
     # Header
+    pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
-    pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
+    # Use the session state value for the company name header
+    co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
+    pdf.cell(0, 10, co_name, ln=True, align='C')
     pdf.ln(5)
     
-    # Table Styling
-    pdf.set_font("Arial", 'B', 10)
-    col_width_left = 60
-    col_width_right = 130
-    row_height = 10
-
     # Row 1: Name of Company
-    pdf.cell(col_width_left, row_height, " Name of Company", border=1)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(col_width_right, row_height, f" {client_name}", border=1, ln=True)
+    draw_rect_row(pdf, "Name of Company", st.session_state.get('sec_meeting_co_name', client_name))
 
     # Row 2: Place of Meeting
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height * 2, " Place of Meeting", border=1)
-    pdf.set_font("Arial", '', 10)
-    place = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-    pdf.multi_cell(col_width_right, row_height, f" {place}", border=1)
+    draw_rect_row(pdf, "Place of Meeting", st.session_state.get('sec_meeting_place', ""))
 
     # Row 3: Date and Time
-    pdf.set_xy(10, pdf.get_y())
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height, " Date and Time of Meeting", border=1)
-    pdf.set_font("Arial", '', 10)
-    m_date = st.session_state.get('sec_meeting_date', date.today()).strftime('%d/%m/%Y')
-    m_time = st.session_state.get('sec_meeting_time', '13:47')
-    pdf.cell(col_width_right, row_height, f" {m_date} {m_time}", border=1, ln=True)
+    m_date = st.session_state.get('sec_meeting_date')
+    fmt_date = m_date.strftime('%d/%m/%Y') if m_date else ""
+    m_time = st.session_state.get('sec_meeting_time', '')
+    draw_rect_row(pdf, "Date and Time of Meeting", f"{fmt_date} at {m_time}")
 
     # Row 4: Directors Present
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height * 2, " Directors Present", border=1)
-    pdf.set_font("Arial", '', 10)
-    
     num_dirs = st.session_state.get("num_directors", 1)
     dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
-    dirs_text = "\n ".join(dirs) if dirs else " None Listed"
-    
-    pdf.multi_cell(col_width_right, row_height, dirs_text, border=1)
+    dirs_text = "\n".join(dirs) if dirs else "None Listed"
+    draw_rect_row(pdf, "Directors Present", dirs_text)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
@@ -811,15 +793,15 @@ def bg_sec_file_form(client_name):
 
     # --- 2. Your Original Inputs (Unchanged) ---
     st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
-    st.text_input("Name of Company", value=client_name)
-    st.text_input("Place of Meeting", value="")
-    
-    dt_col1, dt_col2 = st.columns(2)
-    with dt_col1:
-        inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
-        st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
-    with dt_col2: 
-        st.text_input("Time of Meeting", value="13:47")
+    # INSIDE bg_sec_file_form(client_name):
+st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
+st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", key="sec_meeting_place")
+
+col1, col2 = st.columns(2)
+with col1:
+    st.date_input("Date of Meeting", key="sec_meeting_date")
+with col2:
+    st.text_input("Time of Meeting", value="13:47", key="sec_meeting_time")
         
     st.write("**Directors Present**")
     num_dirs = st.session_state.get("num_directors", 1)
