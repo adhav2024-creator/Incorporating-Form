@@ -190,23 +190,31 @@ def create_pdf_report(client_name):
         
         pdf.ln(8)
     # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP ---
+    # --- 3. SHAREHOLDER AND BENEFICIAL OWNERSHIP (Fixed Table) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
-        if pdf.get_y() > 190: pdf.add_page()
+        # Header check for page break
+        if pdf.get_y() > 200: pdf.add_page()
+        
+        # Using the blue-ish fill color you specified (220, 235, 252)
         pdf.set_font("Arial", 'B', 11); pdf.set_fill_color(220, 235, 252)
         pdf.cell(0, 10, " Shareholder and Beneficial Ownership", ln=True, fill=True, border=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(65, 10, " Name as per Passport / NRIC", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_name_{j}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " NRIC / Passport No.", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_id_{j}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Date of Birth", border=1)
+        
+        # Perfect rectangle rows using the helper
+        draw_rect_row(pdf, "Name as per Passport / NRIC", str(st.session_state.get(f"s_name_{j}", "")))
+        draw_rect_row(pdf, "NRIC / Passport No.", str(st.session_state.get(f"s_id_{j}", "")))
+        
         s_dob = st.session_state.get(f"s_dob_{j}")
-        pdf.cell(125, 10, s_dob.strftime('%d/%m/%Y') if s_dob else "", border=1, ln=True)
-        pdf.cell(65, 10, " Email address", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_email_{j}", "")), border=1, ln=True)
-        pdf.cell(65, 10, " Nationality", border=1); pdf.cell(125, 10, str(st.session_state.get(f"s_nat_{j}", "")), border=1, ln=True)
-        y_saddr = pdf.get_y()
-        pdf.cell(65, 20, " Residential Address", border=1); pdf.set_xy(75, y_saddr)
-        pdf.multi_cell(125, 10, str(st.session_state.get(f"s_address_{j}", "")), border=1)
-        pdf.set_y(y_saddr + 20); pdf.ln(8)
+        fmt_s_dob = s_dob.strftime('%d/%m/%Y') if s_dob else ""
+        draw_rect_row(pdf, "Date of Birth", fmt_s_dob)
+        
+        draw_rect_row(pdf, "Email address", str(st.session_state.get(f"s_email_{j}", "")))
+        draw_rect_row(pdf, "Nationality", str(st.session_state.get(f"s_nat_{j}", "")))
+        
+        # Address (Handles multi-line wrapping without breaking the rectangle)
+        draw_rect_row(pdf, "Residential Address", str(st.session_state.get(f"s_address_{j}", "")))
+        
+        pdf.ln(8)
 
     # --- 4. PERCENTAGE OF SHAREHOLDING ---
     if pdf.get_y() > 180: pdf.add_page()
