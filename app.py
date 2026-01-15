@@ -251,7 +251,7 @@ def create_pdf_report(client_name):
     pdf.set_font("Arial", '', 8)
     pdf.cell(65, 10, str(st.session_state.get('auth_name', '')), border=1); pdf.cell(60, 10, str(st.session_state.get('auth_mobile', '')), border=1); pdf.cell(65, 10, str(st.session_state.get('auth_email', '')), border=1, ln=True)
     # Share Capital
-    pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11);pdf.cell(0, 10, " Company Secretary", ln=True, fill=True, border=1); pdf.set_font("Arial", 'B', 8)
     pdf.cell(45, 8, " Name", border=1); pdf.cell(35, 8, " ID No.", border=1); pdf.cell(75, 8, " Address", border=1); pdf.cell(35, 8, " Nationality", border=1, ln=True)
     pdf.set_font("Arial", '', 8)
     pdf.cell(45, 10, str(st.session_state.get('sec_name', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_id', '')), border=1); pdf.cell(75, 10, str(st.session_state.get('sec_address', '')), border=1); pdf.cell(35, 10, str(st.session_state.get('sec_nat', '')), border=1, ln=True)
