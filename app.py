@@ -340,6 +340,7 @@ def create_pdf_report(client_name):
     # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
   # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed Multi-Column) ---
     # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed) ---
+   # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Final Fix) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
         if pdf.get_y() > 210: pdf.add_page()
@@ -350,58 +351,59 @@ def create_pdf_report(client_name):
         # Table Header Row
         pdf.set_font("Arial", 'B', 7)
         h_head = 10
-        pdf.cell(35, h_head, " BO'S Name", border=1, align='C')
-        pdf.cell(45, h_head, " Company Name", border=1, align='C')
-        pdf.cell(45, h_head, " Business Nature / Industry", border=1, align='C')
-        pdf.cell(32, h_head, " Years in employment", border=1, align='C')
-        pdf.cell(33, h_head, " Years of experience", border=1, align='C', ln=True)
+        widths = [35, 45, 45, 32, 33] # Precise column widths
+        pdf.cell(widths[0], h_head, " BO'S Name", border=1, align='C')
+        pdf.cell(widths[1], h_head, " Company Name", border=1, align='C')
+        pdf.cell(widths[2], h_head, " Business Nature", border=1, align='C')
+        pdf.cell(widths[3], h_head, " Years in emp.", border=1, align='C')
+        pdf.cell(widths[4], h_head, " Years of exp.", border=1, align='C', ln=True)
         
-        # Data Row Preparation
-        pdf.set_font("Arial", '', 8)
+        # Data
         sh_name = str(st.session_state.get(f"s_name_{j}", "")).upper()
         co_name = str(st.session_state.get(f"emp_co_{j}", ""))
         nature = str(st.session_state.get(f"emp_ind_{j}", ""))
         yrs_emp = str(st.session_state.get(f"emp_yrs_{j}", ""))
         yrs_exp = str(st.session_state.get(f"emp_exp_{j}", ""))
 
-        # --- DYNAMIC HEIGHT CALCULATION ---
-        # Calculate lines for multi-line columns
-        col2_lines = len(pdf.multi_cell(45, 5, co_name, split_only=True))
-        col3_lines = len(pdf.multi_cell(45, 5, nature, split_only=True))
+        # 1. Calculate the Max Height needed for this specific row
+        pdf.set_font("Arial", '', 8)
+        lines_co = len(pdf.multi_cell(widths[1], 5, co_name, split_only=True))
+        lines_nat = len(pdf.multi_cell(widths[2], 5, nature, split_only=True))
+        row_h = max(10, lines_co * 5, lines_nat * 5)
         
-        # Set the unified row height
-        row_h = max(10, col2_lines * 5, col3_lines * 5)
-        curr_y = pdf.get_y()
+        start_y = pdf.get_y()
+        start_x = 10 # Standard margin
 
-        # 1. BO Name
-        pdf.set_xy(10, curr_y)
-        pdf.multi_cell(35, row_h, sh_name, border=1, align='C')
-        
-        # 2. Company Name (Using internal cell to allow vertical centering if needed)
-        pdf.set_xy(45, curr_y)
-        # If text is only 1 line, draw it with full row_h. 
-        # If multi-line, draw with 5mm line height but wrap inside the row_h box.
-        pdf.multi_cell(45, 5 if col2_lines > 1 else row_h, co_name, border=1, align='C')
-        # Force outer border to full row_h in case multi_cell didn't fill it
-        pdf.set_xy(45, curr_y)
-        pdf.cell(45, row_h, "", border=1) 
-        
-        # 3. Business Nature
-        pdf.set_xy(90, curr_y)
-        pdf.multi_cell(45, 5 if col3_lines > 1 else row_h, nature, border=1, align='C')
-        pdf.set_xy(90, curr_y)
-        pdf.cell(45, row_h, "", border=1)
+        # 2. Draw Every Border Cell first (This forces the rectangle shape)
+        pdf.cell(widths[0], row_h, "", border=1)
+        pdf.cell(widths[1], row_h, "", border=1)
+        pdf.cell(widths[2], row_h, "", border=1)
+        pdf.cell(widths[3], row_h, "", border=1)
+        pdf.cell(widths[4], row_h, "", border=1)
 
-        # 4. Years in Employment
-        pdf.set_xy(135, curr_y)
-        pdf.cell(32, row_h, yrs_emp, border=1, align='C')
+        # 3. Go back and place the Text inside those borders using set_xy
+        # BO Name
+        pdf.set_xy(start_x, start_y)
+        pdf.multi_cell(widths[0], row_h, sh_name, align='C')
         
-        # 5. Years of Experience
-        pdf.set_xy(167, curr_y)
-        pdf.cell(33, row_h, yrs_exp, border=1, align='C')
+        # Company Name
+        pdf.set_xy(start_x + widths[0], start_y)
+        pdf.multi_cell(widths[1], 5 if lines_co > 1 else row_h, co_name, align='C')
         
-        # Reset Y to the bottom of the row
-        pdf.set_y(curr_y + row_h)
+        # Business Nature
+        pdf.set_xy(start_x + widths[0] + widths[1], start_y)
+        pdf.multi_cell(widths[2], 5 if lines_nat > 1 else row_h, nature, align='C')
+        
+        # Years Emp
+        pdf.set_xy(start_x + widths[0] + widths[1] + widths[2], start_y)
+        pdf.cell(widths[3], row_h, yrs_emp, align='C')
+        
+        # Years Exp
+        pdf.set_xy(start_x + widths[0] + widths[1] + widths[2] + widths[3], start_y)
+        pdf.cell(widths[4], row_h, yrs_exp, align='C')
+        
+        # 4. Final cursor reset to bottom of row
+        pdf.set_y(start_y + row_h)
         pdf.ln(5)
     # --- 14. BO'S SOURCE OF WEALTH (EXACT PHOTO MATCH) ---
     num_sh = st.session_state.get("num_shareholders", 1)
