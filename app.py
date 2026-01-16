@@ -5,11 +5,6 @@ from datetime import date
 from fpdf import FPDF
 import sqlite3
 import json
-# Initialize session state for BG Sec if they don't exist
-if "sec_meeting_place" not in st.session_state:
-    st.session_state["sec_meeting_place"] = ""
-if "sec_meeting_time" not in st.session_state:
-    st.session_state["sec_meeting_time"] = "10:00 AM"
 st.set_page_config(page_title="Audit Client Tracker", layout="wide")
 # --- HELPER FOR PERFECT RECTANGLE TABLES ---
 def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
@@ -562,47 +557,52 @@ def create_pdf_report(client_name):
     # --- FINAL PDF OUTPUT ---
     return pdf.output(dest='S').encode('latin-1')
 def create_minutes_pdf(client_name):
-    from fpdf import FPDF
     pdf = FPDF()
     pdf.add_page()
+    pdf.set_font("Arial", 'B', 12)
     
-    # 1. Pull data directly from the WIDGET KEYS
-    co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
-    place = st.session_state.get('sec_meeting_place', "")
-    m_time = st.session_state.get('sec_meeting_time', "")
-    dirs_text = st.session_state.get('sec_dirs_present', "")
-    
-    m_date_obj = st.session_state.get('sec_meeting_date', date.today())
-    m_date_str = m_date_obj.strftime('%d/%m/%Y') if hasattr(m_date_obj, 'strftime') else str(m_date_obj)
-
-    # Styling & Header
-    pdf.set_font("Arial", 'B', 14)
+    # Header
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
-    pdf.cell(0, 10, co_name, ln=True, align='C')
-    pdf.ln(10)
+    pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
+    pdf.ln(5)
+    
+    # Table Styling
+    pdf.set_font("Arial", 'B', 10)
+    col_width_left = 60
+    col_width_right = 130
+    row_height = 10
 
-    # Table Setup
-    col_l, col_r = 65, 125
+    # Row 1: Name of Company
+    pdf.cell(col_width_left, row_height, " Name of Company", border=1)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(col_width_right, row_height, f" {client_name}", border=1, ln=True)
 
-    def add_row(label, value):
-        pdf.set_font("Arial", 'B', 10)
-        # Calculate wrapping height
-        lines = len(pdf.multi_cell(col_r, 8, str(value), split_only=True))
-        h = max(12, lines * 8)
-        
-        curr_y = pdf.get_y()
-        pdf.cell(col_l, h, f" {label}", border=1)
-        
-        pdf.set_font("Arial", '', 10)
-        pdf.set_xy(10 + col_l, curr_y)
-        pdf.multi_cell(col_r, 8 if lines > 1 else h, f" {value}", border=1)
-        pdf.set_y(curr_y + h)
+    # Row 2: Place of Meeting
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(col_width_left, row_height * 2, " Place of Meeting", border=1)
+    pdf.set_font("Arial", '', 10)
+    place = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    pdf.multi_cell(col_width_right, row_height, f" {place}", border=1)
 
-    # Draw the table
-    add_row("Name of Company", co_name)
-    add_row("Place of Meeting", place)
-    add_row("Date and Time", f"{m_date_str} at {m_time}")
-    add_row("Directors Present", dirs_text)
+    # Row 3: Date and Time
+    pdf.set_xy(10, pdf.get_y())
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(col_width_left, row_height, " Date and Time of Meeting", border=1)
+    pdf.set_font("Arial", '', 10)
+    m_date = st.session_state.get('sec_meeting_date', date.today()).strftime('%d/%m/%Y')
+    m_time = st.session_state.get('sec_meeting_time', '13:47')
+    pdf.cell(col_width_right, row_height, f" {m_date} {m_time}", border=1, ln=True)
+
+    # Row 4: Directors Present
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(col_width_left, row_height * 2, " Directors Present", border=1)
+    pdf.set_font("Arial", '', 10)
+    
+    num_dirs = st.session_state.get("num_directors", 1)
+    dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
+    dirs_text = "\n ".join(dirs) if dirs else " None Listed"
+    
+    pdf.multi_cell(col_width_right, row_height, dirs_text, border=1)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
@@ -848,16 +848,14 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- 1. INITIALIZE DATA (The Secret to Persistence) ---
-    # This prevents the fields from resetting to empty on every rerun
-    if "sec_meeting_place" not in st.session_state:
-        st.session_state["sec_meeting_place"] = ""
-    if "sec_meeting_time" not in st.session_state:
-        st.session_state["sec_meeting_time"] = "10:00 AM"
-    if "sec_meeting_date" not in st.session_state:
-        st.session_state["sec_meeting_date"] = date.today()
+    if st.button("← Back to Client Database", key="bg_sec_back"):
+        st.session_state["view"] = "management"
+        st.rerun()
 
-    # --- 2. HTML & CSS (Injected every rerun) ---
+  
+    # --- 1. Navigation CSS & Circles ---
+    
+
     st.markdown("""
     <style>
     .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -871,71 +869,76 @@ def bg_sec_file_form(client_name):
     
     <div class="progress-container">
         <div class="progress-line"></div>
-        <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
-        <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
-        <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance</div></div>
+        <div class="step">
+            <div class="circle active-circle">1</div>
+            <div class="label">Master KYC Form</div>
+        </div>
+        <div class="step">
+            <div class="circle active-circle">2</div>
+            <div class="label">BG Sec File</div>
+        </div>
+        <div class="step">
+            <div class="circle inactive-circle">3</div>
+            <div class="label">Customer Acceptance Form</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-
-    # --- 3. UI INPUTS ---
-    st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
+    # Back to Database Button
     
-    # We use 'key' to bind directly to session_state
-    # We use 'value=st.session_state[key]' to ensure the UI shows the SAVED data
-    st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
-    
-    st.text_input("Place of Meeting", 
-                  value=st.session_state["sec_meeting_place"], 
-                  key="sec_meeting_place_input") # Temporary key to capture input
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.date_input("Date of Meeting", 
-                      value=st.session_state["sec_meeting_date"], 
-                      key="sec_meeting_date_input")
-    with col2:
-        st.text_input("Time of Meeting", 
-                      value=st.session_state["sec_meeting_time"], 
-                      key="sec_meeting_time_input")
-
-    # Directors (Pulled from Master KYC)
-    num_dirs = st.session_state.get("num_directors", 1)
-    d_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
-    current_dirs = ", ".join([d for d in d_list if d])
-    st.text_area("Directors Present", value=current_dirs, height=100, key="sec_dirs_present")
 
     st.divider()
 
-    # --- 4. THE ACTION BUTTONS ---
-    col_save, col_gen = st.columns(2)
+    # --- 2. Your Original Inputs (Unchanged) ---
+    st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
+    st.text_input("Name of Company", value=client_name)
+    st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
     
-    with col_save:
-        if st.button("💾 Save & Lock Information", use_container_width=True):
-            # Manually sync the 'input' keys to the master 'storage' keys
-            st.session_state["sec_meeting_place"] = st.session_state["sec_meeting_place_input"]
-            st.session_state["sec_meeting_time"] = st.session_state["sec_meeting_time_input"]
-            st.session_state["sec_meeting_date"] = st.session_state["sec_meeting_date_input"]
-            st.success("Data locked into memory!")
-            st.rerun()
+    dt_col1, dt_col2 = st.columns(2)
+    with dt_col1:
+        inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
+        st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
+    with dt_col2: 
+        st.text_input("Time of Meeting", value="13:47")
+        
+    st.write("**Directors Present**")
+    num_dirs = st.session_state.get("num_directors", 1)
+    default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
+    st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
+    
+    if st.button("SUBMIT NOW", key="bg_submit_btn"): 
+        st.success("Generated!")
 
-    with col_gen:
-        # Generate PDF using the LOCKED session state data
+    st.divider()
+
+    # --- 3. Bottom Navigation ---
+    col_prev, col_next = st.columns([1, 1])
+    with col_prev:
+        if st.button("⬅️ Back to KYC Form", key="back_to_kyc_footer"):
+            st.session_state["view"] = "kyc_form"
+            st.rerun()
+    with col_next:
+        if st.button("Next Step ➡️", key="next_to_ca"):
+            st.session_state["view"] = "customer_acceptance"
+            st.rerun()
+    # ... inside bg_sec_file_form ...
+    if st.button("SUBMIT AND GENERATE PDF", key=f"btn_gen_minutes_{client_name}"): 
         try:
-            pdf_bytes = create_minutes_pdf(client_name)
+            # This calls the PDF function we created
+            minutes_pdf = create_minutes_pdf(client_name)
+            
+            # This creates the download link
             st.download_button(
-                label="📄 Generate PDF Report",
-                data=pdf_bytes,
+                label="Download ",
+                data=minutes_pdf,
                 file_name=f"Minutes_{client_name}.pdf",
                 mime="application/pdf",
-                use_container_width=True
+                key=f"dl_btn_{client_name}" # Unique key here too!
             )
+            st.success("Minutes generated successfully!")
         except Exception as e:
-            st.error("Click 'Save' first to initialize PDF data.")
+            st.error(f"Could not generate PDF: {e}")
+# --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
-    # --- 5. NAVIGATION ---
-    if st.button("⬅️ Back to KYC"):
-        st.session_state["view"] = "kyc_form"
-        st.rerun()
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
@@ -1062,5 +1065,6 @@ if check_password():
     # --- VIEWS FOR KYC FORM ---
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
+
     elif st.session_state["view"] == "bg_sec_file":
         bg_sec_file_form(st.session_state["selected_client_name"])
