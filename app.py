@@ -1026,8 +1026,8 @@ if check_password():
             st.info("No clients found.")
 
     # --- VIEWS FOR KYC FORM ---
-    elif st.session_state["view"] == "kyc_form":
+elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
 
-    elif st.session_state["view"] == "bg_sec_file":
+elif st.session_state["view"] == "bg_sec_file":
         bg_sec_file_form(st.session_state["selected_client_name"])
