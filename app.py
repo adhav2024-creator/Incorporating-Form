@@ -560,63 +560,51 @@ def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
     
-    # 1. Header - Always use the state value so it's "Live"
+    # Values from Session State
     co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
-    pdf.set_font("Arial", 'B', 12)
+    place = st.session_state.get('sec_meeting_place', "")
+    m_time = st.session_state.get('sec_meeting_time', "")
+    dirs_text = st.session_state.get('sec_dirs_present', "")
+    
+    m_date_obj = st.session_state.get('sec_meeting_date', date.today())
+    m_date_str = m_date_obj.strftime('%d/%m/%Y') if hasattr(m_date_obj, 'strftime') else str(m_date_obj)
+
+    # Header
+    pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
     pdf.cell(0, 10, co_name, ln=True, align='C')
-    pdf.ln(5)
-    
-    # Setup for Table
-    col_left = 60
-    col_right = 130
-    
-    # Helper to ensure live updates and perfect borders
-    def draw_minutes_row(label, value, is_multi=False):
-        curr_y = pdf.get_y()
-        # Calculate height
-        pdf.set_font("Arial", '', 10)
-        if is_multi:
-            lines = len(pdf.multi_cell(col_right, 10, str(value), split_only=True))
-            h = max(10, lines * 10)
-        else:
-            h = 10
-            
-        # Draw Borders First
-        pdf.set_xy(10, curr_y)
+    pdf.ln(10)
+
+    # Table Layout
+    col_left = 65
+    col_right = 125
+
+    def add_table_row(label, value):
         pdf.set_font("Arial", 'B', 10)
+        # Calculate Height
+        test_pdf = FPDF()
+        test_pdf.add_page()
+        test_pdf.set_font("Arial", '', 10)
+        lines = len(test_pdf.multi_cell(col_right, 8, value, split_only=True))
+        h = max(12, lines * 8)
+        
+        # Start X/Y
+        curr_x = 10
+        curr_y = pdf.get_y()
+        
+        # Left Label
         pdf.cell(col_left, h, f" {label}", border=1)
-        pdf.cell(col_right, h, "", border=1) # Empty box for right side
         
-        # Draw Text inside right box
-        pdf.set_xy(10 + col_left, curr_y)
+        # Right Value (Multi-line)
         pdf.set_font("Arial", '', 10)
-        if is_multi:
-            pdf.multi_cell(col_right, 10, f" {value}")
-        else:
-            pdf.cell(col_right, h, f" {value}")
-        
-        pdf.set_y(curr_y + h) # Reset Y to bottom of row
+        pdf.set_xy(curr_x + col_left, curr_y)
+        pdf.multi_cell(col_right, 8 if lines > 1 else h, f" {value}", border=1)
+        pdf.set_y(curr_y + h)
 
-    # --- DRAW ROWS ---
-    # Row 1: Company Name
-    draw_minutes_row("Name of Company", st.session_state.get('sec_meeting_co_name', client_name))
-
-    # Row 2: Place (Multi-line)
-    place_val = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-    draw_minutes_row("Place of Meeting", place_val, is_multi=True)
-
-    # Row 3: Date and Time
-    m_date = st.session_state.get('sec_meeting_date')
-    fmt_date = m_date.strftime('%d/%m/%Y') if m_date else ""
-    m_time = st.session_state.get('sec_meeting_time', '')
-    draw_minutes_row("Date and Time", f"{fmt_date} at {m_time}")
-
-    # Row 4: Directors Present (Multi-line)
-    num_dirs = st.session_state.get("num_directors", 1)
-    dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
-    dirs_text = "\n ".join(dirs) if dirs else " None Listed"
-    draw_minutes_row("Directors Present", dirs_text, is_multi=True)
+    add_table_row("Name of Company", co_name)
+    add_table_row("Place of Meeting", place)
+    add_table_row("Date and Time", f"{m_date_str} at {m_time}")
+    add_table_row("Directors Present", dirs_text)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
@@ -861,95 +849,57 @@ def master_kyc_form(client_name):
             st.session_state["view"] = "bg_sec_file"
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
-def bg_sec_file_form(client_name):
-    if st.button("← Back to Client Database", key="bg_sec_back"):
-        st.session_state["view"] = "management"
-        st.rerun()
+def create_minutes_pdf(client_name):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Values from Session State
+    co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
+    place = st.session_state.get('sec_meeting_place', "")
+    m_time = st.session_state.get('sec_meeting_time', "")
+    dirs_text = st.session_state.get('sec_dirs_present', "")
+    
+    m_date_obj = st.session_state.get('sec_meeting_date', date.today())
+    m_date_str = m_date_obj.strftime('%d/%m/%Y') if hasattr(m_date_obj, 'strftime') else str(m_date_obj)
 
-  
-    # --- 1. Navigation CSS & Circles ---
-    
+    # Header
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
+    pdf.cell(0, 10, co_name, ln=True, align='C')
+    pdf.ln(10)
 
-    st.markdown("""
-    <style>
-    .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
-    .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
-    .step { text-align: center; z-index: 2; flex: 1; }
-    .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
-    .active-circle { background-color: #2E7D32; color: white; }
-    .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
-    .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
-    </style>
-    
-    <div class="progress-container">
-        <div class="progress-line"></div>
-        <div class="step">
-            <div class="circle active-circle">1</div>
-            <div class="label">Master KYC Form</div>
-        </div>
-        <div class="step">
-            <div class="circle active-circle">2</div>
-            <div class="label">BG Sec File</div>
-        </div>
-        <div class="step">
-            <div class="circle inactive-circle">3</div>
-            <div class="label">Customer Acceptance Form</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    # Back to Database Button
-    
+    # Table Layout
+    col_left = 65
+    col_right = 125
 
-    st.divider()
-    # --- 2. Your Original Inputs (Unchanged) ---
-    st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
-    st.text_input("Name of Company", value=client_name)
-    st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-    
-    dt_col1, dt_col2 = st.columns(2)
-    with dt_col1:
-        inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
-        st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
-    with dt_col2: 
-        st.text_input("Time of Meeting", value="13:47")
+    def add_table_row(label, value):
+        pdf.set_font("Arial", 'B', 10)
+        # Calculate Height
+        test_pdf = FPDF()
+        test_pdf.add_page()
+        test_pdf.set_font("Arial", '', 10)
+        lines = len(test_pdf.multi_cell(col_right, 8, value, split_only=True))
+        h = max(12, lines * 8)
         
-    st.write("**Directors Present**")
-    num_dirs = st.session_state.get("num_directors", 1)
-    default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
-    st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
-    
-    if st.button("SUBMIT NOW", key="bg_submit_btn"): 
-        st.success("Generated!")
+        # Start X/Y
+        curr_x = 10
+        curr_y = pdf.get_y()
+        
+        # Left Label
+        pdf.cell(col_left, h, f" {label}", border=1)
+        
+        # Right Value (Multi-line)
+        pdf.set_font("Arial", '', 10)
+        pdf.set_xy(curr_x + col_left, curr_y)
+        pdf.multi_cell(col_right, 8 if lines > 1 else h, f" {value}", border=1)
+        pdf.set_y(curr_y + h)
 
-    st.divider()
+    add_table_row("Name of Company", co_name)
+    add_table_row("Place of Meeting", place)
+    add_table_row("Date and Time", f"{m_date_str} at {m_time}")
+    add_table_row("Directors Present", dirs_text)
 
-    # --- 3. Bottom Navigation ---
-    col_prev, col_next = st.columns([1, 1])
-    with col_prev:
-        if st.button("⬅️ Back to KYC Form", key="back_to_kyc_footer"):
-            st.session_state["view"] = "kyc_form"
-            st.rerun()
-    with col_next:
-        if st.button("Next Step ➡️", key="next_to_ca"):
-            st.session_state["view"] = "customer_acceptance"
-            st.rerun()
-    # ... inside bg_sec_file_form ...
-    if st.button("SUBMIT AND GENERATE PDF", key=f"btn_gen_minutes_{client_name}"): 
-        try:
-            # This calls the PDF function we created
-            minutes_pdf = create_minutes_pdf(client_name)
-            
-            # This creates the download link
-            st.download_button(
-                label="Download ",
-                data=minutes_pdf,
-                file_name=f"Minutes_{client_name}.pdf",
-                mime="application/pdf",
-                key=f"dl_btn_{client_name}" # Unique key here too!
-            )
-            st.success("Minutes generated successfully!")
-        except Exception as e:
-            st.error(f"Could not generate PDF: {e}")
+    return pdf.output(dest='S').encode('latin-1')
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
