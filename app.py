@@ -559,50 +559,64 @@ def create_pdf_report(client_name):
 def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 12)
     
-    # Header
+    # 1. Header - Always use the state value so it's "Live"
+    co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
+    pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
-    pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
+    pdf.cell(0, 10, co_name, ln=True, align='C')
     pdf.ln(5)
     
-    # Table Styling
-    pdf.set_font("Arial", 'B', 10)
-    col_width_left = 60
-    col_width_right = 130
-    row_height = 10
+    # Setup for Table
+    col_left = 60
+    col_right = 130
+    
+    # Helper to ensure live updates and perfect borders
+    def draw_minutes_row(label, value, is_multi=False):
+        curr_y = pdf.get_y()
+        # Calculate height
+        pdf.set_font("Arial", '', 10)
+        if is_multi:
+            lines = len(pdf.multi_cell(col_right, 10, str(value), split_only=True))
+            h = max(10, lines * 10)
+        else:
+            h = 10
+            
+        # Draw Borders First
+        pdf.set_xy(10, curr_y)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(col_left, h, f" {label}", border=1)
+        pdf.cell(col_right, h, "", border=1) # Empty box for right side
+        
+        # Draw Text inside right box
+        pdf.set_xy(10 + col_left, curr_y)
+        pdf.set_font("Arial", '', 10)
+        if is_multi:
+            pdf.multi_cell(col_right, 10, f" {value}")
+        else:
+            pdf.cell(col_right, h, f" {value}")
+        
+        pdf.set_y(curr_y + h) # Reset Y to bottom of row
 
-    # Row 1: Name of Company
-    pdf.cell(col_width_left, row_height, " Name of Company", border=1)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(col_width_right, row_height, f" {client_name}", border=1, ln=True)
+    # --- DRAW ROWS ---
+    # Row 1: Company Name
+    draw_minutes_row("Name of Company", st.session_state.get('sec_meeting_co_name', client_name))
 
-    # Row 2: Place of Meeting
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height * 2, " Place of Meeting", border=1)
-    pdf.set_font("Arial", '', 10)
-    place = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-    pdf.multi_cell(col_width_right, row_height, f" {place}", border=1)
+    # Row 2: Place (Multi-line)
+    place_val = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    draw_minutes_row("Place of Meeting", place_val, is_multi=True)
 
     # Row 3: Date and Time
-    pdf.set_xy(10, pdf.get_y())
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height, " Date and Time of Meeting", border=1)
-    pdf.set_font("Arial", '', 10)
-    m_date = st.session_state.get('sec_meeting_date', date.today()).strftime('%d/%m/%Y')
-    m_time = st.session_state.get('sec_meeting_time', '13:47')
-    pdf.cell(col_width_right, row_height, f" {m_date} {m_time}", border=1, ln=True)
+    m_date = st.session_state.get('sec_meeting_date')
+    fmt_date = m_date.strftime('%d/%m/%Y') if m_date else ""
+    m_time = st.session_state.get('sec_meeting_time', '')
+    draw_minutes_row("Date and Time", f"{fmt_date} at {m_time}")
 
-    # Row 4: Directors Present
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height * 2, " Directors Present", border=1)
-    pdf.set_font("Arial", '', 10)
-    
+    # Row 4: Directors Present (Multi-line)
     num_dirs = st.session_state.get("num_directors", 1)
     dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
     dirs_text = "\n ".join(dirs) if dirs else " None Listed"
-    
-    pdf.multi_cell(col_width_right, row_height, dirs_text, border=1)
+    draw_minutes_row("Directors Present", dirs_text, is_multi=True)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
@@ -887,7 +901,6 @@ def bg_sec_file_form(client_name):
     
 
     st.divider()
-
     # --- 2. Your Original Inputs (Unchanged) ---
     st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
     st.text_input("Name of Company", value=client_name)
