@@ -849,57 +849,89 @@ def master_kyc_form(client_name):
             st.session_state["view"] = "bg_sec_file"
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
-def create_minutes_pdf(client_name):
-    pdf = FPDF()
-    pdf.add_page()
+def bg_sec_file_form(client_name):
+    # Back button at the top
+    if st.button("← Back to Client Database", key="bg_sec_back"):
+        st.session_state["view"] = "management"
+        st.rerun()
+
+    # --- Progress Bar ---
+    st.markdown("""
+    <style>
+    .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+    .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+    .step { text-align: center; z-index: 2; flex: 1; }
+    .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+    .active-circle { background-color: #2E7D32; color: white; }
+    .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+    .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+    </style>
+    <div class="progress-container">
+        <div class="progress-line"></div>
+        <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
+        <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+        <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
     
-    # Values from Session State
-    co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
-    place = st.session_state.get('sec_meeting_place', "")
-    m_time = st.session_state.get('sec_meeting_time', "")
-    dirs_text = st.session_state.get('sec_dirs_present', "")
+    # --- INPUT SECTION ---
+    st.subheader(f"Minutes Details: {client_name.upper()}")
     
-    m_date_obj = st.session_state.get('sec_meeting_date', date.today())
-    m_date_str = m_date_obj.strftime('%d/%m/%Y') if hasattr(m_date_obj, 'strftime') else str(m_date_obj)
-
-    # Header
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
-    pdf.cell(0, 10, co_name, ln=True, align='C')
-    pdf.ln(10)
-
-    # Table Layout
-    col_left = 65
-    col_right = 125
-
-    def add_table_row(label, value):
-        pdf.set_font("Arial", 'B', 10)
-        # Calculate Height
-        test_pdf = FPDF()
-        test_pdf.add_page()
-        test_pdf.set_font("Arial", '', 10)
-        lines = len(test_pdf.multi_cell(col_right, 8, value, split_only=True))
-        h = max(12, lines * 8)
+    # No pre-existing address string here
+    st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
+    st.text_input("Place of Meeting", value="", placeholder="Enter meeting address...", key="sec_meeting_place")
+    
+    dt_col1, dt_col2 = st.columns(2)
+    with dt_col1:
+        inc_date = st.session_state.get("kyc_inc_date", date.today())
+        st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", key="sec_meeting_date")
+    with dt_col2: 
+        st.text_input("Time of Meeting", value="10:00 AM", key="sec_meeting_time")
         
-        # Start X/Y
-        curr_x = 10
-        curr_y = pdf.get_y()
-        
-        # Left Label
-        pdf.cell(col_left, h, f" {label}", border=1)
-        
-        # Right Value (Multi-line)
-        pdf.set_font("Arial", '', 10)
-        pdf.set_xy(curr_x + col_left, curr_y)
-        pdf.multi_cell(col_right, 8 if lines > 1 else h, f" {value}", border=1)
-        pdf.set_y(curr_y + h)
+    # Directors Logic
+    num_dirs = st.session_state.get("num_directors", 1)
+    kyc_dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
+    dir_list_str = ", ".join([d for d in kyc_dirs if d])
+    
+    st.write("**Directors Present**")
+    st.text_area("Directors List", value=dir_list_str, height=80, key="sec_dirs_present", label_visibility="collapsed")
 
-    add_table_row("Name of Company", co_name)
-    add_table_row("Place of Meeting", place)
-    add_table_row("Date and Time", f"{m_date_str} at {m_time}")
-    add_table_row("Directors Present", dirs_text)
+    # --- KYC STYLE ACTION BUTTONS ---
+    st.write("### Actions")
+    act_col1, act_col2 = st.columns(2)
+    
+    with act_col1:
+        if st.button("💾 Save Minutes Data", use_container_width=True):
+            st.success("Minutes data saved to session!")
+            
+    with act_col2:
+        try:
+            # Generate PDF using the function below
+            pdf_data = create_minutes_pdf(client_name)
+            st.download_button(
+                label="📄 Generate PDF Report",
+                data=pdf_data,
+                file_name=f"Minutes_{client_name}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="btn_download_minutes"
+            )
+        except Exception as e:
+            st.error(f"Error generating PDF: {e}")
 
-    return pdf.output(dest='S').encode('latin-1')
+    # --- FOOTER NAVIGATION ---
+    st.divider()
+    f_prev, f_spacer, f_next = st.columns([1, 2, 1])
+    with f_prev:
+        if st.button("⬅️ Back to KYC", key="f_nav_back"):
+            st.session_state["view"] = "kyc_form"
+            st.rerun()
+    with f_next:
+        if st.button("Next Step ➡️", key="f_nav_next"):
+            st.session_state["view"] = "customer_acceptance"
+            st.rerun()
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
@@ -1026,8 +1058,7 @@ if check_password():
             st.info("No clients found.")
 
     # --- VIEWS FOR KYC FORM ---
-elif st.session_state["view"] == "kyc_form":
+    elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
-
-elif st.session_state["view"] == "bg_sec_file":
+    elif st.session_state["view"] == "bg_sec_file":
         bg_sec_file_form(st.session_state["selected_client_name"])
