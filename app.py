@@ -848,10 +848,18 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # 1. --- INTERNAL HTML/CSS (Ensures it never disappears) ---
+    # --- 1. INITIALIZE DATA (The Secret to Persistence) ---
+    # This prevents the fields from resetting to empty on every rerun
+    if "sec_meeting_place" not in st.session_state:
+        st.session_state["sec_meeting_place"] = ""
+    if "sec_meeting_time" not in st.session_state:
+        st.session_state["sec_meeting_time"] = "10:00 AM"
+    if "sec_meeting_date" not in st.session_state:
+        st.session_state["sec_meeting_date"] = date.today()
+
+    # --- 2. HTML & CSS (Injected every rerun) ---
     st.markdown("""
     <style>
-    /* Progress Bar Styling */
     .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
     .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
     .step { text-align: center; z-index: 2; flex: 1; }
@@ -859,97 +867,75 @@ def bg_sec_file_form(client_name):
     .active-circle { background-color: #2E7D32; color: white; }
     .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
     .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
-    
-    /* Button Styling to match KYC */
-    .stButton>button { border-radius: 5px; height: 3em; transition: 0.3s; }
     </style>
     
     <div class="progress-container">
         <div class="progress-line"></div>
-        <div class="step">
-            <div class="circle active-circle">1</div>
-            <div class="label">Master KYC Form</div>
-        </div>
-        <div class="step">
-            <div class="circle active-circle">2</div>
-            <div class="label">BG Sec File</div>
-        </div>
-        <div class="step">
-            <div class="circle inactive-circle">3</div>
-            <div class="label">Customer Acceptance</div>
-        </div>
+        <div class="step"><div class="circle active-circle">1</div><div class="label">Master KYC Form</div></div>
+        <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+        <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance</div></div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. --- HEADER & BACK BUTTON ---
-    if st.button("← Back to Client Database", key="bg_back_top"):
-        st.session_state["view"] = "management"
-        st.rerun()
-
-    st.divider()
+    # --- 3. UI INPUTS ---
     st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
-
-    # 3. --- INPUT FIELDS (Keys ensure data is saved in session_state) ---
+    
+    # We use 'key' to bind directly to session_state
+    # We use 'value=st.session_state[key]' to ensure the UI shows the SAVED data
     st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
     
-    # Starting with empty value for address as requested
-    st.text_input("Place of Meeting", value="", placeholder="Enter meeting address here...", key="sec_meeting_place")
-    
+    st.text_input("Place of Meeting", 
+                  value=st.session_state["sec_meeting_place"], 
+                  key="sec_meeting_place_input") # Temporary key to capture input
+
     col1, col2 = st.columns(2)
     with col1:
-        # Defaults to KYC incorporation date if available
-        default_date = st.session_state.get("kyc_inc_date", date.today())
-        st.date_input("Date of Meeting", value=default_date, format="DD/MM/YYYY", key="sec_meeting_date")
+        st.date_input("Date of Meeting", 
+                      value=st.session_state["sec_meeting_date"], 
+                      key="sec_meeting_date_input")
     with col2:
-        st.text_input("Time of Meeting", value="10:00 AM", key="sec_meeting_time")
+        st.text_input("Time of Meeting", 
+                      value=st.session_state["sec_meeting_time"], 
+                      key="sec_meeting_time_input")
 
-    # Directors Present (Automatic fetch from KYC)
+    # Directors (Pulled from Master KYC)
     num_dirs = st.session_state.get("num_directors", 1)
     d_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
     current_dirs = ", ".join([d for d in d_list if d])
-    
-    st.write("**Directors Present**")
-    st.text_area("Directors List", value=current_dirs, height=100, key="sec_dirs_present", label_visibility="collapsed")
+    st.text_area("Directors Present", value=current_dirs, height=100, key="sec_dirs_present")
 
     st.divider()
 
-    # 4. --- ACTION BUTTONS (KYC STYLE) ---
-    st.write("#### Actions")
-    act_col1, act_col2 = st.columns(2)
+    # --- 4. THE ACTION BUTTONS ---
+    col_save, col_gen = st.columns(2)
+    
+    with col_save:
+        if st.button("💾 Save & Lock Information", use_container_width=True):
+            # Manually sync the 'input' keys to the master 'storage' keys
+            st.session_state["sec_meeting_place"] = st.session_state["sec_meeting_place_input"]
+            st.session_state["sec_meeting_time"] = st.session_state["sec_meeting_time_input"]
+            st.session_state["sec_meeting_date"] = st.session_state["sec_meeting_date_input"]
+            st.success("Data locked into memory!")
+            st.rerun()
 
-    with act_col1:
-        if st.button("💾 Save Minutes Information", use_container_width=True, key="save_minutes_internal"):
-            st.success("Information synced successfully!")
-            st.rerun() # Forces a refresh so PDF function sees the new data
-
-    with act_col2:
+    with col_gen:
+        # Generate PDF using the LOCKED session state data
         try:
-            # Generate PDF data immediately before rendering the download button
-            minutes_pdf_bytes = create_minutes_pdf(client_name)
+            pdf_bytes = create_minutes_pdf(client_name)
             st.download_button(
                 label="📄 Generate PDF Report",
-                data=minutes_pdf_bytes,
+                data=pdf_bytes,
                 file_name=f"Minutes_{client_name}.pdf",
                 mime="application/pdf",
-                use_container_width=True,
-                key="dl_minutes_button"
+                use_container_width=True
             )
         except Exception as e:
-            st.error(f"Please fill in details to generate PDF. ({e})")
+            st.error("Click 'Save' first to initialize PDF data.")
 
-    # 5. --- FOOTER NAVIGATION ---
-    st.divider()
-    f_prev, f_spacer, f_next = st.columns([1, 2, 1])
-    with f_prev:
-        if st.button("⬅️ Back to KYC Form", key="f_nav_back"):
-            st.session_state["view"] = "kyc_form"
-            st.rerun()
-    with f_next:
-        if st.button("Next Step ➡️", key="f_nav_next"):
-            st.session_state["view"] = "customer_acceptance"
-            st.rerun()
-# --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
-
+    # --- 5. NAVIGATION ---
+    if st.button("⬅️ Back to KYC"):
+        st.session_state["view"] = "kyc_form"
+        st.rerun()
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
