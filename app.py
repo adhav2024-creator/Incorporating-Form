@@ -843,15 +843,23 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- 1. INITIALIZE / LOAD DATA ---
-    # This block ensures that when you 'Come Back', the data is pulled from memory
-    if f"loaded_sec_{client_name}" not in st.session_state:
-        # This calls your database.py function to pull the JSON from SQLite
+    # --- STEP 1: LOAD & INITIALIZE DATA ---
+    # We call load_client_data first. It puts values into st.session_state
+    if f"init_done_{client_name}" not in st.session_state:
         load_client_data(client_name)
-        # Mark as loaded so it doesn't loop infinitely
-        st.session_state[f"loaded_sec_{client_name}"] = True
+        # We set defaults for keys that might not exist in the DB yet
+        defaults = {
+            "sec_meeting_place": "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787",
+            "sec_meeting_time": "13:47",
+            "sec_dirs_manual": ""
+        }
+        for key, val in defaults.items():
+            if key not in st.session_state:
+                st.session_state[key] = val
+        
+        st.session_state[f"init_done_{client_name}"] = True
 
-    # --- 2. PROGRESS BAR & STYLING ---
+    # --- STEP 2: UI STYLING ---
     st.markdown("""
     <style>
     .progress-container { display: flex; justify-content: space-between; padding: 20px 0; position: relative; }
@@ -868,73 +876,50 @@ def bg_sec_file_form(client_name):
     </div>
     """, unsafe_allow_html=True)
 
-    # Top Navigation
-    if st.button("← Back to Client Database", key="top_back_db"):
+    if st.button("← Back to Client Database", key="top_back"):
         st.session_state["view"] = "management"
         st.rerun()
 
     st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
 
-    # --- 3. INPUT FIELDS (Bound to session_state) ---
+    # --- STEP 3: WIDGETS (Linked by Key) ---
+    # We use 'key' only. Streamlit connects it to the session_state we initialized above.
     st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
-    
-    # Using 'key' here means Streamlit looks into session_state automatically
     st.text_input("Place of Meeting", key="sec_meeting_place")
     
-    c1, c2 = st.columns(2)
-    with c1:
+    col1, col2 = st.columns(2)
+    with col1:
         st.date_input("Date of Meeting", key="sec_meeting_date")
-    with c2:
+    with col2:
         st.text_input("Time of Meeting", key="sec_meeting_time")
 
-    st.write("**Directors Present**")
-    # Manual separate input for directors
-    st.text_area("Enter names of directors attending...", 
-                 key="sec_dirs_manual", 
-                 height=100, 
-                 label_visibility="collapsed")
+    st.write("**Directors Present** (Separate Input)")
+    st.text_area("List directors attending:", key="sec_dirs_manual", height=100, label_visibility="collapsed")
 
     st.divider()
 
-    # --- 4. ACTION BUTTONS ---
-    col_save, col_pdf = st.columns(2)
-    with col_save:
+    # --- STEP 4: ACTION BUTTONS ---
+    btn_col1, btn_col2 = st.columns(2)
+    with btn_col1:
         if st.button("💾 Save Minutes Info", use_container_width=True):
-            # 1. Force the values into session state (just in case)
-            # This ensures the dictionary has the latest values before saving
-            st.session_state["sec_meeting_place"] = st.session_state.get("sec_meeting_place", "")
-            st.session_state["sec_dirs_manual"] = st.session_state.get("sec_dirs_manual", "")
-            
-            # 2. Call your existing save function
+            # No manual assignment here! save_client_data reads from session_state.
             save_client_data(client_name)
-            
-            # 3. Success message and rerun to lock it in
-            st.success(f"Minutes for {client_name} saved successfully!")
+            st.success("Information Saved!")
             st.rerun()
 
-    with col_pdf:
+    with btn_col2:
         try:
             pdf_bytes = create_minutes_pdf(client_name)
-            st.download_button("📄 Generate PDF Report", 
-                               data=pdf_bytes, 
-                               file_name=f"Minutes_{client_name}.pdf", 
-                               mime="application/pdf", 
-                               use_container_width=True)
+            st.download_button("📄 Generate PDF Report", data=pdf_bytes, 
+                               file_name=f"Minutes_{client_name}.pdf", mime="application/pdf", use_container_width=True)
         except Exception as e:
-            st.error(f"Save data first to generate PDF correctly.")
+            st.error("Please ensure all fields are filled.")
 
-    # --- 5. BOTTOM NAVIGATION ---
+    # Bottom Nav
     st.divider()
-    f_back, f_next = st.columns(2)
-    with f_back:
-        if st.button("⬅️ Back to Master KYC", key="bot_back_kyc"):
-            st.session_state["view"] = "kyc_form"
-            st.rerun()
-    with f_next:
-        if st.button("Next: Acceptance ➡️", key="bot_next"):
-            st.session_state["view"] = "customer_acceptance"
-            st.rerun()
-# --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
+    if st.button("⬅️ Back to Master KYC"):
+        st.session_state["view"] = "kyc_form"
+        st.rerun()
 
 def check_password():
     if "password_correct" not in st.session_state:
