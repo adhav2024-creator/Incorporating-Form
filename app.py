@@ -556,59 +556,50 @@ def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
     
-    # --- GET LATEST DATA FROM SESSION STATE ---
-    # We pull directly from keys to ensure the PDF isn't "Old"
+    # Fetch current values from the specific keys we created above
     co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
     place = st.session_state.get('sec_meeting_place', "")
-    m_time = st.session_state.get('sec_meeting_time', "13:47")
-    
-    # Date formatting
-    m_date_obj = st.session_state.get('sec_meeting_date', date.today())
-    m_date_str = m_date_obj.strftime('%d/%m/%Y')
+    m_date = st.session_state.get('sec_meeting_date', date.today()).strftime('%d/%m/%Y')
+    m_time = st.session_state.get('sec_meeting_time', '10:00 AM')
+    # Pull from the NEW separate manual input
+    dirs_manual = st.session_state.get('sec_dirs_manual', "")
 
-    # Directors list
-    num_dirs = st.session_state.get("num_directors", 1)
-    dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
-    dirs_text = ", ".join(dirs) if dirs else "None Listed"
-
-    # Header
+    # PDF Layout
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
     pdf.cell(0, 10, co_name, ln=True, align='C')
     pdf.ln(10)
 
-    # --- THE DYNAMIC TABLE HELPER ---
-    def add_table_row(label, value):
+    def draw_wrapped_row(label, value):
         pdf.set_font("Arial", 'B', 10)
-        col_l, col_r = 60, 130
+        col_1, col_2 = 60, 130
         
-        # Calculate how many lines the value needs
+        # Calculate height needed for the right-side text
         pdf.set_font("Arial", '', 10)
-        lines = pdf.multi_cell(col_r, 10, f" {value}", split_only=True)
-        row_h = max(12, len(lines) * 10) # Minimum height of 12
+        line_count = len(pdf.multi_cell(col_2, 10, f" {value}", split_only=True))
+        row_h = max(10, line_count * 10)
         
-        curr_x = pdf.get_x()
-        curr_y = pdf.get_y()
+        # Capture current Y to draw both boxes side-by-side
+        start_y = pdf.get_y()
         
-        # Draw Left Cell (Label)
+        # Draw Left Label
         pdf.set_font("Arial", 'B', 10)
-        pdf.multi_cell(col_l, row_h, f" {label}", border=1)
+        pdf.multi_cell(col_1, row_h, f" {label}", border=1)
         
-        # Draw Right Cell (Value) - Move cursor back to top right of this row
+        # Move back to the top-right to draw the value
+        pdf.set_xy(10 + col_1, start_y)
         pdf.set_font("Arial", '', 10)
-        pdf.set_xy(curr_x + col_l, curr_y)
-        pdf.multi_cell(col_r, 10 if len(lines) > 1 else row_h, f" {value}", border=1)
+        pdf.multi_cell(col_2, 10 if line_count > 1 else row_h, f" {value}", border=1)
         
-        # Ensure next row starts below the tallest cell
-        pdf.set_y(curr_y + row_h)
+        # Reset Y to the bottom of this row
+        pdf.set_y(start_y + row_h)
 
-    # Build Table
-    add_table_row("Name of Company", co_name)
-    add_table_row("Place of Meeting", place)
-    add_table_row("Date and Time", f"{m_date_str} {m_time}")
-    add_table_row("Directors Present", dirs_text)
+    # Add the rows
+    draw_wrapped_row("Name of Company", co_name)
+    draw_wrapped_row("Place of Meeting", place)
+    draw_wrapped_row("Date and Time", f"{m_date} at {m_time}")
+    draw_wrapped_row("Directors Present", dirs_manual)
 
-    return pdf.output(dest='S').encode('latin-1')
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
@@ -853,14 +844,13 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # CSS for the progress bar (as per your screenshots)
+    # CSS remains at the top
     st.markdown("""
     <style>
     .progress-container { display: flex; justify-content: space-between; padding: 20px 0; position: relative; }
     .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
     .step { text-align: center; z-index: 2; flex: 1; }
     .circle { width: 40px; height: 40px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; }
-    .active { background-color: #2E7D32; }
     .label { margin-top: 8px; font-size: 12px; font-weight: bold; color: #2E7D32; }
     </style>
     <div class="progress-container">
@@ -871,48 +861,49 @@ def bg_sec_file_form(client_name):
     </div>
     """, unsafe_allow_html=True)
 
-    st.subheader(f"Minutes Details: {client_name.upper()}")
+    st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
 
-    # --- INPUTS ---
+    # --- INDEPENDENT INPUTS ---
     st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
     
-    # We leave value="" so it's empty by default, allowing user input
-    st.text_input("Place of Meeting", value="", placeholder="Enter meeting location...", key="sec_meeting_place")
+    # New separate input for Place
+    st.text_input("Place of Meeting", placeholder="Enter address...", key="sec_meeting_place")
     
     c1, c2 = st.columns(2)
     with c1:
-        st.date_input("Date of Meeting", value=date.today(), key="sec_meeting_date")
+        st.date_input("Date of Meeting", key="sec_meeting_date")
     with c2:
-        st.text_input("Time of Meeting", value="13:47", key="sec_meeting_time")
+        st.text_input("Time of Meeting", value="10:00 AM", key="sec_meeting_time")
+
+    # --- SEPARATE DIRECTORS INPUT ---
+    st.write("**Directors Present**")
+    # This is now a completely separate field not linked to the KYC list
+    st.text_area("Enter names of directors attending...", 
+                 placeholder="Example: JOHN DOE, JANE SMITH", 
+                 key="sec_dirs_manual", 
+                 height=100, 
+                 label_visibility="collapsed")
 
     st.divider()
 
-    # --- ACTIONS ---
-    col_a, col_b = st.columns(2)
-    with col_a:
-        if st.button("💾 Save Client Information", use_container_width=True):
-            # This triggers the save logic and REFRESHES the app 
-            # so the PDF generator sees the new 'Place of Meeting'
+    col_save, col_pdf = st.columns(2)
+    with col_save:
+        if st.button("💾 Save Minutes Info", use_container_width=True):
+            # This triggers your save_client_data function (SQLite/JSON)
             save_client_data(client_name)
-            st.success("Data synced!")
-            st.rerun()
+            st.success("Information Locked!")
+            st.rerun() # Refresh to update PDF data
 
-    with col_b:
+    with col_pdf:
         try:
-            pdf_data = create_minutes_pdf(client_name)
-            st.download_button(
-                label="📄 Generate PDF Report",
-                data=pdf_data,
-                file_name=f"Minutes_{client_name}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            pdf_bytes = create_minutes_pdf(client_name)
+            st.download_button("📄 Generate PDF Report", 
+                               data=pdf_bytes, 
+                               file_name=f"Minutes_{client_name}.pdf", 
+                               mime="application/pdf", 
+                               use_container_width=True)
         except Exception as e:
             st.error(f"Error: {e}")
-
-    if st.button("Next: Customer Acceptance ➡️"):
-        st.session_state["view"] = "customer_acceptance"
-        st.rerun()
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
