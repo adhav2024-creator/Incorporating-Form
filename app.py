@@ -5,6 +5,7 @@ from datetime import date
 from fpdf import FPDF
 import sqlite3
 import json
+init_db()
 st.set_page_config(page_title="Audit Client Tracker", layout="wide")
 # --- HELPER FOR PERFECT RECTANGLE TABLES ---
 def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
@@ -338,11 +339,6 @@ def create_pdf_report(client_name):
     bank_curr = st.session_state.get('bank_account_currency', '')
     pdf.cell(125, 10, str(bank_curr), border=1, ln=True)
     pdf.ln(8)
-    # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS ---
-  # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed Multi-Column) ---
-    # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Fixed) ---
-   # --- 13. CURRENT EMPLOYMENT/BUSINESS PARTICULARS (Final Fix) ---
-    # --- 13. CURRENT EMPLOYMENT (Locked Borders Fix) ---
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
         if pdf.get_y() > 200: pdf.add_page()
