@@ -844,7 +844,14 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # CSS remains at the top
+    # --- 1. INITIALIZE / LOAD DATA ---
+    # This block ensures that when you 'Come Back', the data is pulled from memory
+    if f"loaded_{client_name}" not in st.session_state:
+        # If your load_client_data function is working, this fills st.session_state
+        load_client_data(client_name) 
+        st.session_state[f"loaded_{client_name}"] = True
+
+    # --- 2. PROGRESS BAR & STYLING ---
     st.markdown("""
     <style>
     .progress-container { display: flex; justify-content: space-between; padding: 20px 0; position: relative; }
@@ -861,38 +868,42 @@ def bg_sec_file_form(client_name):
     </div>
     """, unsafe_allow_html=True)
 
+    # Top Navigation
+    if st.button("← Back to Client Database", key="top_back_db"):
+        st.session_state["view"] = "management"
+        st.rerun()
+
     st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
 
-    # --- INDEPENDENT INPUTS ---
+    # --- 3. INPUT FIELDS (Bound to session_state) ---
     st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
     
-    # New separate input for Place
-    st.text_input("Place of Meeting", placeholder="Enter address...", key="sec_meeting_place")
+    # Using 'key' here means Streamlit looks into session_state automatically
+    st.text_input("Place of Meeting", key="sec_meeting_place")
     
     c1, c2 = st.columns(2)
     with c1:
         st.date_input("Date of Meeting", key="sec_meeting_date")
     with c2:
-        st.text_input("Time of Meeting", value="10:00 AM", key="sec_meeting_time")
+        st.text_input("Time of Meeting", key="sec_meeting_time")
 
-    # --- SEPARATE DIRECTORS INPUT ---
     st.write("**Directors Present**")
-    # This is now a completely separate field not linked to the KYC list
+    # Manual separate input for directors
     st.text_area("Enter names of directors attending...", 
-                 placeholder="Example: JOHN DOE, JANE SMITH", 
                  key="sec_dirs_manual", 
                  height=100, 
                  label_visibility="collapsed")
 
     st.divider()
 
+    # --- 4. ACTION BUTTONS ---
     col_save, col_pdf = st.columns(2)
     with col_save:
-        if st.button("💾 Save Minutes Info", use_container_width=True):
-            # This triggers your save_client_data function (SQLite/JSON)
+        if st.button("💾 Save & Sync Data", use_container_width=True):
+            # This saves the current session_state to your 'clients_kyc.db'
             save_client_data(client_name)
-            st.success("Information Locked!")
-            st.rerun() # Refresh to update PDF data
+            st.success("Information saved to database!")
+            st.rerun()
 
     with col_pdf:
         try:
@@ -903,7 +914,19 @@ def bg_sec_file_form(client_name):
                                mime="application/pdf", 
                                use_container_width=True)
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Save data first to generate PDF correctly.")
+
+    # --- 5. BOTTOM NAVIGATION ---
+    st.divider()
+    f_back, f_next = st.columns(2)
+    with f_back:
+        if st.button("⬅️ Back to Master KYC", key="bot_back_kyc"):
+            st.session_state["view"] = "kyc_form"
+            st.rerun()
+    with f_next:
+        if st.button("Next: Acceptance ➡️", key="bot_next"):
+            st.session_state["view"] = "customer_acceptance"
+            st.rerun()
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
