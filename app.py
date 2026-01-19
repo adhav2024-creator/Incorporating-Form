@@ -50,14 +50,13 @@ def save_client_data(client_name):
     # We exclude internal keys, file uploaders, and buttons
     excluded_types = ('btn', 'next', 'back', 'submit', 'gen_')
     
+   # Ensure 'sec_' keys are ALLOWED
     save_data = {
         k: v for k, v in st.session_state.items() 
         if not k.startswith('__') 
-        and not k.startswith('emp_cv_')
-        and not any(word in k.lower() for word in excluded_types)
-        and k != "view" # Don't save the current page view
+        and k != "view" 
+        # Make sure we don't exclude keys starting with 'sec_'
     }
-    
     json_data = json.dumps(save_data, default=str)
     
     c.execute("INSERT OR REPLACE INTO kyc_records VALUES (?, ?)", (client_name, json_data))
@@ -846,10 +845,11 @@ def master_kyc_form(client_name):
 def bg_sec_file_form(client_name):
     # --- 1. INITIALIZE / LOAD DATA ---
     # This block ensures that when you 'Come Back', the data is pulled from memory
-    if f"loaded_{client_name}" not in st.session_state:
-        # If your load_client_data function is working, this fills st.session_state
-        load_client_data(client_name) 
-        st.session_state[f"loaded_{client_name}"] = True
+    if f"loaded_sec_{client_name}" not in st.session_state:
+        # This calls your database.py function to pull the JSON from SQLite
+        load_client_data(client_name)
+        # Mark as loaded so it doesn't loop infinitely
+        st.session_state[f"loaded_sec_{client_name}"] = True
 
     # --- 2. PROGRESS BAR & STYLING ---
     st.markdown("""
@@ -899,10 +899,17 @@ def bg_sec_file_form(client_name):
     # --- 4. ACTION BUTTONS ---
     col_save, col_pdf = st.columns(2)
     with col_save:
-        if st.button("💾 Save & Sync Data", use_container_width=True):
-            # This saves the current session_state to your 'clients_kyc.db'
+        if st.button("💾 Save Minutes Info", use_container_width=True):
+            # 1. Force the values into session state (just in case)
+            # This ensures the dictionary has the latest values before saving
+            st.session_state["sec_meeting_place"] = st.session_state.get("sec_meeting_place", "")
+            st.session_state["sec_dirs_manual"] = st.session_state.get("sec_dirs_manual", "")
+            
+            # 2. Call your existing save function
             save_client_data(client_name)
-            st.success("Information saved to database!")
+            
+            # 3. Success message and rerun to lock it in
+            st.success(f"Minutes for {client_name} saved successfully!")
             st.rerun()
 
     with col_pdf:
