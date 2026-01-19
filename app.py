@@ -843,84 +843,99 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- STEP 1: LOAD & INITIALIZE DATA ---
-    # We call load_client_data first. It puts values into st.session_state
-    if f"init_done_{client_name}" not in st.session_state:
-        load_client_data(client_name)
-        # We set defaults for keys that might not exist in the DB yet
-        defaults = {
-            "sec_meeting_place": "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787",
-            "sec_meeting_time": "13:47",
-            "sec_dirs_manual": ""
-        }
-        for key, val in defaults.items():
-            if key not in st.session_state:
-                st.session_state[key] = val
-        
-        st.session_state[f"init_done_{client_name}"] = True
+    # --- 1. DATA LOADING LOGIC (FOLLOWING MASTER KYC) ---
+    # This ensures that when you come back from Client DB, info is pre-filled
+    if f"loaded_sec_{client_name}" not in st.session_state:
+        # Assuming load_client_data handles fetching all keys for this client
+        if load_client_data(client_name):
+            st.session_state[f"loaded_sec_{client_name}"] = True
+            st.rerun()
 
-    # --- STEP 2: UI STYLING ---
-    st.markdown("""
-    <style>
-    .progress-container { display: flex; justify-content: space-between; padding: 20px 0; position: relative; }
-    .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
-    .step { text-align: center; z-index: 2; flex: 1; }
-    .circle { width: 40px; height: 40px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; }
-    .label { margin-top: 8px; font-size: 12px; font-weight: bold; color: #2E7D32; }
-    </style>
-    <div class="progress-container">
-        <div class="progress-line"></div>
-        <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
-        <div class="step"><div class="circle">2</div><div class="label">BG Sec File</div></div>
-        <div class="step"><div class="circle" style="background-color: white; color: #2E7D32; border: 2px solid #2E7D32;">3</div><div class="label">Customer Acceptance</div></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if st.button("← Back to Client Database", key="top_back"):
+    # --- 2. NAVIGATION & PROGRESS BAR ---
+    if st.button("← Back to Client Database"):
+        if f"loaded_sec_{client_name}" in st.session_state:
+            del st.session_state[f"loaded_sec_{client_name}"]
         st.session_state["view"] = "management"
         st.rerun()
 
-    st.write(f"### FIRST DIRECTORS' MINUTES - {client_name.upper()}")
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # --- STEP 3: WIDGETS (Linked by Key) ---
-    # We use 'key' only. Streamlit connects it to the session_state we initialized above.
+    st.title(f"BG Sec File: {client_name}")
+
+    # --- 3. MINUTES INPUT FIELDS ---
+    st.write("### FIRST DIRECTORS' MINUTES")
+    
     st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
-    st.text_input("Place of Meeting", key="sec_meeting_place")
+    
+    # We use keys here so data is automatically synced to session_state
+    st.text_area("Place of Meeting", key="sec_meeting_place", height=70)
     
     col1, col2 = st.columns(2)
     with col1:
-        st.date_input("Date of Meeting", key="sec_meeting_date")
+        st.date_input("Date of Meeting", key="sec_meeting_date", format="DD/MM/YYYY")
     with col2:
-        st.text_input("Time of Meeting", key="sec_meeting_time")
+        st.text_input("Time of Meeting", key="sec_meeting_time", value="13:47")
 
-    st.write("**Directors Present** (Separate Input)")
-    st.text_area("List directors attending:", key="sec_dirs_manual", height=100, label_visibility="collapsed")
+    st.divider()
+    
+    # SEPARATE INPUT FOR DIRECTORS
+    st.write("### DIRECTORS PRESENT")
+    st.text_area("Enter names of directors attending (separated by commas)", 
+                 key="sec_dirs_present", 
+                 placeholder="e.g. JOHN DOE, JANE SMITH",
+                 height=100)
 
     st.divider()
 
-    # --- STEP 4: ACTION BUTTONS ---
-    btn_col1, btn_col2 = st.columns(2)
-    with btn_col1:
-        if st.button("💾 Save Minutes Info", use_container_width=True):
-            # No manual assignment here! save_client_data reads from session_state.
+    # --- 4. FINALIZE SECTION (MATCHING MASTER KYC INTERFACE) ---
+    st.subheader("Finalize Application")
+    col_save, col_pdf = st.columns(2)
+
+    with col_save:
+        if st.button("💾 Save Client Information"):
+            # Saves everything in session_state (including our new 'sec_' keys)
             save_client_data(client_name)
-            st.success("Information Saved!")
-            st.rerun()
+            st.success("Information Saved Successfully!")
 
-    with btn_col2:
-        try:
-            pdf_bytes = create_minutes_pdf(client_name)
-            st.download_button("📄 Generate PDF Report", data=pdf_bytes, 
-                               file_name=f"Minutes_{client_name}.pdf", mime="application/pdf", use_container_width=True)
-        except Exception as e:
-            st.error("Please ensure all fields are filled.")
+    with col_pdf:
+        if st.button("📄 Generate PDF Report"):
+            try:
+                # This calls the fixed PDF function that won't overlap text
+                pdf_bytes = create_minutes_pdf(client_name)
+                st.download_button(
+                    "📥 CLICK TO DOWNLOAD PDF", 
+                    data=pdf_bytes, 
+                    file_name=f"Minutes_{client_name}.pdf", 
+                    mime="application/pdf"
+                )
+                st.success("Minutes Generated Successfully!")
+            except Exception as e:
+                st.error(f"Error preparing PDF: {e}")
 
-    # Bottom Nav
     st.divider()
-    if st.button("⬅️ Back to Master KYC"):
-        st.session_state["view"] = "kyc_form"
-        st.rerun()
 
+    # Navigation to Next Section
+    col_left, col_right = st.columns([4, 1])
+    with col_right:
+        if st.button("Next: Acceptance ➡️", key="next_to_acceptance"):
+            st.session_state["view"] = "customer_acceptance"
+            st.rerun()
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
