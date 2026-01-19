@@ -555,51 +555,60 @@ def create_pdf_report(client_name):
 def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 12)
     
-    # Header
-    pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
-    pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
-    pdf.ln(5)
+    # --- GET LATEST DATA FROM SESSION STATE ---
+    # We pull directly from keys to ensure the PDF isn't "Old"
+    co_name = st.session_state.get('sec_meeting_co_name', client_name).upper()
+    place = st.session_state.get('sec_meeting_place', "")
+    m_time = st.session_state.get('sec_meeting_time', "13:47")
     
-    # Table Styling
-    pdf.set_font("Arial", 'B', 10)
-    col_width_left = 60
-    col_width_right = 130
-    row_height = 10
+    # Date formatting
+    m_date_obj = st.session_state.get('sec_meeting_date', date.today())
+    m_date_str = m_date_obj.strftime('%d/%m/%Y')
 
-    # Row 1: Name of Company
-    pdf.cell(col_width_left, row_height, " Name of Company", border=1)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(col_width_right, row_height, f" {client_name}", border=1, ln=True)
-
-    # Row 2: Place of Meeting
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height * 2, " Place of Meeting", border=1)
-    pdf.set_font("Arial", '', 10)
-    place = st.session_state.get('sec_meeting_place', "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-    pdf.multi_cell(col_width_right, row_height, f" {place}", border=1)
-
-    # Row 3: Date and Time
-    pdf.set_xy(10, pdf.get_y())
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height, " Date and Time of Meeting", border=1)
-    pdf.set_font("Arial", '', 10)
-    m_date = st.session_state.get('sec_meeting_date', date.today()).strftime('%d/%m/%Y')
-    m_time = st.session_state.get('sec_meeting_time', '13:47')
-    pdf.cell(col_width_right, row_height, f" {m_date} {m_time}", border=1, ln=True)
-
-    # Row 4: Directors Present
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(col_width_left, row_height * 2, " Directors Present", border=1)
-    pdf.set_font("Arial", '', 10)
-    
+    # Directors list
     num_dirs = st.session_state.get("num_directors", 1)
     dirs = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}")]
-    dirs_text = "\n ".join(dirs) if dirs else " None Listed"
-    
-    pdf.multi_cell(col_width_right, row_height, dirs_text, border=1)
+    dirs_text = ", ".join(dirs) if dirs else "None Listed"
 
+    # Header
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
+    pdf.cell(0, 10, co_name, ln=True, align='C')
+    pdf.ln(10)
+
+    # --- THE DYNAMIC TABLE HELPER ---
+    def add_table_row(label, value):
+        pdf.set_font("Arial", 'B', 10)
+        col_l, col_r = 60, 130
+        
+        # Calculate how many lines the value needs
+        pdf.set_font("Arial", '', 10)
+        lines = pdf.multi_cell(col_r, 10, f" {value}", split_only=True)
+        row_h = max(12, len(lines) * 10) # Minimum height of 12
+        
+        curr_x = pdf.get_x()
+        curr_y = pdf.get_y()
+        
+        # Draw Left Cell (Label)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.multi_cell(col_l, row_h, f" {label}", border=1)
+        
+        # Draw Right Cell (Value) - Move cursor back to top right of this row
+        pdf.set_font("Arial", '', 10)
+        pdf.set_xy(curr_x + col_l, curr_y)
+        pdf.multi_cell(col_r, 10 if len(lines) > 1 else row_h, f" {value}", border=1)
+        
+        # Ensure next row starts below the tallest cell
+        pdf.set_y(curr_y + row_h)
+
+    # Build Table
+    add_table_row("Name of Company", co_name)
+    add_table_row("Place of Meeting", place)
+    add_table_row("Date and Time", f"{m_date_str} {m_time}")
+    add_table_row("Directors Present", dirs_text)
+
+    return pdf.output(dest='S').encode('latin-1')
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
@@ -844,95 +853,66 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    if st.button("← Back to Client Database", key="bg_sec_back"):
-        st.session_state["view"] = "management"
-        st.rerun()
-
-  
-    # --- 1. Navigation CSS & Circles ---
-    
-
+    # CSS for the progress bar (as per your screenshots)
     st.markdown("""
     <style>
-    .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+    .progress-container { display: flex; justify-content: space-between; padding: 20px 0; position: relative; }
     .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
     .step { text-align: center; z-index: 2; flex: 1; }
-    .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
-    .active-circle { background-color: #2E7D32; color: white; }
-    .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
-    .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+    .circle { width: 40px; height: 40px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; }
+    .active { background-color: #2E7D32; }
+    .label { margin-top: 8px; font-size: 12px; font-weight: bold; color: #2E7D32; }
     </style>
-    
     <div class="progress-container">
         <div class="progress-line"></div>
-        <div class="step">
-            <div class="circle active-circle">1</div>
-            <div class="label">Master KYC Form</div>
-        </div>
-        <div class="step">
-            <div class="circle active-circle">2</div>
-            <div class="label">BG Sec File</div>
-        </div>
-        <div class="step">
-            <div class="circle inactive-circle">3</div>
-            <div class="label">Customer Acceptance Form</div>
-        </div>
+        <div class="step"><div class="circle">1</div><div class="label">Master KYC Form</div></div>
+        <div class="step"><div class="circle">2</div><div class="label">BG Sec File</div></div>
+        <div class="step"><div class="circle" style="background-color: white; color: #2E7D32; border: 2px solid #2E7D32;">3</div><div class="label">Customer Acceptance</div></div>
     </div>
     """, unsafe_allow_html=True)
-    # Back to Database Button
+
+    st.subheader(f"Minutes Details: {client_name.upper()}")
+
+    # --- INPUTS ---
+    st.text_input("Name of Company", value=client_name, key="sec_meeting_co_name")
     
+    # We leave value="" so it's empty by default, allowing user input
+    st.text_input("Place of Meeting", value="", placeholder="Enter meeting location...", key="sec_meeting_place")
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        st.date_input("Date of Meeting", value=date.today(), key="sec_meeting_date")
+    with c2:
+        st.text_input("Time of Meeting", value="13:47", key="sec_meeting_time")
 
     st.divider()
 
-    # --- 2. Your Original Inputs (Unchanged) ---
-    st.write(f"**FIRST DIRECTORS' MINUTES - {client_name.upper()}**")
-    st.text_input("Name of Company", value=client_name)
-    st.text_input("Place of Meeting", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
-    
-    dt_col1, dt_col2 = st.columns(2)
-    with dt_col1:
-        inc_date = st.session_state.get("kyc_inc_date", date(2005, 1, 1))
-        st.date_input("Date of Meeting", value=inc_date, format="DD/MM/YYYY", min_value=MIN_DATE, max_value=MAX_DATE)
-    with dt_col2: 
-        st.text_input("Time of Meeting", value="13:47")
-        
-    st.write("**Directors Present**")
-    num_dirs = st.session_state.get("num_directors", 1)
-    default_directors = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
-    st.text_area("Directors Present", value=", ".join([d for d in default_directors if d]), height=70, label_visibility="collapsed")
-    
-    if st.button("SUBMIT NOW", key="bg_submit_btn"): 
-        st.success("Generated!")
-
-    st.divider()
-
-    # --- 3. Bottom Navigation ---
-    col_prev, col_next = st.columns([1, 1])
-    with col_prev:
-        if st.button("⬅️ Back to KYC Form", key="back_to_kyc_footer"):
-            st.session_state["view"] = "kyc_form"
+    # --- ACTIONS ---
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("💾 Save Client Information", use_container_width=True):
+            # This triggers the save logic and REFRESHES the app 
+            # so the PDF generator sees the new 'Place of Meeting'
+            save_client_data(client_name)
+            st.success("Data synced!")
             st.rerun()
-    with col_next:
-        if st.button("Next Step ➡️", key="next_to_ca"):
-            st.session_state["view"] = "customer_acceptance"
-            st.rerun()
-    # ... inside bg_sec_file_form ...
-    if st.button("SUBMIT AND GENERATE PDF", key=f"btn_gen_minutes_{client_name}"): 
+
+    with col_b:
         try:
-            # This calls the PDF function we created
-            minutes_pdf = create_minutes_pdf(client_name)
-            
-            # This creates the download link
+            pdf_data = create_minutes_pdf(client_name)
             st.download_button(
-                label="Download ",
-                data=minutes_pdf,
+                label="📄 Generate PDF Report",
+                data=pdf_data,
                 file_name=f"Minutes_{client_name}.pdf",
                 mime="application/pdf",
-                key=f"dl_btn_{client_name}" # Unique key here too!
+                use_container_width=True
             )
-            st.success("Minutes generated successfully!")
         except Exception as e:
-            st.error(f"Could not generate PDF: {e}")
+            st.error(f"Error: {e}")
+
+    if st.button("Next: Customer Acceptance ➡️"):
+        st.session_state["view"] = "customer_acceptance"
+        st.rerun()
 # --- 5. MAIN LOGIC (LOGIN & DASHBOARD) ---
 
 def check_password():
