@@ -40,29 +40,6 @@ def draw_rect_row(pdf, label, value, label_w=65, value_w=125, h=8):
     
     # 5. Reset position for next row
     pdf.set_xy(curr_x, curr_y + row_height)
-def save_client_data(client_name):
-    conn = sqlite3.connect('clients_kyc.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS kyc_records 
-                 (client_name TEXT PRIMARY KEY, data_json TEXT)''')
-    
-    # --- IMPROVED FILTER ---
-    # We exclude internal keys, file uploaders, and buttons
-    excluded_types = ('btn', 'next', 'back', 'submit', 'gen_')
-    
-   # Ensure 'sec_' keys are ALLOWED
-    save_data = {
-        k: v for k, v in st.session_state.items() 
-        if not k.startswith('__') 
-        and k != "view" 
-        # Make sure we don't exclude keys starting with 'sec_'
-    }
-    json_data = json.dumps(save_data, default=str)
-    
-    c.execute("INSERT OR REPLACE INTO kyc_records VALUES (?, ?)", (client_name, json_data))
-    conn.commit()
-    conn.close()
-    st.success(f"Successfully saved {client_name}")
 def load_client_data(client_name):
     conn = sqlite3.connect('clients_kyc.db')
     c = conn.cursor()
@@ -75,11 +52,15 @@ def load_client_data(client_name):
     if row:
         data = json.loads(row[0])
         for key, value in data.items():
-            # 1. Skip internal/file/navigation keys
-            if key.startswith("__") or key.startswith("emp_cv_") or "btn" in key:
+            # CRITICAL FIX: Skip keys used for buttons or navigation
+            # These are the ones causing the "AssignmentNotAllowedError"
+            if any(x in key for x in ["btn", "next", "back", "submit", "loaded"]):
                 continue
             
-            # 2. Handling Dates
+            if key.startswith("__") or key.startswith("emp_cv_"):
+                continue
+            
+            # Handling Dates
             if 'date' in key or 'dob' in key:
                 try:
                     if isinstance(value, str) and value:
@@ -87,14 +68,35 @@ def load_client_data(client_name):
                 except:
                     st.session_state[key] = value
             else:
-                # 3. SAFETY WRAPPER: Prevents crashing on widget keys
+                # Use the 'set' method or simple assignment ONLY if key isn't a widget already
                 try:
                     st.session_state[key] = value
-                except st.errors.StreamlitAPIException:
-                    # If this is a widget key we can't set, just skip it
-                    continue
+                except:
+                    pass # Skip if Streamlit blocks it
         return True
     return False
+def save_client_data(client_name):
+    conn = sqlite3.connect('clients_kyc.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS kyc_records 
+                 (client_name TEXT PRIMARY KEY, data_json TEXT)''')
+    
+    # Define a list of substrings that identify "UI" elements we don't want to save
+    ui_elements = ('btn', 'next', 'back', 'submit', 'gen_')
+    
+    save_data = {}
+    for k, v in st.session_state.items():
+        # Only save if it's NOT a UI element AND not a internal/view key
+        if not any(word in k.lower() for word in ui_elements) and \
+           not k.startswith('__') and k != "view":
+            save_data[k] = v
+            
+    json_data = json.dumps(save_data, default=str)
+    
+    c.execute("INSERT OR REPLACE INTO kyc_records VALUES (?, ?)", (client_name, json_data))
+    conn.commit()
+    conn.close()
+    st.success(f"Successfully saved {client_name}")
 MONTHS = ["January", "February", "March", "April", "May", "June", 
           "July", "August", "September", "October", "November", "December"]
 
