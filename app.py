@@ -877,7 +877,7 @@ def bg_sec_file_form(client_name):
         d_c1, d_c2 = st.columns(2)
         # DATE FORMAT FIX: Added format="DD/MM/YYYY"
         d_c1.date_input("Date", value=date.today(), key="sec_meet_date", format="DD/MM/YYYY", label_visibility="collapsed")
-        d_c2.time_input("Time", value=None, key="sec_meet_time", label_visibility="collapsed")
+        d_c2.text_input("Time", value="10:00 AM", key="sec_meet_time", label_visibility="collapsed", placeholder="e.g. 10:00 AM")
 
     # Relay Directors
     num_dirs = st.session_state.get("num_directors", 1)
