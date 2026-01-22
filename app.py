@@ -836,73 +836,75 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- 1. INITIALIZE / LOAD (Exact same logic as KYC) ---
+    # --- 1. INITIALIZE / LOAD ---
     if f"loaded_sec_{client_name}" not in st.session_state:
         if load_client_data(client_name):
             st.session_state[f"loaded_sec_{client_name}"] = True
             st.rerun()
 
-    # --- 2. PROGRESS BAR & HEADER ---
-    render_progress_bar(step=2) # Uses your CSS from Master KYC
-    
-    if st.button("← Back to Client Database", key="sec_back_db"):
+    # --- 2. CSS PROGRESS BAR (DIRECTLY INSIDE) ---
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle inactive-circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    if st.button("← Back to Client Database", key="sec_top_back"):
+        if f"loaded_sec_{client_name}" in st.session_state:
+            del st.session_state[f"loaded_sec_{client_name}"]
         st.session_state["view"] = "management"
         st.rerun()
 
     st.title(f"BG Sec File: {client_name}")
 
-    # --- 3. FIRST HALF (Meeting Details) ---
-    st.write("### MEETING DETAILS")
-    st.text_input("Place of Meeting", key="sec_meeting_place")
-    c1, c2 = st.columns(2)
-    with c1: st.date_input("Date of Meeting", key="sec_meeting_date")
-    with c2: st.text_input("Time of Meeting", key="sec_meeting_time")
-    
-    st.write("### DIRECTORS PRESENT")
-    st.text_area("List Directors", key="sec_dirs_present", height=100)
-
-    st.divider()
-
-    # --- 4. NEW: RESOLUTIONS & BUSINESS (The "Next Part") ---
-    st.write("### BUSINESS TRANSACTED")
-    
-    st.write("#### 1. CHAIRMAN")
+    # --- 3. BUSINESS TRANSACTIONS (The Part you wanted to build) ---
+    st.write("### 1. CHAIRMAN")
     st.text_input("Name of Chairman", key="sec_chairman_name")
 
-    st.write("#### 2. QUORUM & CONSTITUTION")
+    st.write("### 2. QUORUM & CONSTITUTION")
     st.info("The Chairman noted that a quorum was present and tabled the Constitution of the Company.")
 
-    st.write("#### 3. FIRST DIRECTORS & SECRETARY")
-    st.text_area("Details of Appointment", 
+    st.write("### 3. FIRST DIRECTORS & SECRETARY")
+    st.text_area("Appointment Details", 
                  value="The Chairman reported that the first directors and secretary named in the Application for Incorporation were appointed upon incorporation.", 
                  key="sec_res_appts", height=80)
 
-    st.write("#### 4. ADOPTION OF COMMON SEAL")
-    st.checkbox("Adopt Common Seal?", value=True, key="sec_adopt_seal")
+    st.write("### 4. ADOPTION OF COMMON SEAL")
+    st.checkbox("Adopt Common Seal for the Company", value=True, key="sec_adopt_seal")
     
-    st.write("#### 5. SHARE ALLOTMENT")
-    res_col1, res_col2 = st.columns(2)
-    with res_col1:
+    st.write("### 5. ISSUE OF SHARES")
+    res_c1, res_c2 = st.columns(2)
+    with res_c1:
         st.text_input("Total Shares Allotted", key="sec_total_shares")
-    with res_col2:
-        st.text_input("Consideration Received", key="sec_share_price", value="SGD 1.00 per share")
+    with res_c2:
+        st.text_input("Consideration (Price per share)", key="sec_share_price", value="SGD 1.00")
 
     st.divider()
 
-    # --- 5. FINALIZE SECTION (EXACTLY LIKE KYC) ---
+    # --- 4. FINALIZE (EXACTLY LIKE KYC) ---
     st.subheader("Finalize Minutes")
     col_save, col_pdf = st.columns(2)
 
     with col_save:
-        if st.button("💾 Save Client Information", key="sec_save_btn"):
-            # This calls your fixed save function that allows 'sec_' keys
+        if st.button("💾 Save Client Information", key="sec_save_final"):
             save_client_data(client_name)
-            # st.success is already inside your save function
+            # st.success is already in your save function
 
     with col_pdf:
-        if st.button("📄 Generate PDF Report", key="sec_pdf_btn"):
+        if st.button("📄 Generate PDF Report", key="sec_pdf_final"):
             try:
-                # This function draws the table without the "overlap" error
                 pdf_bytes = create_minutes_pdf(client_name)
                 st.download_button(
                     "📥 CLICK TO DOWNLOAD PDF", 
@@ -911,14 +913,14 @@ def bg_sec_file_form(client_name):
                     mime="application/pdf"
                 )
             except Exception as e:
-                st.error(f"Error generating PDF: {e}")
+                st.error(f"Error: {e}")
 
     st.divider()
     
-    # Navigation to Step 3
-    nav_left, nav_right = st.columns([4, 1])
-    with nav_right:
-        if st.button("Next: Acceptance ➡️", key="sec_next_btn"):
+    # Navigation
+    c_left, c_right = st.columns([4, 1])
+    with c_right:
+        if st.button("Next: Acceptance ➡️", key="next_to_acc"):
             st.session_state["view"] = "customer_acceptance"
             st.rerun()
 def check_password():
