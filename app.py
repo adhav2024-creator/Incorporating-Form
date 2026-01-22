@@ -558,39 +558,28 @@ def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
     
-    # Header
+    # ... (Helper functions remain the same) ...
+    def fmt_date(d_obj):
+        if not d_obj: return ""
+        if isinstance(d_obj, date): return d_obj.strftime("%d/%m/%Y")
+        return str(d_obj)
+
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
     pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
-    pdf.ln(10)
+    pdf.ln(5)
 
-    def draw_row(label, value):
-        pdf.set_font("Arial", 'B', 10)
-        # 1. Calculate how many lines the text will take
-        pdf.set_font("Arial", '', 10)
-        lines = pdf.multi_cell(130, 10, f" {value}", split_only=True)
-        # 2. Set row height based on line count
-        h = max(10, len(lines) * 10)
-        
-        y_start = pdf.get_y()
-        # 3. Draw Left Box (Label)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.multi_cell(60, h, f" {label}", border=1)
-        
-        # 4. Draw Right Box (Value)
-        pdf.set_xy(70, y_start) # Move to the right of the label
-        pdf.set_font("Arial", '', 10)
-        pdf.multi_cell(130, 10, f" {value}", border=1)
-        
-        # 5. Reset Y to the bottom of the tallest box
-        pdf.set_y(y_start + h)
-
-    # Populate table with session state data
-    draw_row("Place of Meeting", st.session_state.get('sec_meeting_place', ''))
-    draw_row("Date & Time", f"{st.session_state.get('sec_meeting_date', '')} {st.session_state.get('sec_meeting_time', '')}")
-    draw_row("Directors Present", st.session_state.get('sec_dirs_present', ''))
-    draw_row("Chairman", st.session_state.get('sec_chairman_name', ''))
-    draw_row("Shares Allotted", st.session_state.get('sec_total_shares', ''))
+    # 1. METADATA
+    draw_pdf_row("Place of Meeting", st.session_state.get('sec_meeting_place', ''))
+    
+    # DATE & TIME FIX: meet_time is now a string from text_input
+    meet_date_raw = st.session_state.get('sec_meet_date')
+    meet_time = str(st.session_state.get('sec_meet_time', ''))
+    formatted_meet_date = fmt_date(meet_date_raw)
+    
+    draw_pdf_row("Date & Time", f"{formatted_meet_date} {meet_time}")
+    
+    # ... (Rest of the PDF rows remain the same) ...
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
