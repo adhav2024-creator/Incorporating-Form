@@ -836,7 +836,7 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- HEADER & PROGRESS BAR (Matches your design) ---
+    # --- 1. ORIGINAL CSS & PROGRESS BAR ---
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -846,146 +846,151 @@ def bg_sec_file_form(client_name):
         .active-circle { background-color: #2E7D32; color: white; }
         .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
         .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
-        .section-header { margin-top: 20px; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
         </style>
         <div class="progress-container">
             <div class="progress-line"></div>
             <div class="step"><div class="circle inactive-circle">1</div><div class="label">Master KYC Form</div></div>
             <div class="step"><div class="circle active-circle">2</div><div class="label">BG Sec File</div></div>
             <div class="step"><div class="circle inactive-circle">3</div><div class="label">Customer Acceptance Form</div></div>
-            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement</div></div>
-            <div class="step"><div class="circle inactive-circle">5</div><div class="label">Terms and Conditions</div></div>
         </div>
         """, unsafe_allow_html=True)
 
-    # --- TOP HEADER ---
-    col_h1, col_h2 = st.columns([1, 1])
-    with col_h1: st.write("FIRST DIRECTORS' MINUTES")
-    with col_h2: st.write("BG CONSULTANCY PTE LTD")
+    st.title(f"BG Sec File: {client_name}")
+    
+    # --- HEADER SECTION ---
+    c_h1, c_h2 = st.columns(2)
+    c_h1.write("**FIRST DIRECTORS' MINUTES**")
+    c_h2.write("**BG CONSULTANCY PTE LTD**")
     st.markdown("---")
 
-    # Helper function for "Label | Input" layout
+    # Helper for the "Label | Input" layout
     def row_input(label, value, key, disabled=False):
         c1, c2 = st.columns([1, 3])
         with c1:
             st.markdown(f"**{label}**")
         with c2:
-            return st.text_input(label, value=value, key=key, disabled=disabled, label_visibility="collapsed")
+            st.text_input(label, value=value, key=key, disabled=disabled, label_visibility="collapsed")
 
-    # --- METADATA SECTION ---
-    # 1. Company Name
+    # 1. METADATA
     row_input("Name of Company", client_name.upper(), "sec_co_name", disabled=True)
-
-    # 2. Place of Meeting
-    default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
-    row_input("Place of Meeting", default_address, "sec_meet_place")
-
-    # 3. Date and Time
-    c1, c2, c3 = st.columns([1, 1.5, 1.5])
-    with c1: st.markdown("**Date and Time of Meeting**")
-    with c2: st.date_input("Date", value=date.today(), key="sec_meet_date", label_visibility="collapsed")
-    with c3: st.time_input("Time", value=None, key="sec_meet_time", label_visibility="collapsed")
-
-    # 4. Directors Present (Gather from KYC)
-    num_dirs = st.session_state.get("num_directors", 1)
-    dir_names = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
-    dirs_joined = ", ".join(filter(None, dir_names))
+    row_input("Place of Meeting", "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", "sec_meeting_place")
     
-    row_input("Directors Present", dirs_joined, "sec_dirs_present")
+    col_d1, col_d2 = st.columns([1, 3])
+    with col_d1: st.markdown("**Date and Time**")
+    with col_d2:
+        d_c1, d_c2 = st.columns(2)
+        d_c1.date_input("Date", value=date.today(), key="sec_meet_date", label_visibility="collapsed")
+        d_c2.time_input("Time", value=None, key="sec_meet_time", label_visibility="collapsed")
+
+    # Relay Directors for "Present" field
+    num_dirs = st.session_state.get("num_directors", 1)
+    dir_list = []
+    for i in range(num_dirs):
+        d_name = st.session_state.get(f"d_name_{i}", "")
+        if d_name: dir_list.append(d_name)
+    
+    row_input("Directors Present", ", ".join(dir_list), "sec_dirs_present")
 
     st.markdown("---")
 
-    # --- 1. CHAIRMAN ---
-    st.markdown("#### 1. CHAIRMAN")
-    # Default to first director
-    default_chair = dir_names[0] if dir_names else ""
-    row_input("The Chair was taken by", default_chair, "sec_chairman")
+    # 2. CHAIRMAN
+    st.write("#### 1. CHAIRMAN")
+    default_chair = dir_list[0] if dir_list else ""
+    row_input("The Chair was taken by", default_chair, "sec_chairman_name")
 
-    # --- 2. INCORPORATION ---
-    st.markdown("#### 2. INCORPORATION")
+    # 3. INCORPORATION (RELAY UEN)
+    st.write("#### 2. INCORPORATION")
     st.write("It was noted that the Company was incorporated under the COMPANIES ACT.(CAP.50).")
     
-    uen = st.session_state.get("kyc_co_no", "")
+    # RELAY FIX: Fetching 'kyc_co_no' for the certificate number
+    uen_number = st.session_state.get("kyc_co_no", "")
     inc_date = st.session_state.get("kyc_inc_date", date.today())
-    
-    row_input("The Certificate of Incorporation number was:", uen, "sec_inc_no")
-    
-    c_inc1, c_inc2 = st.columns([1, 3])
-    with c_inc1: st.markdown("**The Date of Incorporation was:**")
-    with c_inc2: st.date_input("Inc Date", value=inc_date, key="sec_inc_date_disp", disabled=True, label_visibility="collapsed")
 
-    st.caption("A Copy of Constitution was also presented to the meeting.")
+    row_input("The Certificate of Incorporation number was:", uen_number, "sec_inc_no")
+    
+    ci1, ci2 = st.columns([1, 3])
+    with ci1: st.markdown("**The Date of Incorporation was:**")
+    with ci2: st.date_input("Inc Date", value=inc_date, key="sec_inc_date_display", disabled=True, label_visibility="collapsed")
 
-    # --- 3. DIRECTORS ---
-    st.markdown("#### 3. Directors")
+    # 4. DIRECTORS (RELAY NAMES)
+    st.write("#### 3. DIRECTORS")
     st.write("It was resolved that the following be appointed as the first director(s) of the Company:")
     
-    # List directors on separate lines like the image
-    for name in dir_names:
-        if name:
-            st.text_input(f"Director Name", value=name, key=f"sec_disp_dir_{name}", disabled=True, label_visibility="collapsed")
+    # Loop to display input boxes for each director found in KYC
+    for i, d_name in enumerate(dir_list):
+        row_input(f"Director {i+1}", d_name, f"sec_dir_name_{i}", disabled=True)
 
-    # --- 4. SHARE CAPITAL ---
-    st.markdown("#### 4. Share Capital")
+    # 5. SHARE CAPITAL
+    st.write("#### 4. SHARE CAPITAL")
+    # Relay Share Capital Amount
+    cap_amt = st.session_state.get("cap_amount", "100")
     
-    # Fetch KYC share data or default
-    cap_amt = st.session_state.get("cap_amount", "150000")
-    num_shares = st.session_state.get("cap_amount", "150000") # Usually matches amount if $1/share
-    share_val = "1"
-    
-    sc1, sc2, sc3, sc4, sc5 = st.columns([3, 2, 2, 2, 2])
-    with sc1: st.write("It was noted that the share capital of the Company was")
-    with sc2: st.text_input("Capital", value=cap_amt, key="sec_cap_amt", label_visibility="collapsed")
+    sc1, sc2, sc3, sc4 = st.columns([2, 1, 1, 2])
+    with sc1: st.write("Share capital of the Company was")
+    with sc2: st.text_input("Cap Amt", value=cap_amt, key="sec_cap_amt", label_visibility="collapsed")
     with sc3: st.write("divided into")
-    with sc4: st.text_input("Num Shares", value=num_shares, key="sec_cap_num", label_visibility="collapsed")
-    with sc5: st.write(f"shares of ${share_val} each.")
+    with sc4: st.write(f"{cap_amt} shares of 1 each.")
 
-    # --- 5. ALLOTMENT ---
-    st.markdown(f"#### 5. Application for allotment of {client_name.upper()}")
-    st.write("The application(s) for shares in the Company were submitted as per A attached. It was resolved that the application(s) be approved and that the share(s) be issued accordingly.")
-    st.caption("It was further resolved that the common seal of the Company be affixed to the share certificate(s) to be issued and that details be entered in the Register of Members.")
+    # 6. ALLOTMENT (RELAY SHAREHOLDERS)
+    st.write(f"#### 5. APPLICATION FOR ALLOTMENT OF {client_name.upper()}")
+    st.write("The application(s) for shares in the Company were submitted. It was resolved that the application(s) be approved.")
 
     st.markdown("**Application for and allotment of shares**")
     
-    # Headers
+    # Table Header
     h1, h2, h3 = st.columns([2, 2, 1])
-    h1.markdown("**Name of the Shareholder**")
+    h1.markdown("**Name of Shareholder**")
     h2.markdown("**NRIC/Passport No**")
-    h3.markdown("**No. of shares Issued**")
+    h3.markdown("**No. of shares**")
 
-    # Loop through Shareholders from KYC
+    # RELAY FIX: Loop through shareholders and pull 'p_issued_{j}' for qty
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
-        s_name = st.session_state.get(f"s_name_{j}", "")
-        s_nric = st.session_state.get(f"s_id_{j}", "")
-        s_qty = st.session_state.get(f"p_issued_{j}", "1") # Default 1 if missing
-        
-        r1, r2, r3 = st.columns([2, 2, 1])
-        r1.text_input(f"n_{j}", value=s_name, key=f"sec_row_name_{j}", label_visibility="collapsed")
-        r2.text_input(f"id_{j}", value=s_nric, key=f"sec_row_nric_{j}", label_visibility="collapsed")
-        r3.text_input(f"q_{j}", value=s_qty, key=f"sec_row_qty_{j}", label_visibility="collapsed")
+        sh_name = st.session_state.get(f"s_name_{j}", "")
+        sh_id = st.session_state.get(f"s_id_{j}", "")
+        sh_qty = st.session_state.get(f"p_issued_{j}", "") # Relayed from Step 1
 
-    # --- 6. REGISTERED OFFICE ---
-    st.markdown("#### 6. Registered office and correspondence Address")
+        r1, r2, r3 = st.columns([2, 2, 1])
+        r1.text_input(f"s_name_{j}", value=sh_name, key=f"sec_sh_name_{j}", label_visibility="collapsed")
+        r2.text_input(f"s_id_{j}", value=sh_id, key=f"sec_sh_id_{j}", label_visibility="collapsed")
+        r3.text_input(f"s_qty_{j}", value=sh_qty, key=f"sec_sh_qty_{j}", label_visibility="collapsed")
+
+    # 7. REGISTERED OFFICE (RELAY ADDRESS)
+    st.write("#### 6. REGISTERED OFFICE AND CORRESPONDENCE ADDRESS")
     
+    # RELAY FIX: Fetching 'reg_office_address' from Step 1
     reg_addr = st.session_state.get("reg_office_address", "")
-    
+
     st.markdown("**It was resolved that the registered office of the company be situated at:**")
-    st.text_input("Reg Address", value=reg_addr, key="sec_reg_addr_final", label_visibility="collapsed")
+    st.text_input("Reg Office", value=reg_addr, key="sec_reg_office", label_visibility="collapsed")
     
     st.markdown("**It was resolved that the address to be used for all correspondence be as follows:**")
-    st.text_input("Corr Address", value=reg_addr, key="sec_corr_addr_final", label_visibility="collapsed")
+    st.text_input("Corr Office", value=reg_addr, key="sec_corr_office", label_visibility="collapsed")
 
     st.divider()
 
-    # --- SUBMIT BUTTON ---
-    # Positioned right aligned or centered
-    b_col1, b_col2, b_col3 = st.columns([1, 2, 1])
-    with b_col2:
-        if st.button("SUBMIT NOW", use_container_width=True, type="primary"):
-            save_client_data(client_name)
-            st.session_state.view = "acceptance_form"  # Move to Step 3
-            st.rerun()
+    # --- BUTTONS (ORIGINAL LOGIC) ---
+    b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
+    
+    if b_col1.button("← Back to KYC"):
+        st.session_state.view = "kyc_form"
+        st.rerun()
+
+    # The PDF Generator Button
+    if b_col2.button("Generate Minutes PDF"):
+        save_client_data(client_name)
+        pdf_data = create_minutes_pdf(client_name)
+        st.download_button(
+            label="Download Minutes PDF",
+            data=pdf_data,
+            file_name=f"{client_name}_Minutes.pdf",
+            mime="application/pdf"
+        )
+
+    if b_col3.button("Next: Acceptance Form →"):
+        save_client_data(client_name)
+        st.session_state.view = "acceptance_form"
+        st.rerun()
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
