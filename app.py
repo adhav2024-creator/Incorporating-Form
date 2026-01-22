@@ -836,12 +836,6 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- 1. PERSISTENCE & RELAY LOGIC ---
-    if f"loaded_sec_{client_name}" not in st.session_state:
-        load_client_data(client_name)
-        st.session_state[f"loaded_sec_{client_name}"] = True
-
-    # --- 2. PROGRESS BAR & CSS ---
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -861,60 +855,69 @@ def bg_sec_file_form(client_name):
         """, unsafe_allow_html=True)
 
     st.title(f"BG Sec File: {client_name}")
-
-    # --- 3. RELAYED DATA: DIRECTORS PRESENT ---
-    # We fetch the names from the 'd_name_i' keys in Step 1
-    num_dirs = st.session_state.get("num_directors", 1)
-    dir_names_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
-    relayed_dirs = ", ".join([name for name in dir_names_list if name])
-
-    st.write("### MEETING DETAILS")
-    st.text_input("Place of Meeting", key="sec_place")
     
-    col_dt, col_tm = st.columns(2)
-    with col_dt: st.text_input("Date and Time of Meeting", key="sec_date")
-    with col_tm: st.text_input("Time", key="sec_time")
+    # --- SECTION 3: DIRECTORS (RELAYED FROM KYC) ---
+    st.write("### 3. DIRECTORS")
+    num_dirs = st.session_state.get("num_directors", 1)
+    dir_names = [st.session_state.get(f"d_name_{i}", f"Director {i+1}") for i in range(num_dirs)]
+    dir_string = ", ".join(dir_names[:-1]) + " and " + dir_names[-1] if len(dir_names) > 1 else dir_names[0]
 
-    # This field is pre-filled with names from Step 1
-    st.text_area("Directors Present", value=relayed_dirs, key="sec_dirs_present", height=70)
+    st.info(f"Relayed Directors: {dir_string}")
+    st.text_area("Director Resolution", 
+                 value=f"IT WAS RESOLVED that the appointment of {dir_string} as the first directors of the Company be and is hereby confirmed.", 
+                 key="sec_dir_res", height=80)
+
+    # --- SECTION 4: SECRETARY (RELAYED FROM KYC) ---
+    st.write("### 4. SECRETARY")
+    sec_name = st.session_state.get("sec_name", "THE SECRETARY")
+    st.write(f"Confirmed Secretary: **{sec_name}**")
+    st.text_input("Secretary Resolution", 
+                 value=f"RESOLVED that the appointment of {sec_name} as the first Secretary of the Company be and is hereby confirmed.",
+                 key="sec_sec_res")
 
     st.divider()
 
-    # --- 4. RELAYED DATA: INCORPORATION (UEN & DATE) ---
-    st.write("### 1. CHAIRMAN")
-    st.text_input("The Chair was taken by", key="sec_chairman_name")
-
-    st.write("### 2. INCORPORATION")
+    # --- SECTION 5: APPLICATION FOR ALLOTMENT OF SHARES ---
+    st.write(f"### 5. APPLICATION FOR ALLOTMENT OF {client_name.upper()}")
     
-    # Relaying UEN and Date from 'kyc_co_no' and 'kyc_inc_date'
-    relayed_uen = st.session_state.get("kyc_co_no", "")
-    relayed_inc_date = st.session_state.get("kyc_inc_date", "")
-    if relayed_inc_date:
-        # Convert date object to string if necessary
-        relayed_inc_date = relayed_inc_date.strftime("%d/%m/%Y") if hasattr(relayed_inc_date, 'strftime') else str(relayed_inc_date)
+    # Table Header for Allotment
+    st.write("**Relayed Allotment Table**")
+    num_sh = st.session_state.get("num_shareholders", 1)
+    
+    head_c1, head_c2, head_c3 = st.columns([2, 2, 1])
+    head_c1.write("**Name of Shareholder**")
+    head_c2.write("**NRIC/Passport**")
+    head_c3.write("**Shares Allotted**")
 
-    inc_col1, inc_col2 = st.columns(2)
-    with inc_col1: 
-        st.text_input("The Certificate of Incorporation number (UEN) was:", value=relayed_uen, key="sec_inc_no")
-    with inc_col2: 
-        st.text_input("The Date of Incorporation was:", value=relayed_inc_date, key="sec_inc_date")
+    for j in range(num_sh):
+        s_name = st.session_state.get(f"s_name_{j}", "")
+        s_id = st.session_state.get(f"s_id_{j}", "")
+        s_qty = st.session_state.get(f"p_issued_{j}", "0") # Relayed from Step 1 Paid-Up section
+        
+        r1, r2, r3 = st.columns([2, 2, 1])
+        r1.text_input(f"SH Name {j}", value=s_name, key=f"sec_sh_name_{j}", label_visibility="collapsed")
+        r2.text_input(f"SH ID {j}", value=s_id, key=f"sec_sh_id_{j}", label_visibility="collapsed")
+        r3.text_input(f"SH Qty {j}", value=s_qty, key=f"sec_sh_qty_{j}", label_visibility="collapsed")
 
-    # --- 5. FINALIZE & PDF ---
-    st.subheader("Finalize Application")
-    col_save, col_pdf = st.columns(2)
+    # --- SECTION 6: REGISTERED OFFICE ---
+    st.divider()
+    st.write("### 6. REGISTERED OFFICE AND CORRESPONDENCE")
+    reg_addr = st.session_state.get("reg_office_address", "Office Address Missing")
+    
+    st.write("The Registered Office shall be situated at:")
+    st.success(reg_addr)
+    st.text_area("Registered Office Resolution", 
+                 value=f"RESOLVED that the Registered Office of the Company be situated at {reg_addr}.",
+                 key="sec_office_res")
 
-    with col_save:
-        if st.button("💾 Save Client Information", key="sec_save"):
-            save_client_data(client_name)
-
-    with col_pdf:
-        if st.button("📄 Generate PDF Report", key="sec_pdf"):
-            pdf_bytes = create_minutes_pdf(client_name)
-            st.download_button("📥 DOWNLOAD PDF", data=pdf_bytes, file_name=f"Minutes_{client_name}.pdf")
-
-    # Navigation
-    if st.button("Next: Acceptance ➡️", key="sec_next"):
-        st.session_state["view"] = "customer_acceptance"
+    # --- NAVIGATION ---
+    col_nav1, col_nav2 = st.columns(2)
+    if col_nav1.button("← Back to KYC"):
+        st.session_state.view = "kyc_form"
+        st.rerun()
+    if col_nav2.button("Generate Minutes PDF & Continue →"):
+        save_client_data(client_name)
+        st.session_state.view = "acceptance_form"
         st.rerun()
 def check_password():
     if "password_correct" not in st.session_state:
