@@ -836,13 +836,12 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # --- 1. INITIALIZE / LOAD ---
+    # --- 1. PERSISTENCE & RELAY LOGIC ---
     if f"loaded_sec_{client_name}" not in st.session_state:
-        if load_client_data(client_name):
-            st.session_state[f"loaded_sec_{client_name}"] = True
-            st.rerun()
+        load_client_data(client_name)
+        st.session_state[f"loaded_sec_{client_name}"] = True
 
-    # --- 2. CSS PROGRESS BAR (DIRECTLY INSIDE) ---
+    # --- 2. PROGRESS BAR & CSS ---
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -861,68 +860,62 @@ def bg_sec_file_form(client_name):
         </div>
         """, unsafe_allow_html=True)
 
-    if st.button("← Back to Client Database", key="sec_top_back"):
-        if f"loaded_sec_{client_name}" in st.session_state:
-            del st.session_state[f"loaded_sec_{client_name}"]
-        st.session_state["view"] = "management"
-        st.rerun()
-
     st.title(f"BG Sec File: {client_name}")
 
-    # --- 3. BUSINESS TRANSACTIONS (The Part you wanted to build) ---
-    st.write("### 1. CHAIRMAN")
-    st.text_input("Name of Chairman", key="sec_chairman_name")
+    # --- 3. RELAYED DATA: DIRECTORS PRESENT ---
+    # We fetch the names from the 'd_name_i' keys in Step 1
+    num_dirs = st.session_state.get("num_directors", 1)
+    dir_names_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs)]
+    relayed_dirs = ", ".join([name for name in dir_names_list if name])
 
-    st.write("### 2. QUORUM & CONSTITUTION")
-    st.info("The Chairman noted that a quorum was present and tabled the Constitution of the Company.")
-
-    st.write("### 3. FIRST DIRECTORS & SECRETARY")
-    st.text_area("Appointment Details", 
-                 value="The Chairman reported that the first directors and secretary named in the Application for Incorporation were appointed upon incorporation.", 
-                 key="sec_res_appts", height=80)
-
-    st.write("### 4. ADOPTION OF COMMON SEAL")
-    st.checkbox("Adopt Common Seal for the Company", value=True, key="sec_adopt_seal")
+    st.write("### MEETING DETAILS")
+    st.text_input("Place of Meeting", key="sec_place")
     
-    st.write("### 5. ISSUE OF SHARES")
-    res_c1, res_c2 = st.columns(2)
-    with res_c1:
-        st.text_input("Total Shares Allotted", key="sec_total_shares")
-    with res_c2:
-        st.text_input("Consideration (Price per share)", key="sec_share_price", value="SGD 1.00")
+    col_dt, col_tm = st.columns(2)
+    with col_dt: st.text_input("Date and Time of Meeting", key="sec_date")
+    with col_tm: st.text_input("Time", key="sec_time")
+
+    # This field is pre-filled with names from Step 1
+    st.text_area("Directors Present", value=relayed_dirs, key="sec_dirs_present", height=70)
 
     st.divider()
 
-    # --- 4. FINALIZE (EXACTLY LIKE KYC) ---
-    st.subheader("Finalize Minutes")
+    # --- 4. RELAYED DATA: INCORPORATION (UEN & DATE) ---
+    st.write("### 1. CHAIRMAN")
+    st.text_input("The Chair was taken by", key="sec_chairman_name")
+
+    st.write("### 2. INCORPORATION")
+    
+    # Relaying UEN and Date from 'kyc_co_no' and 'kyc_inc_date'
+    relayed_uen = st.session_state.get("kyc_co_no", "")
+    relayed_inc_date = st.session_state.get("kyc_inc_date", "")
+    if relayed_inc_date:
+        # Convert date object to string if necessary
+        relayed_inc_date = relayed_inc_date.strftime("%d/%m/%Y") if hasattr(relayed_inc_date, 'strftime') else str(relayed_inc_date)
+
+    inc_col1, inc_col2 = st.columns(2)
+    with inc_col1: 
+        st.text_input("The Certificate of Incorporation number (UEN) was:", value=relayed_uen, key="sec_inc_no")
+    with inc_col2: 
+        st.text_input("The Date of Incorporation was:", value=relayed_inc_date, key="sec_inc_date")
+
+    # --- 5. FINALIZE & PDF ---
+    st.subheader("Finalize Application")
     col_save, col_pdf = st.columns(2)
 
     with col_save:
-        if st.button("💾 Save Client Information", key="sec_save_final"):
+        if st.button("💾 Save Client Information", key="sec_save"):
             save_client_data(client_name)
-            # st.success is already in your save function
 
     with col_pdf:
-        if st.button("📄 Generate PDF Report", key="sec_pdf_final"):
-            try:
-                pdf_bytes = create_minutes_pdf(client_name)
-                st.download_button(
-                    "📥 CLICK TO DOWNLOAD PDF", 
-                    data=pdf_bytes, 
-                    file_name=f"Minutes_{client_name}.pdf", 
-                    mime="application/pdf"
-                )
-            except Exception as e:
-                st.error(f"Error: {e}")
+        if st.button("📄 Generate PDF Report", key="sec_pdf"):
+            pdf_bytes = create_minutes_pdf(client_name)
+            st.download_button("📥 DOWNLOAD PDF", data=pdf_bytes, file_name=f"Minutes_{client_name}.pdf")
 
-    st.divider()
-    
     # Navigation
-    c_left, c_right = st.columns([4, 1])
-    with c_right:
-        if st.button("Next: Acceptance ➡️", key="next_to_acc"):
-            st.session_state["view"] = "customer_acceptance"
-            st.rerun()
+    if st.button("Next: Acceptance ➡️", key="sec_next"):
+        st.session_state["view"] = "customer_acceptance"
+        st.rerun()
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
