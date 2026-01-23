@@ -558,12 +558,35 @@ def create_minutes_pdf(client_name):
     pdf = FPDF()
     pdf.add_page()
     
-    # ... (Helper functions remain the same) ...
+    # --- INTERNAL HELPER: DEFINING THE MISSING FUNCTION ---
+    def draw_pdf_row(label, value):
+        """Draws the Label-Value table row in the PDF"""
+        pdf.set_font("Arial", 'B', 10)
+        # Calculate how many lines the text will take to determine row height
+        pdf.set_font("Arial", '', 10)
+        lines = pdf.multi_cell(130, 8, f" {value}", split_only=True)
+        h = max(8, len(lines) * 8)
+        
+        y_start = pdf.get_y()
+        
+        # Draw Left Box (Label)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.multi_cell(60, h, f" {label}", border=1)
+        
+        # Draw Right Box (Value)
+        pdf.set_xy(70, y_start) 
+        pdf.set_font("Arial", '', 10)
+        pdf.multi_cell(130, 8, f" {value}", border=1)
+        
+        # Reset Y to the bottom of this row
+        pdf.set_y(y_start + h)
+
     def fmt_date(d_obj):
         if not d_obj: return ""
         if isinstance(d_obj, date): return d_obj.strftime("%d/%m/%Y")
         return str(d_obj)
 
+    # --- START GENERATING CONTENT ---
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
     pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
@@ -572,15 +595,70 @@ def create_minutes_pdf(client_name):
     # 1. METADATA
     draw_pdf_row("Place of Meeting", st.session_state.get('sec_meeting_place', ''))
     
-    # DATE & TIME FIX: meet_time is now a string from text_input
     meet_date_raw = st.session_state.get('sec_meet_date')
     meet_time = str(st.session_state.get('sec_meet_time', ''))
-    formatted_meet_date = fmt_date(meet_date_raw)
+    draw_pdf_row("Date & Time", f"{fmt_date(meet_date_raw)} {meet_time}")
     
-    draw_pdf_row("Date & Time", f"{formatted_meet_date} {meet_time}")
-    
-    # ... (Rest of the PDF rows remain the same) ...
+    draw_pdf_row("Directors Present", st.session_state.get('sec_dirs_present', ''))
+    draw_pdf_row("Chairman", st.session_state.get('sec_chairman_name', ''))
 
+    pdf.ln(5)
+
+    # 2. INCORPORATION
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "2. INCORPORATION", ln=True)
+    draw_pdf_row("Cert. of Incorporation", st.session_state.get('sec_inc_no', ''))
+    draw_pdf_row("Date of Incorporation", fmt_date(st.session_state.get('kyc_inc_date')))
+
+    pdf.ln(5)
+
+    # 3. DIRECTORS
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "3. DIRECTORS", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5, "It was resolved that the following be appointed as the first director(s) of the Company:")
+    pdf.ln(2)
+    
+    num_dirs = st.session_state.get("num_directors", 1)
+    for i in range(num_dirs):
+        d_name = st.session_state.get(f"d_name_{i}", "")
+        if d_name:
+            pdf.cell(10, 8, "-", align='C')
+            pdf.cell(0, 8, d_name, ln=True)
+
+    pdf.ln(5)
+
+    # 4. ALLOTMENT TABLE
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "5. APPLICATION FOR ALLOTMENT OF SHARES", ln=True)
+    
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(80, 8, " Name of Shareholder", border=1)
+    pdf.cell(60, 8, " NRIC/Passport No.", border=1)
+    pdf.cell(50, 8, " Shares Issued", border=1, ln=True)
+    
+    pdf.set_font("Arial", '', 9)
+    num_sh = st.session_state.get("num_shareholders", 1)
+    for j in range(num_sh):
+        # Using the keys from the UI relay
+        name = st.session_state.get(f"sec_sh_name_{j}", "")
+        nric = st.session_state.get(f"sec_sh_id_{j}", "")
+        qty = st.session_state.get(f"sec_sh_qty_{j}", "")
+        
+        pdf.cell(80, 8, f" {name}", border=1)
+        pdf.cell(60, 8, f" {nric}", border=1)
+        pdf.cell(50, 8, f" {qty}", border=1, ln=True)
+
+    pdf.ln(5)
+
+    # 5. REGISTERED OFFICE
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "6. REGISTERED OFFICE", ln=True)
+    pdf.set_font("Arial", '', 10)
+    reg_office = st.session_state.get('sec_reg_office', '')
+    pdf.multi_cell(0, 5, f"It was resolved that the registered office of the company be situated at: {reg_office}")
+
+    # Return the encoded PDF
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
