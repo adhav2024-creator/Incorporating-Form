@@ -1335,6 +1335,53 @@ def bg_sec_file_form(client_name):
             st.table(transfer_ledger_entries)
             st.caption("ℹ️ *Note: At incorporation, all initial share allocations are logged inside the Allotment Ledger. The Register of Transfers remains clear until a secondary sale or assignment takes place.*")
     # NAVIGATION AND DATA EXPORT CONTROL BUTTONS
+    # =========================================================================
+    # --- FORM 45A: CONSENT TO ACT AS SECRETARY & CONTINUATION SHEET ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### FORM 45A: CONSENT TO ACT AS SECRETARY")
+    st.write("Official Form 45A declaration and matching continuation sheet for the named Secretary:")
+
+    sec_name_val = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
+    sec_id_val = st.session_state.get("sec_secretary_id", "S7277791C")
+
+    with st.expander(f"📄 Form 45A & Continuation Sheet I: {sec_name_val.upper()}", expanded=False):
+        st.markdown("#### FORM 45A: Particulars for Secretary")
+        
+        s_col1, s_col2 = st.columns(2)
+        with s_col1:
+            st.text_input("Name of Secretary", value=sec_name_val, key="f45a_ui_name")
+            st.text_input("Company Name", value=client_name.upper(), key="f45a_ui_co_name", disabled=True)
+            st.text_area("Residential Address", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", key="f45a_ui_address", height=68)
+        with s_col2:
+            st.text_input("NRIC / Passport No.", value=sec_id_val, key="f45a_ui_id")
+            st.text_input("Company No. (UEN)", value=uen_number, key="f45a_ui_uen", disabled=True)
+            st.date_input("Date of Appointment", value=inc_date, key="f45a_ui_app_date", format="DD/MM/YYYY")
+
+        st.markdown("---")
+        st.markdown("**Under the provisions of the Singapore Companies Act, I state as follows:**")
+        
+        sec_statutory_text = """
+        1. I, the undermentioned person, hereby consent to act as a secretary of the above named company.
+        2. I am a qualified person under section 171(1AA) of the Companies Act by virtue of my being:
+           • A member of the Singapore Association of the Institute of Chartered Secretaries and Administrators (SAICSA) / Registered Filing Agent.
+        """
+        st.caption(sec_statutory_text)
+
+        # Form 45A Continuation Sheet I Layout
+        st.markdown("---")
+        st.markdown("#### Form 45A Continuation Sheet I")
+        st.info("*(3) That the statements made by me in this form are true. I read and understand English. I confirm that the statements are true, I am also aware that I can be prosecuted in Court if I wilfully give any information on this form which is false.*")
+        
+        sc_col1, sc_col2 = st.columns(2)
+        with sc_col1:
+            st.markdown(f"**Secretary Signature Execution**")
+            st.caption(f"Name: {sec_name_val.upper()}")
+            st.caption("Signature: `_______________________`")
+        with sc_col2:
+            st.markdown(f"**Witness / Lodging Agent Certification**")
+            st.caption("Certified By: REGISTERED FILING AGENT")
+            st.caption("Signature: `_______________________`")
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     if b_col1.button("← Back to KYC"):
         st.session_state.view = "kyc_form"
