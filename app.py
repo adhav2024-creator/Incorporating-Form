@@ -1342,8 +1342,8 @@ def bg_sec_file_form(client_name):
     st.write("### FORM 45A: CONSENT TO ACT AS SECRETARY")
     st.write("Official Form 45A declaration and matching continuation sheet for the named Secretary:")
 
-    sec_name_val = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
-    sec_id_val = st.session_state.get("sec_secretary_id", "S7277791C")
+    sec_name_val = st.session_state.get("sec_secretary_name", "")
+    sec_id_val = st.session_state.get("sec_secretary_id", "")
 
     with st.expander(f"📄 Form 45A & Continuation Sheet I: {sec_name_val.upper()}", expanded=False):
         st.markdown("#### FORM 45A: Particulars for Secretary")
