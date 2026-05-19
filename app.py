@@ -1191,6 +1191,104 @@ def bg_sec_file_form(client_name):
             }
             
             st.table(director_ledger_entries)
+    # =========================================================================
+    # --- STATUTORY LEDGER: APPLICATION FOR & ALLOTMENT OF SHARES ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### STATUTORY TRANSACTION RECORD: ALLOTMENT OF SHARES")
+    st.write("Tracks the individual board authorization and application details for new share issues:")
+
+    num_sh = st.session_state.get("num_shareholders", 1)
+    
+    for j in range(num_sh):
+        sh_name = st.session_state.get(f"sec_sh_name_{j}", st.session_state.get(f"s_name_{j}", ""))
+        if not sh_name:
+            continue
+            
+        with st.expander(f"📋 Share Allotment Allotment Card: {sh_name.upper()}", expanded=False):
+            st.markdown(f"**APPLICATION FOR AND ALLOTMENT OF SHARES — RECORD NO. {j+1}**")
+            
+            sh_id = st.session_state.get(f"sec_sh_id_{j}", st.session_state.get(f"s_id_{j}", ""))
+            sh_qty = st.session_state.get(f"sec_sh_qty_{j}", st.session_state.get(f"p_issued_{j}", "100"))
+            
+            # Displays the individual transactional tracking data box
+            allotment_ledger_entries = {
+                "Allotment Parameter": [
+                    "Name of the Shareholder",
+                    "NRIC / Passport No.",
+                    "No. of Shares Allotted",
+                    "Class of Shares",
+                    "Certificate Number Assigned",
+                    "Date of Allotment Action"
+                ],
+                "Transaction Record Value": [
+                    sh_name.upper(),
+                    sh_id,
+                    f"{sh_qty} Shares",
+                    "ORDINARY",
+                    f"Cert No. {j+1}",
+                    inc_date.strftime("%d/%m/%Y") if isinstance(inc_date, date) else str(inc_date)
+                ]
+            }
+            st.table(allotment_ledger_entries)
+    # =========================================================================
+    # --- STATUTORY LEDGER: REGISTER OF MEMBERS (UPDATED FULL THING) ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### STATUTORY OWNERSHIP RECORD: REGISTER OF MEMBERS")
+    st.write("Definitive historical continuous ledger tracking official corporate membership status:")
+
+    for j in range(num_sh):
+        sh_name = st.session_state.get(f"sec_sh_name_{j}", st.session_state.get(f"s_name_{j}", ""))
+        if not sh_name:
+            continue
+            
+        with st.expander(f"🗃️ Register of Members Legal Folio: {sh_name.upper()}", expanded=False):
+            st.markdown(f"### REGISTER OF MEMBERS")
+            st.markdown(f"**FOLIO REFERENCE REFERENCE NO. {j+1}**")
+            
+            # Master Member Meta-data Row
+            sh_id = st.session_state.get(f"sec_sh_id_{j}", st.session_state.get(f"s_id_{j}", ""))
+            sh_qty = st.session_state.get(f"sec_sh_qty_{j}", st.session_state.get(f"p_issued_{j}", "100"))
+            sh_addr = st.session_state.get(f"s_address_{j}", reg_addr)
+            sh_nat = st.session_state.get(f"s_nationality_{j}", "SINGAPORE CITIZEN")
+            fmt_inc_date = inc_date.strftime("%d/%m/%Y") if isinstance(inc_date, date) else str(inc_date)
+
+            meta_col1, meta_col2 = st.columns(2)
+            with meta_col1:
+                st.markdown(f"**Name:** {sh_name.upper()}")
+                st.markdown(f"**Address:** {sh_addr}")
+            with meta_col2:
+                st.markdown(f"**NRIC/Passport No:** {sh_id}")
+                st.markdown(f"**Nationality:** {sh_nat}")
+            
+            st.markdown("#### 1. Shares Allotted / Acquired Log")
+            # First Grid Matching IMG_0293.jpg Column Structure
+            allotted_log_table = {
+                "Date of Entry": [fmt_inc_date],
+                "No. of Allotment": [f"Allotment #{j+1}"],
+                "No. of Shares Allotted": [sh_qty],
+                "Distinctive Nos. From": ["0000001"],
+                "Distinctive Nos. To": [str(sh_qty).zfill(7)],
+                "Certificate No.": [f"Cert No. {j+1}"],
+                "Amount Paid per Share": ["$1.00"],
+                "Total Paid Up Capital": [f"${sh_qty}.00"]
+            }
+            st.table(allotted_log_table)
+
+            st.markdown("#### 2. Shares Transferred / Disposed Log")
+            # Second Grid Matching IMG_0294.jpg Column Structure
+            transferred_log_table = {
+                "Date of Transfer": ["-"],
+                "No. of Transfer Deed": ["-"],
+                "No. of Shares Transferred": ["-"],
+                "Distinctive Nos. From": ["-"],
+                "Distinctive Nos. To": ["-"],
+                "Transferred To (Folio / Name)": ["-"],
+                "Balance Shares Held": [sh_qty],
+                "Date Ceased to be Member": ["OPEN / ACTIVE OWNER"]
+            }
+            st.table(transferred_log_table)
     
     # NAVIGATION AND DATA EXPORT CONTROL BUTTONS
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
