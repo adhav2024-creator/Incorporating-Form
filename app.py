@@ -1809,19 +1809,19 @@ def render_customer_acceptance_form(client_name_arg=None):
     )
     st.session_state["selected_client_name"] = client_name
 
-    # Set up some dynamic profile lookups depending on which company pack matches
+    # Set up safe structural fallback string parameters cleanly
     default_uen = "200517609N"
-    default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" [cite: 253, 390]
+    default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
     default_inc_date = "01/01/2005"
 
     if "STAGCO DOUBLEZ" in client_name.upper():
-        default_uen = "202546019H" [cite: 230]
-        default_address = "761 ANG MO KIO AVENUE 2, HORIZON GREEN, SINGAPORE 567792" [cite: 246]
-        default_inc_date = "15/10/2025" [cite: 230]
+        default_uen = "202546019H"
+        default_address = "761 ANG MO KIO AVENUE 2, HORIZON GREEN, SINGAPORE 567792"
+        default_inc_date = "15/10/2025"
     elif "DSFGH" in client_name.upper():
-        default_uen = "" # Blank in corporate pack [cite: 397]
-        default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" [cite: 364, 390]
-        default_inc_date = "19/05/2026" [cite: 371]
+        default_uen = ""
+        default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
+        default_inc_date = "19/05/2026"
 
     client_since = st.text_input("Client Since", value="01/01/2005", key="caf_client_since_field")
     referred_by = st.selectbox("Referred by", options=["NA", "Internal Referral", "External Partner"], index=0, key="caf_referred_by_field")
@@ -1867,7 +1867,6 @@ def render_customer_acceptance_form(client_name_arg=None):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<font color='red'><b>INTENDED NATURE AND PURPOSE OF BUSINESS RELATIONSHIP REQUIRED</b></font>", unsafe_allow_html=True)
     
-    # Checkboxes exactly matching the second screenshot view
     rel_registered_office = st.checkbox("Registered office", value=True, key="caf_rel_reg_office")
     rel_corp_sec = st.checkbox("Acting as corporate Secretary", value=True, key="caf_rel_corp_sec")
     rel_accounting = st.checkbox("Accounting services", value=True, key="caf_rel_accounting")
@@ -1875,7 +1874,7 @@ def render_customer_acceptance_form(client_name_arg=None):
     rel_acra = st.checkbox("ACRA filing services", value=True, key="caf_rel_acra")
     rel_others = st.checkbox("Others", value=False, key="caf_rel_others")
 
-    # Submit button matching the blue style on-screen
+    # Submit action structure
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("SUBMIT NOW", type="primary"):
         st.success("Customer Acceptance Form Saved Successfully!")
