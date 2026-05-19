@@ -1761,19 +1761,17 @@ def bg_sec_file_form(client_name):
 def render_customer_acceptance_form(client_name_arg=None):
     import streamlit as st
 
-    # 1. Initialize global company variable safely if not present
+    # 1. Initialize global tracking configurations safely
     if "selected_client_name" not in st.session_state:
         st.session_state["selected_client_name"] = ""
 
-    # Sync name if it was passed as an argument from the database selection
     if client_name_arg and not st.session_state["selected_client_name"]:
         st.session_state["selected_client_name"] = client_name_arg
 
-    # Initialize counter for individual rows across Sections B, C, and E
     if "caf_person_count" not in st.session_state:
         st.session_state["caf_person_count"] = 1
 
-    # 2. Progress Bar Component Custom CSS Injection
+    # 2. Component Custom Progress Line UI Styling
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -1813,7 +1811,7 @@ def render_customer_acceptance_form(client_name_arg=None):
     )
     st.session_state["selected_client_name"] = client_name
 
-    # Pre-population fallbacks
+    # Auto Pack profile detection values
     default_uen = "200517609N"
     default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
     default_inc_date = "01/01/2005"
@@ -1856,7 +1854,7 @@ def render_customer_acceptance_form(client_name_arg=None):
 
     st.markdown("---")
 
-    # --- SECTION B (INFORMATION OF DIRECTORS, PARTNERS AND EXECUTIVE AUTHORITY) ---
+    # --- SECTION B (INFORMATION OF DIRECTORS & SHAREHOLDERS) ---
     st.subheader("SECTION B")
     st.markdown("**INFORMATION OF DIRECTORS, PARTNERS AND OTHER PERSONS WITH EXECUTIVE AUTHORITY**")
 
@@ -1885,7 +1883,7 @@ def render_customer_acceptance_form(client_name_arg=None):
 
     st.markdown("---")
 
-    # --- SECTION C (INFORMATION OF CUSTOMER'S BENEFICIAL OWNER(S)) ---
+    # --- SECTION C (INFORMATION OF BENEFICIAL OWNERS) ---
     st.subheader("SECTION C")
     st.markdown("**INFORMATION OF CUSTOMER'S BENEFICIAL OWNER(S)**")
 
@@ -1910,26 +1908,55 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # --- SECTION D (INFORMATION OF POLITICALLY EXPOSED PERSONS) ---
+    # --- SECTION D (POLITICALLY EXPOSED PERSONS CHECKS) ---
     st.subheader("SECTION D")
-    st.markdown("**INFORMATION OF POLITICALLY EXPOSED PERSONS, THEIR IMMEDIATE FAMILY MEMBERS AND CLOSE ASSOCIATES**")
+    st.markdown("**INFORMATION OF POLITICALLY EXPOSED PERSONS, THEIR IMMEDMATE FAMILY MEMBERS AND CLOSE ASSOCIATES**")
 
     st.markdown("###### Are any of the persons listed above a politically exposed person, that is, a person who is or has been entrusted with any prominent public function in Singapore, a country or territory outside Singapore, or by an international organisation at present?")
-    st.radio("Current PEP Check", ["Yes", "No"], index=1, key="caf_sec_d_q1", label_visibility="collapsed")
+    pep_q1 = st.radio("Current PEP Check", ["Yes", "No"], index=1, key="caf_sec_d_q1", label_visibility="collapsed")
 
     st.markdown("###### Are any of the persons listed above a politically exposed person, that is, a person who has been entrusted with any prominent public function in Singapore, a country or territory outside Singapore, or by an international organisation who has stepped down from his prominent public function?")
-    st.radio("Stepped down PEP Check", ["Yes", "No"], index=1, key="caf_sec_d_q2", label_visibility="collapsed")
+    pep_q2 = st.radio("Stepped down PEP Check", ["Yes", "No"], index=1, key="caf_sec_d_q2", label_visibility="collapsed")
 
     st.markdown("###### Are any of the persons listed above an immediate family member or a close associate of a politically exposed person or a politically exposed person who has stepped down?")
-    st.radio("PEP Family/Associate Check", ["Yes", "No"], index=1, key="caf_sec_d_q3", label_visibility="collapsed")
+    pep_q3 = st.radio("PEP Family/Associate Check", ["Yes", "No"], index=1, key="caf_sec_d_q3", label_visibility="collapsed")
 
     st.markdown("---")
 
-    # --- SECTION E (CUSTOMER'S DECLARATION - LOOPED PER CUSTOMER) ---
+    # --- ADVANCED PART 2: DYNAMIC PEP EXTENSION SECTION ---
+    # Activates exactly when any of the section D checks above are flagged to "Yes"
+    if pep_q1 == "Yes" or pep_q2 == "Yes" or pep_q3 == "Yes":
+        st.subheader("PART 2- FORM FOR POLITICALLY EXPOSED PERSONS")
+        
+        if pep_q1 == "Yes":
+            st.markdown("#### SECTION A (Current PEP Additional Profile Data)")
+            st.text_input("Name of politically exposed person and background / purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_a_name")
+            st.text_input("Describe nature of prominent public function that the person is or has been entrusted with", value="NA", key="caf_part2_sec_a_function")
+            st.text_input("Period of time in which the person is/was a politically exposed person", value="NA", key="caf_part2_sec_a_period")
+            st.text_input("Provide information on the person's source of wealth", value="NA", key="caf_part2_sec_a_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship", value="NA", key="caf_part2_sec_a_funds")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+        if pep_q2 == "Yes":
+            st.markdown("#### SECTION B (Immediate Family Member Profile Data)")
+            st.text_input("Name of person who is an immediate family member of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_b_name")
+            st.text_input("Describe nature of the person's relationship with the politically exposed person", value="NA", key="caf_part2_sec_b_rel_nature")
+            st.text_input("Provide information on the person's source of wealth (Family Row)", value="NA", key="caf_part2_sec_b_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Family Row)", value="NA", key="caf_part2_sec_b_funds")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+        if pep_q3 == "Yes":
+            st.markdown("#### SECTION C (Close Associate Profile Data)")
+            st.text_input("Name of person who is close associate of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_c_name")
+            st.text_input("Describe nature of the person's relationship with the politically exposed person (Associate Row)", value="NA", key="caf_part2_sec_c_rel_nature")
+            st.text_input("Provide information on the person's source of wealth (Associate Row)", value="NA", key="caf_part2_sec_c_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Associate Row)", value="NA", key="caf_part2_sec_c_funds")
+            st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    # --- SECTION E (CUSTOMER'S DECLARATION - FOR EVERY INDIVIDUAL CUSTOMER) ---
     st.subheader("SECTION E")
     st.markdown("**CUSTOMER'S DECLARATION**")
 
-    # Shared declaration disclaimer text block
     declaration_text = (
         "I declare that the information provided in this form is true and correct. I am aware that I may be "
         "subject to prosecution and criminal sanctions under written law if I am found to have made any false "
@@ -1938,21 +1965,30 @@ def render_customer_acceptance_form(client_name_arg=None):
     )
 
     for i in range(st.session_state["caf_person_count"]):
-        st.markdown(f"##### Declaration Row #{i+1}")
+        st.markdown(f"##### Declaration Profile Entry #{i+1}")
         st.info(declaration_text)
         
-        # Tie declaration data defaults cleanly back to values entered in section B
+        # Tie declaration data defaults back to values entered in section B / Section C
         default_person_name = st.session_state.get(f"caf_sec_b_name_{i}", "")
-        default_person_id = st.session_state.get(f"caf_sec_c_id_{i}", "") if i == 0 else ""
+        if i == 0 and not default_person_name:
+            default_person_name = "Janakiraman Ayyappan"
+        elif i == 1 and not default_person_name:
+            default_person_name = "Vaidyanathan Padmini"
+
+        default_person_id = st.session_state.get(f"caf_sec_c_id_{i}", "")
+        if i == 0 and not default_person_id:
+            default_person_id = "S7277791C"
+        elif i == 1 and not default_person_id:
+            default_person_id = "S7379693H"
         
         st.text_input("Name of customer", value=default_person_name, key=f"caf_sec_e_name_{i}")
         st.text_input("Unique Identification number", value=default_person_id, key=f"caf_sec_e_id_{i}")
         st.text_input("Signature", value="Manually Signed / Authenticated", key=f"caf_sec_e_sig_{i}")
-        st.text_input("Date", value="01/01/2005" if i == 0 else "19/05/2026", key=f"caf_sec_e_date_{i}")
+        st.text_input("Date", value="01/01/2005", key=f"caf_sec_e_date_{i}")
         
-        st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # Global structural control operations line
+    # Global structural control row
     ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 4])
     
     if ctrl_col1.button("➕ Add Shareholder / Director"):
@@ -1963,10 +1999,10 @@ def render_customer_acceptance_form(client_name_arg=None):
         st.session_state["caf_person_count"] -= 1
         st.rerun()
 
-    # --- BOTTOM FORM ACTION ---
+    # --- BOTTOM FORM EXECUTION ACTION ---
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("SUBMIT NOW", type="primary", use_container_width=True):
-        st.success("Customer Acceptance Form Sections A, B, C, D, and E completely compiled and validated successfully!")
+        st.success("Customer Acceptance Form Saved Successfully!")
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
