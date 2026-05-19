@@ -561,6 +561,17 @@ def create_minutes_pdf(client_name):
     # Enable automatic page breaking with a standard margin to prevent spill overflows
     pdf.set_auto_page_break(auto=True, margin=15)
     
+    # =========================================================================
+    # CRITICAL FIX: Extract session state variables upfront to prevent NameError
+    # =========================================================================
+    sign_chair = st.session_state.get("res_chairman_sign", "")
+    sign_dir = st.session_state.get("res_director_sign", "")
+    res_date = st.session_state.get("res_dated_day", date.today())
+    
+    num_dirs = st.session_state.get("num_directors", 1)
+    num_sh = st.session_state.get("num_shareholders", 1)
+    inc_date_pdf = st.session_state.get('sec_inc_date_display')
+    
     # --- FIXED CONSECUTIVE GRID ROW GENERATOR ---
     def draw_pdf_row(label, value):
         val_str = str(value) if value is not None else ""
@@ -629,7 +640,6 @@ def create_minutes_pdf(client_name):
     pdf.ln(2)
     
     uen_pdf = st.session_state.get('sec_inc_no', '')
-    inc_date_pdf = st.session_state.get('sec_inc_date_display')
     draw_pdf_row("The Certificate of Incorporation number was:", uen_pdf)
     draw_pdf_row("The Date of Incorporation was:", fmt_date(inc_date_pdf))
     
@@ -644,7 +654,6 @@ def create_minutes_pdf(client_name):
     pdf.multi_cell(0, 5, "It was resolved that the following be appointed as the first director(s) of the Company:")
     pdf.ln(2)
     
-    num_dirs = st.session_state.get("num_directors", 1)
     for i in range(num_dirs):
         d_name = st.session_state.get(f"sec_dir_name_{i}", "")
         if d_name:
@@ -678,7 +687,6 @@ def create_minutes_pdf(client_name):
     pdf.cell(50, 6, " No. of shares Issued", border=1, ln=True)
     
     pdf.set_font("Arial", '', 9)
-    num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
         name = st.session_state.get(f"sec_sh_name_{j}", "")
         nric = st.session_state.get(f"sec_sh_id_{j}", "")
@@ -720,8 +728,36 @@ def create_minutes_pdf(client_name):
     pdf.multi_cell(0, 5, f"It was resolved that the books, records and minutes of the Company be kept at the following location, until otherwise determined by the director(s):\n{books_place}")
     pdf.ln(4)
 
+    # 9. TERMINATION (Section 1 Meeting Closure)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 6, "TERMINATION", ln=True)
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 11)
+    pdf.multi_cell(0, 6, "There being no further business, the meeting was terminated with a vote of thanks to the Chair.")
+    pdf.ln(12)
+
+    # First Minutes Signature Block placement
+    if pdf.get_y() > 240:
+        pdf.add_page()
+        
+    y_sig_first = pdf.get_y()
+    pdf.set_xy(10, y_sig_first)
+    pdf.cell(85, 4, "........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_x(10)
+    pdf.cell(85, 5, f"CHAIRMAN: {sign_chair.upper() if sign_chair else '_______________________'}", ln=True)
+    
+    pdf.set_xy(110, y_sig_first)
+    pdf.cell(85, 4, "........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_xy(110, y_sig_first + 4)
+    pdf.cell(85, 5, f"DIRECTOR: {sign_dir.upper() if sign_dir else '_______________________'}", ln=True)
+    pdf.ln(6)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 5, f"Dated This Day Of: {fmt_date(res_date)}", ln=True)
+
     # =========================================================================
-    # PART 2: FORM 45 - CONSENT TO ACT AS DIRECTOR (flows inline)
+    # PART 2: FORM 45 - CONSENT TO ACT AS DIRECTOR
     # =========================================================================
     for i in range(num_dirs):
         f45_name = st.session_state.get(f"f45_name_{i}", "")
@@ -754,7 +790,7 @@ def create_minutes_pdf(client_name):
         pdf.ln(4)
         pdf.cell(0, 5, "Signature: .............................................................  Date: ............................", ln=True)
 
-        # Inline continuation segment wording 
+        # Continuation Sheet Wording
         pdf.ln(4)
         pdf.set_font("Arial", 'B', 11)
         pdf.cell(0, 5, "Form 45 Continuation Sheet I", ln=True)
@@ -767,7 +803,7 @@ def create_minutes_pdf(client_name):
         pdf.cell(0, 5, f"Signature of Director: {f45_name.upper() if f45_name else '_______________________'}", ln=True)
         pdf.ln(3)
         pdf.set_font("Arial", 'I', 9)
-        pdf.multi_cell(0, 4.5, f"I certify that the individual named above appeared before me, executed this statement, and verified their identification profile.\nCertified By Witness: {f45_witness.upper()}")
+        pdf.multi_cell(0, 4.5, f"I certify that the individual named above appeared before me, executed this statement, and verified their identification profile to me.\nCertified By Witness: {f45_witness.upper()}")
 
     # =========================================================================
     # PART 3: REGISTER OF DIRECTORS
@@ -808,7 +844,7 @@ def create_minutes_pdf(client_name):
         draw_pdf_row("Share Certificate Number", f"Cert No. {j+1}")
 
     # =========================================================================
-    # PART 5: REGISTER OF MEMBERS (Compact Ledger)
+    # PART 5: REGISTER OF MEMBERS
     # =========================================================================
     for j in range(num_sh):
         sh_name = st.session_state.get(f"sec_sh_name_{j}", "")
@@ -900,7 +936,7 @@ def create_minutes_pdf(client_name):
     pdf.ln(3)
     pdf.cell(0, 5, "Signature: .............................................................  Date: ............................", ln=True)
 
-    # Form 45A Continuation sheet integrated text flow
+    # Form 45A Continuation sheet integration text flow
     pdf.ln(4)
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 5, "Form 45A Continuation Sheet I", ln=True)
