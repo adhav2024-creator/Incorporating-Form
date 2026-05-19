@@ -1769,9 +1769,9 @@ def render_customer_acceptance_form(client_name_arg=None):
     if client_name_arg and not st.session_state["selected_client_name"]:
         st.session_state["selected_client_name"] = client_name_arg
 
-    # Initialize counter for Section B dynamic rows
-    if "caf_section_b_count" not in st.session_state:
-        st.session_state["caf_section_b_count"] = 1
+    # Initialize counter for individual rows across Section B and C
+    if "caf_person_count" not in st.session_state:
+        st.session_state["caf_person_count"] = 1
 
     # 2. Progress Bar Component Custom CSS Injection
     st.markdown("""
@@ -1813,7 +1813,7 @@ def render_customer_acceptance_form(client_name_arg=None):
     )
     st.session_state["selected_client_name"] = client_name
 
-    # Corporate Pack defaults configurations
+    # Pre-population fallbacks
     default_uen = "200517609N"
     default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
     default_inc_date = "01/01/2005"
@@ -1856,45 +1856,76 @@ def render_customer_acceptance_form(client_name_arg=None):
 
     st.markdown("---")
 
-    # --- SECTION B (DYNAMIC INDIVIDUAL ENTRIES) ---
-    st.subheader("SECTION B ( Information on individual Beneficial Owner / Politically Exposed Person )")
-    st.caption("Please add individual entries as required:")
+    # --- SECTION B (INFORMATION OF DIRECTORS, PARTNERS AND OTHER PERSONS WITH EXECUTIVE AUTHORITY) ---
+    st.subheader("SECTION B")
+    st.markdown("**INFORMATION OF DIRECTORS, PARTNERS AND OTHER PERSONS WITH EXECUTIVE AUTHORITY**")
 
-    # Loop to generate dynamic user input rows
-    for i in range(st.session_state["caf_section_b_count"]):
+    for i in range(st.session_state["caf_person_count"]):
         st.markdown(f"#### Individual Profile #{i+1}")
         
-        b_name = st.text_input(f"Name of individual [{i+1}]", key=f"caf_sec_b_name_{i}")
-        b_alias = st.text_input(f"Alias (if any) [{i+1}]", key=f"caf_sec_b_alias_{i}")
-        b_id = st.text_input(f"NRIC /Passport number [{i+1}]", key=f"caf_sec_b_id_{i}")
-        b_dob = st.text_input(f"Date of birth [{i+1}]", key=f"caf_sec_b_dob_{i}")
-        b_nationality = st.text_input(f"Nationality [{i+1}]", key=f"caf_sec_b_nationality_{i}")
-        b_address = st.text_area(f"Residential address [{i+1}]", key=f"caf_sec_b_address_{i}", height=68)
+        # Hardcoded sample data for index 0 to simulate image population cleanly
+        b_default_name = "Janakiraman Ayyappan" if i == 0 else ""
+        b_default_addr = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" if i == 0 else ""
+        b_default_phone = "+6597679806" if i == 0 else ""
+        b_default_email = "jack@bgconsultancy.com.sg" if i == 0 else ""
+
+        st.text_input("Name as per Passport/NRIC", value=b_default_name, key=f"caf_sec_b_name_{i}")
+        st.text_area("Address", value=b_default_addr, key=f"caf_sec_b_address_{i}", height=68)
+        st.text_input("Contact Number", value=b_default_phone, key=f"caf_sec_b_phone_{i}")
+        st.text_input("Email", value=b_default_email, key=f"caf_sec_b_email_{i}")
         
-        st.markdown("<font color='red'><b>Politically Exposed Person (PEP) Status Verified:</b></font>", unsafe_allow_html=True)
-        b_pep = st.selectbox(
-            f"Is the individual a PEP or an immediate family member/close associate of a PEP? [{i+1}]",
-            options=["No", "Yes"],
-            index=0,
-            key=f"caf_sec_b_pep_{i}"
-        )
+        st.selectbox("Profession", options=["Business", "Professional", "Employment", "Other"], index=0, key=f"caf_sec_b_profession_{i}")
+        st.selectbox("Director", options=["Yes", "No"], index=0, key=f"caf_sec_b_director_{i}")
+        st.selectbox("Shareholder", options=["Yes", "No"], index=0, key=f"caf_sec_b_shareholder_{i}")
+        
+        st.text_input("% of Shareholdings", value="100" if i == 0 else "", key=f"caf_sec_b_shareholding_pct_{i}")
+        st.text_input("Proposed Amount of capital", value="150000" if i == 0 else "", key=f"caf_sec_b_capital_{i}")
+        st.selectbox("Source of funds", options=["Savings", "Loan", "Earnings", "Inheritance"], index=0, key=f"caf_sec_b_source_{i}")
+        
         st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # Dynamic controls row
+    st.markdown("---")
+
+    # --- SECTION C (INFORMATION OF CUSTOMER'S BENEFICIAL OWNER(S)) ---
+    st.subheader("SECTION C")
+    st.markdown("**INFORMATION OF CUSTOMER'S BENEFICIAL OWNER(S)**")
+
+    for i in range(st.session_state["caf_person_count"]):
+        st.markdown(f"#### Beneficial Owner Profile #{i+1}")
+        
+        c_default_name = "Janakiraman Ayyappan" if i == 0 else ""
+        c_default_id = "S7277791C" if i == 0 else ""
+        c_default_dob = "15/06/1972" if i == 0 else ""
+        c_default_nat = "SG" if i == 0 else ""
+        c_default_phone = "+6597679806" if i == 0 else ""
+
+        st.text_input("Full Name of beneficial owner (including any alias)", value=c_default_name, key=f"caf_sec_c_fullname_{i}")
+        st.text_input("Unique Identification number", value=c_default_id, key=f"caf_sec_c_id_{i}")
+        st.text_input("Date of birth", value=c_default_dob, key=f"caf_sec_c_dob_{i}")
+        st.text_input("Nationality", value=c_default_nat, key=f"caf_sec_c_nat_{i}")
+        st.text_input("Contact number", value=c_default_phone, key=f"caf_sec_c_phone_{i}")
+        
+        st.text_input("Provide information of nature of beneficial ownership (e.g. more than 25% of ownership of the customer)", value="NA", key=f"caf_sec_c_nature_{i}")
+        st.text_input("Information on ownership and control structure of the customer.", value="NA", key=f"caf_sec_c_structure_{i}")
+        st.text_input("Attach the proof of Ultimate Beneficial Ownership proof – Ex. Company constitution/Profile/details of director, shareholders from the country of origin.", value="NA", key=f"caf_sec_c_proof_{i}")
+        
+        st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    # Global controls row to handle adding/removing records cleanly
     ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 4])
     
-    if ctrl_col1.button("➕ Add More"):
-        st.session_state["caf_section_b_count"] += 1
+    if ctrl_col1.button("➕ Add Shareholder / Director"):
+        st.session_state["caf_person_count"] += 1
         st.rerun()
         
-    if ctrl_col2.button("➖ Remove Last") and st.session_state["caf_section_b_count"] > 1:
-        st.session_state["caf_section_b_count"] -= 1
+    if ctrl_col2.button("️➖ Remove Last") and st.session_state["caf_person_count"] > 1:
+        st.session_state["caf_person_count"] -= 1
         st.rerun()
 
-    # --- BOTTOM FORM EXECUTION ---
+    # --- BOTTOM FORM SUBMIT ---
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("SUBMIT NOW", type="primary", use_container_width=True):
-        st.success("Customer Acceptance Form & All Individual Section B Profiles Saved Successfully!")
+        st.success("Customer Acceptance Form Section B & Section C Fields Saved Cleanly!")
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
