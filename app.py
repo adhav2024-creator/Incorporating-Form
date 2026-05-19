@@ -1748,8 +1748,11 @@ def bg_sec_file_form(client_name):
     if b_col2.button("Generate Minutes Package PDF"):
         pdf_data = create_minutes_pdf(client_name)
         st.download_button("Download Document Package PDF", data=pdf_data, file_name=f"{client_name}_Corporate_Pack.pdf", mime="application/pdf")
-    if b_col3.button("Next: Acceptance Form →"):
-        st.session_state.view = "acceptance_form"; st.rerun()
+    col_left, col_right = st.columns([4, 1])
+    with col_right:
+        if st.button("Next: Customer acceptance form ➡️", key="next_step_btn"):
+            st.session_state["view"] = "acceptance_form"
+            st.rerun()
 def render_customer_acceptance_form():
    
 # Progress Bar Component Alignment
