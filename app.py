@@ -1120,7 +1120,8 @@ def bg_sec_file_form(client_name):
             st.text_input("NRIC / Passport No.", value=d_id, key=f"f45_id_{i}")
             st.text_input("Company Name", value=client_name.upper(), key=f"f45_co_name_{i}", disabled=True)
             st.text_input("Company No. (UEN)", value=uen_number, key=f"f45_uen_{i}", disabled=True)
-            st.text_area("Residential Address", value=d_addr, key=f"f45_address_{i}", rows=2)
+            # A height of 68 or 70 pixels perfectly matches a 2-row default layout
+            st.text_area("Residential Address", value=d_addr, key=f"f45_address_{i}", height=68)
             
             col_f1, col_f2 = st.columns(2)
             col_f1.date_input("Date of Appointment", value=inc_date, key=f"f45_app_date_{i}", format="DD/MM/YYYY")
