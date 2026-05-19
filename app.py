@@ -970,7 +970,7 @@ def master_kyc_form(client_name):
             st.rerun()
 # --- 4. BG SEC FILE SECTION ---
 def bg_sec_file_form(client_name):
-    # ... (CSS and Header remain the same) ...
+    # Progress Bar Component Alignment
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
@@ -996,13 +996,13 @@ def bg_sec_file_form(client_name):
     c_h2.write("**BG CONSULTANCY PTE LTD**")
     st.markdown("---")
 
+    # Layout row grid input template
     def row_input(label, value, key, disabled=False):
         c1, c2 = st.columns([1, 3])
         with c1: st.markdown(f"**{label}**")
-        with c2: st.text_input(label, value=value, key=key, disabled=disabled, label_visibility="collapsed")
+        with c2: return st.text_input(label, value=value, key=key, disabled=disabled, label_visibility="collapsed")
 
-    # [KEEP EXISTING SECTIONS 1 TO 6 INDISTINGUISHED HERE]
-    # 1. METADATA
+    # 1. METADATA SECTION
     row_input("Name of Company", client_name.upper(), "sec_co_name", disabled=True)
     row_input("Place of Meeting", "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", "sec_meeting_place")
     
@@ -1018,6 +1018,8 @@ def bg_sec_file_form(client_name):
     row_input("Directors Present", ", ".join(dir_list), "sec_dirs_present")
 
     st.markdown("---")
+    
+    # 2. SECTIONS 1 - 6 BUSINESS LOGIC
     st.write("#### 1. CHAIRMAN")
     default_chair = dir_list[0] if dir_list else ""
     row_input("The Chair was taken by", default_chair, "sec_chairman_name")
@@ -1065,80 +1067,97 @@ def bg_sec_file_form(client_name):
     st.markdown("**It was resolved that the address to be used for all correspondence be as follows:**")
     st.text_input("Corr Office", value=reg_addr, key="sec_corr_office", label_visibility="collapsed")
 
-
-    # --- NEW ADDITIONS: SECTION 7 ONWARDS ---
     st.markdown("---")
     
-    # 7. APPOINTMENT OF SECRETARY
+    # SECTIONS 7 - 10 MANAGEMENT SECTIONS
     st.write("#### 7. APPOINTMENT OF SECRETARY")
-    st.write("It was resolved that the following person be appointed as the First Secretary of the Company:")
-    row_input("Secretary Name", st.session_state.get("sec_secretary_name", "KUMARAN S/O BALAKRISHNAN"), "sec_secretary_name")
-    row_input("Secretary NRIC/Passport", st.session_state.get("sec_secretary_id", "S8123456A"), "sec_secretary_id")
+    row_input("Secretary Name", st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), "sec_secretary_name")
+    row_input("Secretary NRIC/Passport", st.session_state.get("sec_secretary_id", "S7277791C"), "sec_secretary_id")
 
-    # 8. APPOINTMENT OF AUDITORS
     st.write("#### 8. APPOINTMENT OF AUDITORS")
-    st.write("It was noted that the company may opt for audit exemption under the small company concept.")
     audit_opt = st.radio("Auditor Status", ["Exempt / No Auditor Appointed", "Appoint Audit Firm"], key="sec_audit_status")
     if audit_opt == "Appoint Audit Firm":
         row_input("Audit Firm Name", "", "sec_auditor_name")
     else:
         st.session_state["sec_auditor_name"] = "EXEMPT"
 
-    # 9. BANKING ACCOUNT
     st.write("#### 9. BANKING ACCOUNT")
-    st.write("It was resolved that a corporate bank account be opened with the following institution:")
     row_input("Bank Name", "DBS BANK LTD", "sec_bank_name")
     row_input("Authorized Signatories", ", ".join(dir_list), "sec_bank_signatories")
 
-    # 10. FINANCIAL YEAR END
     st.write("#### 10. FINANCIAL YEAR END")
-    st.write("It was resolved that the Financial Year End (FYE) of the company be fixed as:")
     fye_col1, fye_col2 = st.columns(2)
-    fye_col1.selectbox("Day", list(range(1, 32)), index=30, key="sec_fye_day")
-    fye_col2.selectbox("Month", ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], index=11, key="sec_fye_month")
+    fye_col1.selectbox("Day", list(range(1, 32)), index=29, key="sec_fye_day")
+    fye_col2.selectbox("Month", ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], index=8, key="sec_fye_month")
 
-    st.divider()
-    # --- FORM 45: CONSENT TO ACT AS DIRECTOR SECTION ---
+    # =========================================================================
+    # --- FORM 45: CONSENT TO ACT AS DIRECTOR SECTION (BUILT INSIDE INTERFACE) ---
+    # =========================================================================
     st.markdown("---")
     st.write("### FORM 45: CONSENT TO ACT AS DIRECTOR")
-    st.write("The following statutory declarations will be generated automatically for each appointed director:")
+    st.write("Statutory disclosures dynamically compiled per designated officer profile:")
 
-    # Loop through the known directors to display/verify Form 45 configurations
     for i, d_name in enumerate(dir_list):
         if not d_name:
             continue
             
-        with st.expander(f"📄 Form 45 Particulars: {d_name.upper()}", expanded=(i == 0)):
-            st.markdown(f"**Declaration Details for Director {i+1}**")
+        with st.expander(f"📄 Form 45 Details & Continuation Statement: {d_name.upper()}", expanded=(i == 0)):
+            st.markdown(f"**Section A: Particulars for Director {i+1}**")
             
-            # Fetch existing data from state if available, otherwise fallback to defaults
+            # Fetch default mappings from current session values
             d_id = st.session_state.get(f"d_id_{i}", "")
-            d_addr = st.session_state.get(f"d_address_{i}", reg_addr) # Fallback to company reg office if missing
+            d_addr = st.session_state.get(f"d_address_{i}", reg_addr)
             
-            # Form 45 input/display rows
             st.text_input("Name of Director", value=d_name, key=f"f45_name_{i}", disabled=True)
             st.text_input("NRIC / Passport No.", value=d_id, key=f"f45_id_{i}")
             st.text_input("Company Name", value=client_name.upper(), key=f"f45_co_name_{i}", disabled=True)
             st.text_input("Company No. (UEN)", value=uen_number, key=f"f45_uen_{i}", disabled=True)
-            # A height of 68 or 70 pixels perfectly matches a 2-row default layout
             st.text_area("Residential Address", value=d_addr, key=f"f45_address_{i}", height=68)
             
             col_f1, col_f2 = st.columns(2)
             col_f1.date_input("Date of Appointment", value=inc_date, key=f"f45_app_date_{i}", format="DD/MM/YYYY")
-            col_f2.text_input("Witness / Secretarial Agent Name", value=st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), key=f"f45_witness_{i}")
+            col_f2.text_input("Witness / Secretarial Agent", value=st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), key=f"f45_witness_{i}")
             
-            # Quick status info highlighting the legal provisions of Form 45
-            st.caption("⚠️ By generating this document, the director declares they are at least 21 years of age, of full capacity, and not disqualified from acting as a director under sections 148, 149, 154, or 155 of the Singapore Companies Act.")
-    # BUTTONS
+            st.markdown("---")
+            st.markdown("**Section B: Under the provisions of the Singapore Companies Act, I state as follows:**")
+            
+            # Full Text Legal Preview Blocks Inside UI Container
+            legal_text = f"""
+            1. That I am not less than 21 years of age and that I am of full capacity.
+            2. That I am not an undischarged bankrupt in Singapore or in any other foreign jurisdiction.
+            3. Within a period of 5 years preceding the date of this statement I have not had any disqualification order made by the High Court of Singapore against me under section 149 or 154(2) of the Act.
+            4. That within a period of 5 years preceding the appointment date, I have not been convicted whether within or without Singapore, of any offence—
+               (a) in connection with the promotion, formation or management of a corporation;
+               (b) involving fraud or dishonesty punishable on conviction with imprisonment for 3 months or more; or
+               (c) under section 157 or section 339 of the Act.
+            5. That within a period of 5 years preceding the date of this statement I have not been convicted, in Singapore or elsewhere, of any offence involving fraud or dishonesty punishable on conviction with imprisonment for 3 months or more.
+            6. That I am not subject to a disqualification status from acting under the rules of the registry.
+            7. By virtue of the foregoing I am not disqualified from acting as a director of the above named company.
+            """
+            st.caption(legal_text)
+            
+            st.markdown("---")
+            st.markdown("**Section C: Form 45 Continuation Sheet I**")
+            st.info("*(8) That the statements made by me in this form are true. I read and understand English. I confirm that the statements are true, I am also aware that I can be prosecuted in Court if I wilfully give any information on this form which is false.*")
+            
+            # Simulated Execution Elements
+            cx1, cx2 = st.columns(2)
+            cx1.markdown(f"🖊️ **Signature Required:**\n\n`_______________________`\n\n**{d_name.upper()}**\n\n*(Director)*")
+            cx2.markdown(f"🖋️ **Witness Certification:**\n\n`_______________________`\n\n**{st.session_state.get('sec_secretary_name', 'JANAKIRAMAN AYYAPPAN').upper()}**\n\n*(Filing Agent / Witness)*")
+
+    # =========================================================================
+
+    st.divider()
+    
+    # NAVIGATION AND DATA EXPORT CONTROL BUTTONS
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     if b_col1.button("← Back to KYC"):
         st.session_state.view = "kyc_form"
         st.rerun()
 
-    if b_col2.button("Generate Minutes PDF"):
-        # Ensure data is saved before executing layout generation
+    if b_col2.button("Generate Minutes & Form 45 PDF"):
         pdf_data = create_minutes_pdf(client_name)
-        st.download_button("Download Minutes PDF", data=pdf_data, file_name=f"{client_name}_Minutes.pdf", mime="application/pdf")
+        st.download_button("Download Document Package PDF", data=pdf_data, file_name=f"{client_name}_Corporate_Pack.pdf", mime="application/pdf")
 
     if b_col3.button("Next: Acceptance Form →"):
         st.session_state.view = "acceptance_form"
