@@ -1761,19 +1761,19 @@ def bg_sec_file_form(client_name):
 def render_customer_acceptance_form(client_name_arg=None):
     import streamlit as st
 
-    # Initialize global company variable if not present
+    # 1. Initialize global company variable safely if not present
     if "selected_client_name" not in st.session_state:
         st.session_state["selected_client_name"] = ""
 
-    # If a name was passed as an argument, sync it to session state
-    if client_name_arg:
+    # Sync name if it was passed as an argument from the database selection
+    if client_name_arg and not st.session_state["selected_client_name"]:
         st.session_state["selected_client_name"] = client_name_arg
 
-    # Progress Bar Component Alignment
+    # 2. Progress Bar Component Custom CSS Injection
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
-        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .progress-line { position: absolute; top: 45px; left: 10%; right: 10%; height: 4px; background-color: #2E7D32; z-index: 1; }
         .step { text-align: center; z-index: 2; flex: 1; }
         .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
         .active-circle { background-color: #2E7D32; color: white; }
@@ -1785,145 +1785,80 @@ def render_customer_acceptance_form(client_name_arg=None):
             <div class="step"><div class="circle inactive-circle">1</div><div class="label">Master KYC Form</div></div>
             <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
             <div class="step"><div class="circle active-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
+            <div class="step"><div class="circle inactive-circle">5</div><div class="label">Terms and Conditions</div></div>
         </div>
         """, unsafe_allow_html=True)
 
-    # 1. CUSTOMER ACCEPTANCE FORM (Header)
-    st.subheader("CUSTOMER ACCEPTANCE FORM")
-    
-    client_name = st.text_input(
-        "Name of Client / Proposed Company Name:", 
-        value=st.session_state["selected_client_name"],
-        key="caf_client_name_input"
+    # Main Header
+    st.caption("BGC-CUSTOMER ACCEPTANCE FORM")
+    st.subheader("INFORMATION ABOUT CUSTOMERS (BENEFICIAL OWNERS AND POLITICALLY EXPOSED PERSONS)")
+
+    # Client Status Radio Button Selection
+    client_status = st.radio(
+        "Client Type",
+        options=["Existing Client", "New Client"],
+        index=1,
+        label_visibility="collapsed",
+        key="caf_client_status_radio"
     )
+
+    # Form Fields Matching the Visual Interface layout exactly
+    # Notice: 'value' properties are uncoupled from dynamic session state lookups to eliminate TypeErrors
+    client_name = st.text_input(
+        "Name of the Client", 
+        value=st.session_state["selected_client_name"],
+        key="caf_main_client_name"
+    )
+    # Save any manual changes back to the session state safely
     st.session_state["selected_client_name"] = client_name
 
-    if not client_name:
-        st.info("Please enter the client/company name to fill the form.")
-        return
-
-    # =========================================================================
-    # PART 1
-    # =========================================================================
-    st.markdown("### PART 1")
-
-    # A. CORPORATE PARTICULARS
-    st.markdown("#### A. CORPORATE PARTICULARS")
-    col_a1, col_a2 = st.columns(2)
-    with col_a1:
-        st.session_state['kyc_country'] = st.text_input("Country of Incorporation:", value="SINGAPORE", key="caf_country_state")
-        st.session_state['kyc_entity_type'] = st.text_input("Type of Entity:", key="caf_entity_type_state")
-    with col_a2:
-        st.session_state['kyc_biz_activity'] = st.text_area("Principal Business Activity:", key="caf_biz_act_state")
-        st.session_state['sec_reg_office'] = st.text_area("Registered Office Address:", key="caf_reg_off_state")
-
-    # B. PARTICULARS OF DIRECTORS / SHAREHOLDERS / UBO
-    st.markdown("#### B. PARTICULARS OF DIRECTORS / SHAREHOLDERS / UBO")
-    num_dirs = st.number_input("Number of Individuals:", min_value=1, max_value=20, value=1, key="caf_num_inds_state")
-    st.session_state["num_directors"] = num_dirs
-
-    for i in range(num_dirs):
-        st.markdown(f"**Individual {i+1}**")
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-            st.session_state[f"sec_dir_name_{i}"] = st.text_input("Full Name:", key=f"caf_name_state_{i}")
-            st.session_state[f"f45_id_{i}"] = st.text_input("NRIC / Passport No:", key=f"caf_id_state_{i}")
-        with col_b2:
-            st.session_state[f"f45_nationality_{i}"] = st.text_input("Country of Nationality:", key=f"caf_nat_state_{i}")
-            st.session_state[f"kyc_capacity_{i}"] = st.text_input("Capacity (e.g. Director / Shareholder / UBO):", key=f"caf_cap_state_{i}")
-
-    # C. SOURCE OF FUNDS & REVENUE ESTIMATION
-    st.markdown("#### C. SOURCE OF FUNDS & REVENUE ESTIMATION")
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-        st.session_state['kyc_source_funds'] = st.text_input("Source of Start-up Capital / Wealth:", key="caf_sof_state")
-        st.session_state['kyc_est_turnover'] = st.text_input("Estimated Annual Turnover:", key="caf_turnover_state")
-    with col_c2:
-        st.session_state['kyc_target_countries'] = st.text_area("Target Countries of Operation:", key="caf_countries_state")
-
-    # =========================================================================
-    # FUTURE PARTS WILL BE APPENDED HERE
-    # =========================================================================
-
-    # Progress Bar Component Alignment
-    st.markdown("""
-        <style>
-        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
-        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
-        .step { text-align: center; z-index: 2; flex: 1; }
-        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
-        .active-circle { background-color: #2E7D32; color: white; }
-        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
-        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
-        </style>
-        <div class="progress-container">
-            <div class="progress-line"></div>
-            <div class="step"><div class="circle inactive-circle">1</div><div class="label">Master KYC Form</div></div>
-            <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
-            <div class="step"><div class="circle active-circle">3</div><div class="label">Customer Acceptance Form</div></div>
-        </div>
-        """, unsafe_allow_html=True)
-    # Initialize global company variable if not present
-    if "selected_client_name" not in st.session_state:
-        st.session_state["selected_client_name"] = ""
-
-    # 1. CUSTOMER ACCEPTANCE FORM (Header)
-    st.subheader("CUSTOMER ACCEPTANCE FORM")
-    
-    client_name = st.text_input(
-        "Name of Client / Proposed Company Name:", 
-        value=st.session_state["selected_client_name"],
-        key="caf_client_name_input"
+    client_since = st.text_input(
+        "Client Since", 
+        value="01/01/2005", 
+        key="caf_client_since_field"
     )
-    st.session_state["selected_client_name"] = client_name
+    
+    referred_by = st.selectbox(
+        "Referred by", 
+        options=["NA", "Internal Referral", "External Partner", "Direct Channel"], 
+        index=0, 
+        key="caf_referred_by_field"
+    )
+    
+    date_of_inc = st.text_input(
+        "Date of Incorporation", 
+        value="01/01/2005", 
+        key="caf_date_of_inc_field"
+    )
+    
+    other_info = st.text_input(
+        "Other", 
+        key="caf_other_info_field"
+    )
 
-    if not client_name:
-        st.info("Please enter the client/company name to fill the form.")
-        return
+    st.markdown("---")
 
-    # =========================================================================
-    # PART 1
-    # =========================================================================
-    st.markdown("### PART 1")
+    # SECTION A Layout Formulation
+    st.subheader("SECTION A ( Information of customer )")
+    st.markdown("**NEW OR BUSINESS ENTITY'S INFORMATION**")
 
-    # A. CORPORATE PARTICULARS
-    st.markdown("#### A. CORPORATE PARTICULARS")
-    col_a1, col_a2 = st.columns(2)
-    with col_a1:
-        st.session_state['kyc_country'] = st.text_input("Country of Incorporation:", value="SINGAPORE", key="caf_country")
-        st.session_state['kyc_entity_type'] = st.text_input("Type of Entity:", key="caf_entity_type")
-    with col_a2:
-        st.session_state['kyc_biz_activity'] = st.text_area("Principal Business Activity:", key="caf_biz_act")
-        st.session_state['sec_reg_office'] = st.text_area("Registered Office Address:", key="caf_reg_off")
+    entity_name = st.text_input(
+        "Name of entity", 
+        value=client_name, 
+        key="caf_section_a_entity_name"
+    )
 
-    # B. PARTICULARS OF DIRECTORS / SHAREHOLDERS / UBO
-    st.markdown("#### B. PARTICULARS OF DIRECTORS / SHAREHOLDERS / UBO")
-    num_dirs = st.number_input("Number of Individuals:", min_value=1, max_value=20, value=1, key="caf_num_inds")
-    st.session_state["num_directors"] = num_dirs
-
-    for i in range(num_dirs):
-        st.markdown(f"**Individual {i+1}**")
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-            st.session_state[f"sec_dir_name_{i}"] = st.text_input("Full Name:", key=f"caf_name_{i}")
-            st.session_state[f"f45_id_{i}"] = st.text_input("NRIC / Passport No:", key=f"caf_id_{i}")
-        with col_b2:
-            st.session_state[f"f45_nationality_{i}"] = st.text_input("Country of Nationality:", key=f"caf_nat_{i}")
-            st.session_state[f"kyc_capacity_{i}"] = st.text_input("Capacity (e.g. Director / Shareholder / UBO):", key=f"caf_cap_{i}")
-
-    # C. SOURCE OF FUNDS & REVENUE ESTIMATION
-    st.markdown("#### C. SOURCE OF FUNDS & REVENUE ESTIMATION")
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-        st.session_state['kyc_source_funds'] = st.text_input("Source of Start-up Capital / Wealth:", key="caf_sof")
-        st.session_state['kyc_est_turnover'] = st.text_input("Estimated Annual Turnover:", key="caf_turnover")
-    with col_c2:
-        st.session_state['kyc_target_countries'] = st.text_area("Target Countries of Operation:", key="caf_countries")
-
-    # Leave a placeholder comment here to cleanly append Part 2, Part 3, etc. later
-    # =========================================================================
-    # FUTURE PARTS WILL BE APPENDED HERE
-    # =========================================================================
+    # Save data elements down to processing structures securely
+    st.session_state["caf_form_data"] = {
+        "client_status": client_status,
+        "client_name": client_name,
+        "client_since": client_since,
+        "referred_by": referred_by,
+        "date_of_incorporation": date_of_inc,
+        "other": other_info,
+        "entity_name": entity_name
+    }
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
