@@ -1142,7 +1142,7 @@ if check_password():
     if st.session_state["view"] == "management":
         st.title("Client Management System")
 
-        # --- DATA FETCHING & TYPE CASTING ---
+       
         df = get_clients()
 
         if not df.empty:
