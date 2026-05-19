@@ -1336,13 +1336,55 @@ def bg_sec_file_form(client_name):
             st.caption("ℹ️ *Note: At incorporation, all initial share allocations are logged inside the Allotment Ledger. The Register of Transfers remains clear until a secondary sale or assignment takes place.*")
     # NAVIGATION AND DATA EXPORT CONTROL BUTTONS
     # =========================================================================
+# =========================================================================
+    # --- FORM 45A: CONSENT TO ACT AS SECRETARY & CONTINUATION SHEET ---
+    # =========================================================================
     st.markdown("---")
     st.write("### FORM 45A: CONSENT TO ACT AS SECRETARY")
-    with st.expander("📄 Form 45A & Continuation Sheet I: Secretary Setup", expanded=False):
-        st.text_input("Name of Secretary", value="", key="f45a_ui_name") # Emptied
-        st.text_input("NRIC / Passport No.", value="", key="f45a_ui_id") # Emptied
-        st.text_area("Residential Address Address", value="", key="f45a_ui_address") # Emptied
+    st.write("Official Form 45A statutory declaration layout with qualification criteria selections:")
 
+    with st.expander("📄 Form 45A Details & Continuation Sheet I: Secretary Setup", expanded=True):
+        st.markdown("#### FORM 45A: Particulars of Secretary")
+        
+        s_col1, s_col2 = st.columns(2)
+        with s_col1:
+            st.text_input("Name of Secretary", value="", key="f45a_ui_name")
+            st.text_input("Company Name", value=client_name.upper(), key="f45a_ui_co_name", disabled=True)
+            st.text_area("Residential Address", value="", key="f45a_ui_address", height=68)
+        with s_col2:
+            st.text_input("Identity No. (NRIC / Passport No.)", value="", key="f45a_ui_id")
+            st.text_input("Company No. (UEN)", value="", key="f45a_ui_uen")
+            st.text_input("Nationality", value="", key="f45a_ui_nationality")
+
+        st.markdown("---")
+        st.markdown("**Statutory Declarations (Under the provisions of the Singapore Companies Act):**")
+        st.write("*I, the under mentioned person, hereby consent to act as a secretary of the above named company with effect from the date of incorporation.*")
+        
+        st.markdown("##### I am a qualified person under section 171(1AA) of the Companies Act by virtue of my being (Select applicable):")
+        
+        # Statutory selections matching standard ACRA Form 45A layout parameters exactly
+        st.checkbox("*(i) a secretary of a company for at least 3 of the 5 years immediately preceding the above mentioned date of my appointment as secretary of the above named company*", key="f45a_crit_1")
+        st.checkbox("*(ii) a qualified person under the Legal Profession Act (Cap. 161)*", key="f45a_crit_2")
+        st.checkbox("*(iii) a public accountant*", key="f45a_crit_3")
+        st.checkbox("*(iiia) a member of the Institute of Certified Public Accountants in Singapore*", key="f45a_crit_4")
+        st.checkbox("*(iv) a member of the Singapore Association of the Institute of Chartered Secretaries and Administrators*", key="f45a_crit_5")
+        st.checkbox("*(v) a member of the Association of International Accountants (Singapore Branch)*", key="f45a_crit_6")
+        st.checkbox("*(vi) a member of the Institute of Company Accountants, Singapore*", key="f45a_crit_7")
+
+        # Form 45A Continuation Sheet I Phrasing Layout
+        st.markdown("---")
+        st.markdown("#### Form 45A Continuation Sheet I")
+        st.info("*(3) That the statements made by me in this form are true. I read and understand English. I confirm that the statements are true, I am also aware that I can be prosecuted in Court if I wilfully give any information on this form which is false.*")
+        
+        sc_col1, sc_col2 = st.columns(2)
+        with sc_col1:
+            st.markdown(f"**Secretary Signature Block**")
+            st.caption("Signature: `_______________________`")
+            st.caption("Dated This Day Of: `_______________________`")
+        with sc_col2:
+            st.markdown(f"**Witness / Lodging Agent Certification**")
+            st.caption("Certified By: REGISTERED FILING AGENT")
+            st.caption("Signature: `_______________________`")
     st.divider()
     
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
