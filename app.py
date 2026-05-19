@@ -1434,7 +1434,28 @@ def bg_sec_file_form(client_name):
         }
         st.table(sec_ledger_table)
     st.divider()
-    
+    # =========================================================================
+    # --- MINUTES OF DIRECTORS' MEETING & RESOLUTION ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### MINUTES OF DIRECTORS' MEETING & RESOLUTION")
+
+    with st.expander("📝 Minutes Meeting Closure", expanded=True):
+        st.markdown("**TERMINATION**")
+        st.write("There being no further business, the meeting was terminated with a vote of thanks to the Chair.")
+        
+        st.markdown("---")
+        st.markdown("**SIGNATURE BLOCKS**")
+        
+        res_col1, res_col2 = st.columns(2)
+        with res_col1:
+            st.text_input("Chairman", value="", key="res_chairman_sign")
+            st.caption("Signature: `_______________________`")
+        with res_col2:
+            st.text_input("Director", value="", key="res_director_sign")
+            st.caption("Signature: `_______________________`")
+            
+        st.date_input("Dated This Day Of", value=date.today(), key="res_dated_day", format="DD/MM/YYYY")
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     if b_col1.button("← Back to KYC"):
         st.session_state.view = "kyc_form"; st.rerun()
