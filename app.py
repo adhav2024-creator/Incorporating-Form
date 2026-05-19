@@ -1742,20 +1742,25 @@ def bg_sec_file_form(client_name):
             st.caption("Signature: `_______________________`")
             
         st.date_input("Dated This Day Of", value=date.today(), key="res_dated_day", format="DD/MM/YYYY")
+    st.markdown("---")
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
+    
     if b_col1.button("← Back to KYC"):
-        st.session_state.view = "kyc_form"; st.rerun()
+        st.session_state["view"] = "kyc_form"
+        st.rerun()
+        
     if b_col2.button("Generate Minutes Package PDF"):
+        # Assuming create_minutes_pdf is defined elsewhere in your runtime environment
         pdf_data = create_minutes_pdf(client_name)
         st.download_button("Download Document Package PDF", data=pdf_data, file_name=f"{client_name}_Corporate_Pack.pdf", mime="application/pdf")
-    col_left, col_right = st.columns([4, 1])
-    with col_right:
-        if st.button("Next: Customer acceptance form ➡️", key="next_step_btn"):
-            st.session_state["view"] = "acceptance_form"
-            st.rerun()
+        
+    if b_col3.button("Next: Customer acceptance form ➡️", key="next_step_btn"):
+       st.session_state["view"] = "acceptance_form"
+       st.rerun()
+
 def render_customer_acceptance_form():
-   
-# Progress Bar Component Alignment
+
+    # Progress Bar Component Alignment
     st.markdown("""
         <style>
         .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
