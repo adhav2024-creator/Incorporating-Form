@@ -1769,6 +1769,10 @@ def render_customer_acceptance_form(client_name_arg=None):
     if client_name_arg and not st.session_state["selected_client_name"]:
         st.session_state["selected_client_name"] = client_name_arg
 
+    # Initialize counter for Section B dynamic rows
+    if "caf_section_b_count" not in st.session_state:
+        st.session_state["caf_section_b_count"] = 1
+
     # 2. Progress Bar Component Custom CSS Injection
     st.markdown("""
         <style>
@@ -1809,7 +1813,7 @@ def render_customer_acceptance_form(client_name_arg=None):
     )
     st.session_state["selected_client_name"] = client_name
 
-    # Set up safe structural fallback string parameters cleanly
+    # Corporate Pack defaults configurations
     default_uen = "200517609N"
     default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
     default_inc_date = "01/01/2005"
@@ -1834,35 +1838,11 @@ def render_customer_acceptance_form(client_name_arg=None):
     st.subheader("SECTION A ( Information of customer )")
     st.markdown("**NEW OR BUSINESS ENTITY'S INFORMATION**")
 
-    entity_name = st.text_input(
-        "Name of entity", 
-        value=client_name, 
-        key="caf_section_a_entity_name"
-    )
-    
-    inc_reg_num = st.text_input(
-        "Incorporation registration number", 
-        value=default_uen,
-        key="caf_section_a_inc_reg_num"
-    )
-    
-    address_office = st.text_area(
-        "Address (place of business/registered office)", 
-        value=default_address,
-        key="caf_section_a_address_office"
-    )
-    
-    place_of_reg = st.text_input(
-        "Place of registration /incorporation", 
-        value="Singapore", 
-        key="caf_section_a_place_of_reg"
-    )
-    
-    date_of_reg = st.text_input(
-        "Date of registration /incorporation", 
-        value=date_of_inc, 
-        key="caf_section_a_date_of_reg"
-    )
+    entity_name = st.text_input("Name of entity", value=client_name, key="caf_section_a_entity_name")
+    inc_reg_num = st.text_input("Incorporation registration number", value=default_uen, key="caf_section_a_inc_reg_num")
+    address_office = st.text_area("Address (place of business/registered office)", value=default_address, key="caf_section_a_address_office")
+    place_of_reg = st.text_input("Place of registration /incorporation", value="Singapore", key="caf_section_a_place_of_reg")
+    date_of_reg = st.text_input("Date of registration /incorporation", value=date_of_inc, key="caf_section_a_date_of_reg")
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<font color='red'><b>INTENDED NATURE AND PURPOSE OF BUSINESS RELATIONSHIP REQUIRED</b></font>", unsafe_allow_html=True)
@@ -1874,10 +1854,47 @@ def render_customer_acceptance_form(client_name_arg=None):
     rel_acra = st.checkbox("ACRA filing services", value=True, key="caf_rel_acra")
     rel_others = st.checkbox("Others", value=False, key="caf_rel_others")
 
-    # Submit action structure
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("SUBMIT NOW", type="primary"):
-        st.success("Customer Acceptance Form Saved Successfully!")
+    st.markdown("---")
+
+    # --- SECTION B (DYNAMIC INDIVIDUAL ENTRIES) ---
+    st.subheader("SECTION B ( Information on individual Beneficial Owner / Politically Exposed Person )")
+    st.caption("Please add individual entries as required:")
+
+    # Loop to generate dynamic user input rows
+    for i in range(st.session_state["caf_section_b_count"]):
+        st.markdown(f"#### Individual Profile #{i+1}")
+        
+        b_name = st.text_input(f"Name of individual [{i+1}]", key=f"caf_sec_b_name_{i}")
+        b_alias = st.text_input(f"Alias (if any) [{i+1}]", key=f"caf_sec_b_alias_{i}")
+        b_id = st.text_input(f"NRIC /Passport number [{i+1}]", key=f"caf_sec_b_id_{i}")
+        b_dob = st.text_input(f"Date of birth [{i+1}]", key=f"caf_sec_b_dob_{i}")
+        b_nationality = st.text_input(f"Nationality [{i+1}]", key=f"caf_sec_b_nationality_{i}")
+        b_address = st.text_area(f"Residential address [{i+1}]", key=f"caf_sec_b_address_{i}", height=68)
+        
+        st.markdown("<font color='red'><b>Politically Exposed Person (PEP) Status Verified:</b></font>", unsafe_allow_html=True)
+        b_pep = st.selectbox(
+            f"Is the individual a PEP or an immediate family member/close associate of a PEP? [{i+1}]",
+            options=["No", "Yes"],
+            index=0,
+            key=f"caf_sec_b_pep_{i}"
+        )
+        st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    # Dynamic controls row
+    ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 4])
+    
+    if ctrl_col1.button("➕ Add More"):
+        st.session_state["caf_section_b_count"] += 1
+        st.rerun()
+        
+    if ctrl_col2.button("➖ Remove Last") and st.session_state["caf_section_b_count"] > 1:
+        st.session_state["caf_section_b_count"] -= 1
+        st.rerun()
+
+    # --- BOTTOM FORM EXECUTION ---
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    if st.button("SUBMIT NOW", type="primary", use_container_width=True):
+        st.success("Customer Acceptance Form & All Individual Section B Profiles Saved Successfully!")
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
