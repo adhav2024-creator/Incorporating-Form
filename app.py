@@ -1289,7 +1289,51 @@ def bg_sec_file_form(client_name):
                 "Date Ceased to be Member": ["OPEN / ACTIVE OWNER"]
             }
             st.table(transferred_log_table)
+    # =========================================================================
+    # --- STATUTORY LEDGER: REGISTER OF TRANSFERS ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### STATUTORY TRANSACTION RECORD: REGISTER OF TRANSFERS")
+    st.write("Official register documenting the formal transfer deeds and structural share changes:")
+
+    num_sh = st.session_state.get("num_shareholders", 1)
     
+    for j in range(num_sh):
+        sh_name = st.session_state.get(f"sec_sh_name_{j}", st.session_state.get(f"s_name_{j}", ""))
+        if not sh_name:
+            continue
+            
+        with st.expander(f"📜 Register of Transfers Entry: {sh_name.upper()}", expanded=False):
+            st.markdown(f"**REGISTER OF TRANSFERS — TRANSFER TRANSACTION BOOK ENTRY**")
+            
+            sh_id = st.session_state.get(f"sec_sh_id_{j}", st.session_state.get(f"s_id_{j}", ""))
+            sh_qty = st.session_state.get(f"sec_sh_qty_{j}", st.session_state.get(f"p_issued_{j}", "100"))
+            
+            # Formatted data entry matrix matching the tabular column headers from IMG_0295.jpg exactly
+            transfer_ledger_entries = {
+                "Statutory Transfer Parameter": [
+                    "Date of Transfer Lodgement",
+                    "No. of Transfer Deed",
+                    "Transferor Name (From Whom Transferred)",
+                    "Transferee Name (To Whom Transferred)",
+                    "Number of Shares Transferred",
+                    "Distinctive Numbers From",
+                    "Distinctive Numbers To",
+                    "New Certificate Number Issued"
+                ],
+                "Current Transaction Status": [
+                    "-",
+                    "-",
+                    "-",
+                    "-",
+                    "-",
+                    "-",
+                    "-",
+                    "-"
+                ]
+            }
+            st.table(transfer_ledger_entries)
+            st.caption("ℹ️ *Note: At incorporation, all initial share allocations are logged inside the Allotment Ledger. The Register of Transfers remains clear until a secondary sale or assignment takes place.*")
     # NAVIGATION AND DATA EXPORT CONTROL BUTTONS
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     if b_col1.button("← Back to KYC"):
