@@ -1091,20 +1091,21 @@ def bg_sec_file_form(client_name):
     fye_col2.selectbox("Month", ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], index=8, key="sec_fye_month")
 
     # =========================================================================
-    # --- FORM 45: CONSENT TO ACT AS DIRECTOR SECTION (BUILT INSIDE INTERFACE) ---
+    # --- FORM 45: CONSENT TO ACT AS DIRECTOR & CONTINUATION PACKAGE ---
     # =========================================================================
     st.markdown("---")
-    st.write("### FORM 45: CONSENT TO ACT AS DIRECTOR")
-    st.write("Statutory disclosures dynamically compiled per designated officer profile:")
+    st.write("### FORM 45 PACKAGE: DIRECTORS & SECRETARY STATUTORY FORMS")
+    st.write("Statutory declarations and legal ledgers dynamically compiled per designated officer profile:")
 
+    # 1. GENERATE INDIVIDUAL SECTIONS FOR EACH ACTIVE DIRECTOR
     for i, d_name in enumerate(dir_list):
         if not d_name:
             continue
             
-        with st.expander(f"📄 Form 45 Details & Continuation Statement: {d_name.upper()}", expanded=(i == 0)):
-            st.markdown(f"**Section A: Particulars for Director {i+1}**")
+        with st.expander(f"📄 Form 45 Details & Continuation Sheet I: {d_name.upper()}", expanded=(i == 0)):
+            st.markdown(f"#### FORM 45: Particulars for Director {i+1}")
             
-            # Fetch default mappings from current session values
+            # Fetch variables from state
             d_id = st.session_state.get(f"d_id_{i}", "")
             d_addr = st.session_state.get(f"d_address_{i}", reg_addr)
             
@@ -1116,34 +1117,75 @@ def bg_sec_file_form(client_name):
             
             col_f1, col_f2 = st.columns(2)
             col_f1.date_input("Date of Appointment", value=inc_date, key=f"f45_app_date_{i}", format="DD/MM/YYYY")
-            col_f2.text_input("Witness / Secretarial Agent", value=st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), key=f"f45_witness_{i}")
+            col_f2.text_input("Witness / Secretarial Professional Agent", value=st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), key=f"f45_witness_{i}")
             
             st.markdown("---")
             st.markdown("**Section B: Under the provisions of the Singapore Companies Act, I state as follows:**")
             
-            # Full Text Legal Preview Blocks Inside UI Container
-            legal_text = f"""
+            legal_text = """
             1. That I am not less than 21 years of age and that I am of full capacity.
             2. That I am not an undischarged bankrupt in Singapore or in any other foreign jurisdiction.
             3. Within a period of 5 years preceding the date of this statement I have not had any disqualification order made by the High Court of Singapore against me under section 149 or 154(2) of the Act.
-            4. That within a period of 5 years preceding the appointment date, I have not been convicted whether within or without Singapore, of any offence—
-               (a) in connection with the promotion, formation or management of a corporation;
-               (b) involving fraud or dishonesty punishable on conviction with imprisonment for 3 months or more; or
-               (c) under section 157 or section 339 of the Act.
-            5. That within a period of 5 years preceding the date of this statement I have not been convicted, in Singapore or elsewhere, of any offence involving fraud or dishonesty punishable on conviction with imprisonment for 3 months or more.
-            6. That I am not subject to a disqualification status from acting under the rules of the registry.
-            7. By virtue of the foregoing I am not disqualified from acting as a director of the above named company.
+            4. That within a period of 5 years preceding the appointment date, I have not been convicted whether within or without Singapore, of any offence involving the promotion, formation or management of a corporation, fraud or dishonesty punishable with imprisonment for 3 months or more, or under section 157 or section 339 of the Act.
+            5. By virtue of the foregoing I am not disqualified from acting as a director of the above named company.
             """
             st.caption(legal_text)
             
+            # Form 45 Continuation Sheet I Tabular Structure
             st.markdown("---")
-            st.markdown("**Section C: Form 45 Continuation Sheet I**")
+            st.markdown("#### Form 45 Continuation Sheet I")
             st.info("*(8) That the statements made by me in this form are true. I read and understand English. I confirm that the statements are true, I am also aware that I can be prosecuted in Court if I wilfully give any information on this form which is false.*")
             
-            # Simulated Execution Elements
-            cx1, cx2 = st.columns(2)
-            cx1.markdown(f"🖊️ **Signature Required:**\n\n`_______________________`\n\n**{d_name.upper()}**\n\n*(Director)*")
-            cx2.markdown(f"🖋️ **Witness Certification:**\n\n`_______________________`\n\n**{st.session_state.get('sec_secretary_name', 'JANAKIRAMAN AYYAPPAN').upper()}**\n\n*(Filing Agent / Witness)*")
+            c_col1, c_col2 = st.columns(2)
+            with c_col1:
+                st.markdown(f"**Director Signature Execution**")
+                st.caption(f"Name: {d_name.upper()}")
+                st.caption("Signature: `_______________________`")
+            with c_col2:
+                st.markdown(f"**Witness / Lodging Agent Certification**")
+                st.caption(f"Certified By: {st.session_state.get('sec_secretary_name', 'JANAKIRAMAN AYYAPPAN').upper()}")
+                st.caption("Signature: `_______________________`")
+
+    # 2. GENERATE SECRETARY CONSENT SECTION (FORM 45A)
+    st.markdown("---")
+    sec_name_val = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
+    sec_id_val = st.session_state.get("sec_secretary_id", "S7277791C")
+    
+    with st.expander(f"🔐 Form 45A: Consent to Act as Secretary — {sec_name_val.upper()}", expanded=True):
+        st.markdown("#### FORM 45A: CONSENT TO ACT AS SECRETARY")
+        st.write("To be completed by the named Corporate Secretary compliance officer:")
+        
+        s_col1, s_col2 = st.columns(2)
+        with s_col1:
+            st.text_input("Secretary Full Name", value=sec_name_val, key="f45a_sec_name")
+            st.text_input("Identity Card / NRIC No.", value=sec_id_val, key="f45a_sec_id")
+        with s_col2:
+            st.text_input("Nationality", value="SINGAPORE CITIZEN", key="f45a_sec_nationality")
+            st.text_input("Effective Date of Appointment", value=inc_date.strftime("%d/%m/%Y") if isinstance(inc_date, date) else str(inc_date), key="f45a_sec_date", disabled=True)
+            
+        st.text_area("Residential Office Address", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", key="f45a_sec_address", height=68)
+        
+        st.markdown("**Statutory Qualification Declarations Under Section 171(1AA):**")
+        st.markdown("""
+        * **1.** I, the undermentioned person, hereby consent to act as a secretary of the above-named company.
+        * **2.** I am a qualified person under section 171(1AA) of the Companies Act by virtue of being a member of the **Singapore Association of the Institute of Chartered Secretaries and Administrators (SAICSA)** / Registered Filing Agent.
+        """)
+        st.caption("Signature of Secretary: `_______________________` \u00A0\u00A0\u00A0\u00A0 Dated Day Of: `_______________________`")
+
+    # 3. REGISTER OF SECRETARIES LEDGER BOX LAYOUT
+    with st.expander("🗃️ Statutory Ledger: Register of Secretaries", expanded=False):
+        st.markdown("#### REGISTER OF SECRETARIES")
+        st.caption("Internal statutory book layout kept at the Registered Office address:")
+        
+        ledger_data = {
+            "Folio Reference No.": ["Folio No. 1"],
+            "Full Official Name": [sec_name_val.upper()],
+            "Identity / Passport Number": [sec_id_val],
+            "Registered Address": ["NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"],
+            "Date of Appointment": [inc_date.strftime("%d/%m/%Y") if isinstance(inc_date, date) else str(inc_date)],
+            "Date of Cessation": ["🎨 OPEN / ACTIVE"]
+        }
+        st.table(ledger_data)
 
     # =========================================================================
 
@@ -1155,7 +1197,7 @@ def bg_sec_file_form(client_name):
         st.session_state.view = "kyc_form"
         st.rerun()
 
-    if b_col2.button("Generate Minutes & Form 45 PDF"):
+    if b_col2.button("Generate Minutes & Form 45 Package PDF"):
         pdf_data = create_minutes_pdf(client_name)
         st.download_button("Download Document Package PDF", data=pdf_data, file_name=f"{client_name}_Corporate_Pack.pdf", mime="application/pdf")
 
