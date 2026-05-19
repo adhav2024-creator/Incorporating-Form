@@ -1342,8 +1342,8 @@ def bg_sec_file_form(client_name):
     st.write("### FORM 45A: CONSENT TO ACT AS SECRETARY")
     st.write("Official Form 45A declaration and matching continuation sheet for the named Secretary:")
 
-    sec_name_val = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
-    sec_id_val = st.session_state.get("sec_secretary_id", "S7277791C")
+    sec_name_val = st.session_state.get("sec_secretary_name", "")
+    sec_id_val = st.session_state.get("sec_secretary_id", "")
 
     with st.expander(f"📄 Form 45A & Continuation Sheet I: {sec_name_val.upper()}", expanded=False):
         st.markdown("#### FORM 45A: Particulars for Secretary")
@@ -1352,7 +1352,7 @@ def bg_sec_file_form(client_name):
         with s_col1:
             st.text_input("Name of Secretary", value=sec_name_val, key="f45a_ui_name")
             st.text_input("Company Name", value=client_name.upper(), key="f45a_ui_co_name", disabled=True)
-            st.text_area("Residential Address", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", key="f45a_ui_address", height=68)
+            st.text_area("Residential Address", value="", key="f45a_ui_address", height=68)
         with s_col2:
             st.text_input("NRIC / Passport No.", value=sec_id_val, key="f45a_ui_id")
             st.text_input("Company No. (UEN)", value=uen_number, key="f45a_ui_uen", disabled=True)
