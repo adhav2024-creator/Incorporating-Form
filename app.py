@@ -1908,7 +1908,7 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # --- SECTION D (POLITICALLY EXPOSED PERSONS CHECKS) ---
+    # --- SECTION D (POLITICALLY EXPOSED PERSONS INITIAL SCANS) ---
     st.subheader("SECTION D")
     st.markdown("**INFORMATION OF POLITICALLY EXPOSED PERSONS, THEIR IMMEDMATE FAMILY MEMBERS AND CLOSE ASSOCIATES**")
 
@@ -1922,36 +1922,6 @@ def render_customer_acceptance_form(client_name_arg=None):
     pep_q3 = st.radio("PEP Family/Associate Check", ["Yes", "No"], index=1, key="caf_sec_d_q3", label_visibility="collapsed")
 
     st.markdown("---")
-
-    # --- ADVANCED PART 2: DYNAMIC PEP EXTENSION SECTION ---
-    # Activates exactly when any of the section D checks above are flagged to "Yes"
-    if pep_q1 == "Yes" or pep_q2 == "Yes" or pep_q3 == "Yes":
-        st.subheader("PART 2- FORM FOR POLITICALLY EXPOSED PERSONS")
-        
-        if pep_q1 == "Yes":
-            st.markdown("#### SECTION A (Current PEP Additional Profile Data)")
-            st.text_input("Name of politically exposed person and background / purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_a_name")
-            st.text_input("Describe nature of prominent public function that the person is or has been entrusted with", value="NA", key="caf_part2_sec_a_function")
-            st.text_input("Period of time in which the person is/was a politically exposed person", value="NA", key="caf_part2_sec_a_period")
-            st.text_input("Provide information on the person's source of wealth", value="NA", key="caf_part2_sec_a_wealth")
-            st.text_input("Provide information on the person's source of funds in the proposed business relationship", value="NA", key="caf_part2_sec_a_funds")
-            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
-
-        if pep_q2 == "Yes":
-            st.markdown("#### SECTION B (Immediate Family Member Profile Data)")
-            st.text_input("Name of person who is an immediate family member of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_b_name")
-            st.text_input("Describe nature of the person's relationship with the politically exposed person", value="NA", key="caf_part2_sec_b_rel_nature")
-            st.text_input("Provide information on the person's source of wealth (Family Row)", value="NA", key="caf_part2_sec_b_wealth")
-            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Family Row)", value="NA", key="caf_part2_sec_b_funds")
-            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
-
-        if pep_q3 == "Yes":
-            st.markdown("#### SECTION C (Close Associate Profile Data)")
-            st.text_input("Name of person who is close associate of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_c_name")
-            st.text_input("Describe nature of the person's relationship with the politically exposed person (Associate Row)", value="NA", key="caf_part2_sec_c_rel_nature")
-            st.text_input("Provide information on the person's source of wealth (Associate Row)", value="NA", key="caf_part2_sec_c_wealth")
-            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Associate Row)", value="NA", key="caf_part2_sec_c_funds")
-            st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
     # --- SECTION E (CUSTOMER'S DECLARATION - FOR EVERY INDIVIDUAL CUSTOMER) ---
     st.subheader("SECTION E")
@@ -1988,7 +1958,38 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # Global structural control row
+    # --- PART 2: DYNAMIC PEP EXTENSION SECTION (MOVED TO THE VERY END) ---
+    # Activates here below Section E if any of the Section D triggers are flagged to "Yes"
+    if pep_q1 == "Yes" or pep_q2 == "Yes" or pep_q3 == "Yes":
+        st.markdown("---")
+        st.subheader("PART 2- FORM FOR POLITICALLY EXPOSED PERSONS")
+        
+        if pep_q1 == "Yes":
+            st.markdown("#### SECTION A (Current PEP Additional Profile Data)")
+            st.text_input("Name of politically exposed person and background / purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_a_name")
+            st.text_input("Describe nature of prominent public function that the person is or has been entrusted with", value="NA", key="caf_part2_sec_a_function")
+            st.text_input("Period of time in which the person is/was a politically exposed person", value="NA", key="caf_part2_sec_a_period")
+            st.text_input("Provide information on the person's source of wealth", value="NA", key="caf_part2_sec_a_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship", value="NA", key="caf_part2_sec_a_funds")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+        if pep_q2 == "Yes":
+            st.markdown("#### SECTION B (Immediate Family Member Profile Data)")
+            st.text_input("Name of person who is an immediate family member of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_b_name")
+            st.text_input("Describe nature of the person's relationship with the politically exposed person", value="NA", key="caf_part2_sec_b_rel_nature")
+            st.text_input("Provide information on the person's source of wealth (Family Row)", value="NA", key="caf_part2_sec_b_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Family Row)", value="NA", key="caf_part2_sec_b_funds")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+        if pep_q3 == "Yes":
+            st.markdown("#### SECTION C (Close Associate Profile Data)")
+            st.text_input("Name of person who is close associate of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_c_name")
+            st.text_input("Describe nature of the person's relationship with the politically exposed person (Associate Row)", value="NA", key="caf_part2_sec_c_rel_nature")
+            st.text_input("Provide information on the person's source of wealth (Associate Row)", value="NA", key="caf_part2_sec_c_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Associate Row)", value="NA", key="caf_part2_sec_c_funds")
+            st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    # Global structural control adjustments layout
     ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 4])
     
     if ctrl_col1.button("➕ Add Shareholder / Director"):
@@ -2002,7 +2003,7 @@ def render_customer_acceptance_form(client_name_arg=None):
     # --- BOTTOM FORM EXECUTION ACTION ---
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("SUBMIT NOW", type="primary", use_container_width=True):
-        st.success("Customer Acceptance Form Saved Successfully!")
+        st.success("Customer Acceptance Form Saved Successfully with Part 2 placed at the very end!")
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
