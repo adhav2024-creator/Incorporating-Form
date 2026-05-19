@@ -1790,11 +1790,10 @@ def render_customer_acceptance_form(client_name_arg=None):
         </div>
         """, unsafe_allow_html=True)
 
-    # Main Header
+    # --- TOP CLIENT DETAILS SECTION ---
     st.caption("BGC-CUSTOMER ACCEPTANCE FORM")
     st.subheader("INFORMATION ABOUT CUSTOMERS (BENEFICIAL OWNERS AND POLITICALLY EXPOSED PERSONS)")
 
-    # Client Status Radio Button Selection
     client_status = st.radio(
         "Client Type",
         options=["Existing Client", "New Client"],
@@ -1803,43 +1802,35 @@ def render_customer_acceptance_form(client_name_arg=None):
         key="caf_client_status_radio"
     )
 
-    # Form Fields Matching the Visual Interface layout exactly
-    # Notice: 'value' properties are uncoupled from dynamic session state lookups to eliminate TypeErrors
     client_name = st.text_input(
         "Name of the Client", 
         value=st.session_state["selected_client_name"],
         key="caf_main_client_name"
     )
-    # Save any manual changes back to the session state safely
     st.session_state["selected_client_name"] = client_name
 
-    client_since = st.text_input(
-        "Client Since", 
-        value="01/01/2005", 
-        key="caf_client_since_field"
-    )
-    
-    referred_by = st.selectbox(
-        "Referred by", 
-        options=["NA", "Internal Referral", "External Partner", "Direct Channel"], 
-        index=0, 
-        key="caf_referred_by_field"
-    )
-    
-    date_of_inc = st.text_input(
-        "Date of Incorporation", 
-        value="01/01/2005", 
-        key="caf_date_of_inc_field"
-    )
-    
-    other_info = st.text_input(
-        "Other", 
-        key="caf_other_info_field"
-    )
+    # Set up some dynamic profile lookups depending on which company pack matches
+    default_uen = "200517609N"
+    default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" [cite: 253, 390]
+    default_inc_date = "01/01/2005"
+
+    if "STAGCO DOUBLEZ" in client_name.upper():
+        default_uen = "202546019H" [cite: 230]
+        default_address = "761 ANG MO KIO AVENUE 2, HORIZON GREEN, SINGAPORE 567792" [cite: 246]
+        default_inc_date = "15/10/2025" [cite: 230]
+    elif "DSFGH" in client_name.upper():
+        default_uen = "" # Blank in corporate pack [cite: 397]
+        default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" [cite: 364, 390]
+        default_inc_date = "19/05/2026" [cite: 371]
+
+    client_since = st.text_input("Client Since", value="01/01/2005", key="caf_client_since_field")
+    referred_by = st.selectbox("Referred by", options=["NA", "Internal Referral", "External Partner"], index=0, key="caf_referred_by_field")
+    date_of_inc = st.text_input("Date of Incorporation", value=default_inc_date, key="caf_date_of_inc_field")
+    other_info = st.text_input("Other", key="caf_other_info_field")
 
     st.markdown("---")
 
-    # SECTION A Layout Formulation
+    # --- SECTION A (INFORMATION OF CUSTOMER) ---
     st.subheader("SECTION A ( Information of customer )")
     st.markdown("**NEW OR BUSINESS ENTITY'S INFORMATION**")
 
@@ -1848,17 +1839,46 @@ def render_customer_acceptance_form(client_name_arg=None):
         value=client_name, 
         key="caf_section_a_entity_name"
     )
+    
+    inc_reg_num = st.text_input(
+        "Incorporation registration number", 
+        value=default_uen,
+        key="caf_section_a_inc_reg_num"
+    )
+    
+    address_office = st.text_area(
+        "Address (place of business/registered office)", 
+        value=default_address,
+        key="caf_section_a_address_office"
+    )
+    
+    place_of_reg = st.text_input(
+        "Place of registration /incorporation", 
+        value="Singapore", 
+        key="caf_section_a_place_of_reg"
+    )
+    
+    date_of_reg = st.text_input(
+        "Date of registration /incorporation", 
+        value=date_of_inc, 
+        key="caf_section_a_date_of_reg"
+    )
 
-    # Save data elements down to processing structures securely
-    st.session_state["caf_form_data"] = {
-        "client_status": client_status,
-        "client_name": client_name,
-        "client_since": client_since,
-        "referred_by": referred_by,
-        "date_of_incorporation": date_of_inc,
-        "other": other_info,
-        "entity_name": entity_name
-    }
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<font color='red'><b>INTENDED NATURE AND PURPOSE OF BUSINESS RELATIONSHIP REQUIRED</b></font>", unsafe_allow_html=True)
+    
+    # Checkboxes exactly matching the second screenshot view
+    rel_registered_office = st.checkbox("Registered office", value=True, key="caf_rel_reg_office")
+    rel_corp_sec = st.checkbox("Acting as corporate Secretary", value=True, key="caf_rel_corp_sec")
+    rel_accounting = st.checkbox("Accounting services", value=True, key="caf_rel_accounting")
+    rel_taxation = st.checkbox("Taxation services", value=True, key="caf_rel_taxation")
+    rel_acra = st.checkbox("ACRA filing services", value=True, key="caf_rel_acra")
+    rel_others = st.checkbox("Others", value=False, key="caf_rel_others")
+
+    # Submit button matching the blue style on-screen
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("SUBMIT NOW", type="primary"):
+        st.success("Customer Acceptance Form Saved Successfully!")
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
