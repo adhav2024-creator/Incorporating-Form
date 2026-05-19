@@ -5,6 +5,12 @@ from datetime import date
 from fpdf import FPDF
 import sqlite3
 import json
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+
 init_db()
 st.set_page_config(page_title="Audit Client Tracker", layout="wide")
 # --- HELPER FOR PERFECT RECTANGLE TABLES ---
@@ -1014,6 +1020,584 @@ def create_minutes_pdf(client_name):
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
+
+def generate_customer_acceptance_pdf():
+    """
+    Generates a formal Customer Acceptance Form PDF document based on 
+    active data preserved inside the Streamlit form session state context.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=letter,
+        rightMargin=40, 
+        leftMargin=40, 
+        topMargin=40, 
+        bottomMargin=40
+    )
+    
+    styles = getSampleStyleSheet()
+    
+    # Define clean, professional corporate typography styles
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#1B5E20'),
+        spaceAfter=6
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'DocSubTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#424242'),
+        spaceAfter=15
+    )
+    
+    h1_style = ParagraphStyle(
+        'SectionH1',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        leading=16,
+        textColor=colors.HexColor('#1B5E20'),
+        spaceBefore=14,
+        spaceAfter=6,
+        keepWithNext=True
+    )
+    
+    h2_style = ParagraphStyle(
+        'SectionH2',
+        parent=styles['Heading3'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#2E7D32'),
+        spaceBefore=8,
+        spaceAfter=4,
+        keepWithNext=True
+    )
+    
+    label_style = ParagraphStyle(
+        'FieldLabel',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#333333')
+    )
+    
+    value_style = ParagraphStyle(
+        'FieldValue',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#000000')
+    )
+    
+    body_style = ParagraphStyle(
+        'BodyTextCustom',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#444444')
+    )
+
+    story = []
+
+    # --- DOCUMENT HEADER ---
+    story.append(Paragraph("BGC-CUSTOMER ACCEPTANCE FORM", title_style))
+    story.append(Paragraph("INFORMATION ABOUT CUSTOMERS (BENEFICIAL OWNERS AND POLITICALLY EXPOSED PERSONS)", subtitle_style))
+    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#1B5E20'), spaceAfter=15))
+
+    def create_grid_table(data_rows):
+        """Helper to output cleanly aligned two-column parameters."""
+        formatted_data = []
+        for label, val in data_rows:
+            lbl_p = Paragraph(str(label), label_style)
+            val_p = Paragraph(str(val) if val else "NA", value_style)
+            formatted_data.append([lbl_p, val_p])
+            
+        t = Table(formatted_data, colWidths=[200, 332])
+        t.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('TOPPADDING', (0,0), (-1,-1), 6),
+            ('LINEBELOW', (0,0), (-1,-1), 0.5, colors.HexColor('#E0E0E0')),
+        ]))
+        return t
+
+    # --- TOP LEVEL PARAMETERS ---
+    client_type = st.session_state.get("caf_client_status_radio", "New Client")
+    main_name = st.session_state.get("caf_main_client_name", "")
+    client_since = st.session_state.get("caf_client_since_field", "")
+    referred_by = st.session_state.get("caf_referred_by_field", "NA")
+    date_inc = st.session_state.get("caf_date_of_inc_field", "")
+    other_info = st.session_state.get("caf_other_info_field", "")
+
+    top_meta = [
+        ("Client Type", client_type),
+        ("Name of the Client", main_name),
+        ("Client Since", client_since),
+        ("Referred by", referred_by),
+        ("Date of Incorporation", date_inc),
+        ("Other", other_info)
+    ]
+    story.append(create_grid_table(top_meta))
+    story.append(Spacer(1, 15))
+
+    # --- SECTION A ---
+    story.append(Paragraph("SECTION A ( Information of customer )", h1_style))
+    story.append(Paragraph("NEW OR BUSINESS ENTITY'S INFORMATION", h2_style))
+    
+    sec_a_meta = [
+        ("Name of entity", st.session_state.get("caf_section_a_entity_name", "")),
+        ("Incorporation registration number", st.session_state.get("caf_section_a_inc_reg_num", "")),
+        ("Address (place of business/registered office)", st.session_state.get("caf_section_a_address_office", "")),
+        ("Place of registration /incorporation", st.session_state.get("caf_section_a_place_of_reg", "")),
+        ("Date of registration /incorporation", st.session_state.get("caf_section_a_date_of_reg", ""))
+    ]
+    story.append(create_grid_table(sec_a_meta))
+    story.append(Spacer(1, 10))
+
+    # Intended Purpose Checkboxes Processing
+    purposes = []
+    if st.session_state.get("caf_rel_reg_office"): purposes.append("Registered office")
+    if st.session_state.get("caf_rel_corp_sec"): purposes.append("Acting as corporate Secretary")
+    if st.session_state.get("caf_rel_accounting"): purposes.append("Accounting services")
+    if st.session_state.get("caf_rel_taxation"): purposes.append("Taxation services")
+    if st.session_state.get("caf_rel_acra"): purposes.append("ACRA filing services")
+    if st.session_state.get("caf_rel_others"): purposes.append("Others")
+    
+    purpose_str = ", ".join(purposes) if purposes else "None Selected"
+    story.append(Paragraph("INTENDED NATURE AND PURPOSE OF BUSINESS RELATIONSHIP REQUIRED", label_style))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph(purpose_str, value_style))
+    story.append(Spacer(1, 15))
+
+    # Loop iterations length configuration
+    person_count = st.session_state.get("caf_person_count", 1)
+
+    # --- SECTION B ---
+    story.append(Paragraph("SECTION B", h1_style))
+    story.append(Paragraph("INFORMATION OF DIRECTORS, PARTNERS AND OTHER PERSONS WITH EXECUTIVE AUTHORITY", h2_style))
+    
+    for i in range(person_count):
+        story.append(Paragraph(f"<b>Individual Profile #{i+1}</b>", h2_style))
+        sec_b_meta = [
+            ("Name as per Passport/NRIC", st.session_state.get(f"caf_sec_b_name_{i}", "")),
+            ("Address", st.session_state.get(f"caf_sec_b_address_{i}", "")),
+            ("Contact Number", st.session_state.get(f"caf_sec_b_phone_{i}", "")),
+            ("Email", st.session_state.get(f"caf_sec_b_email_{i}", "")),
+            ("Profession", st.session_state.get(f"caf_sec_b_profession_{i}", "Business")),
+            ("Director", st.session_state.get(f"caf_sec_b_director_{i}", "Yes")),
+            ("Shareholder", st.session_state.get(f"caf_sec_b_shareholder_{i}", "Yes")),
+            ("% of Shareholdings", st.session_state.get(f"caf_sec_b_shareholding_pct_{i}", "")),
+            ("Proposed Amount of capital", st.session_state.get(f"caf_sec_b_capital_{i}", "")),
+            ("Source of funds", st.session_state.get(f"caf_sec_b_source_{i}", "Savings"))
+        ]
+        story.append(create_grid_table(sec_b_meta))
+        story.append(Spacer(1, 10))
+
+    # --- SECTION C ---
+    story.append(Paragraph("SECTION C", h1_style))
+    story.append(Paragraph("INFORMATION OF CUSTOMER'S BENEFICIAL OWNER(S)", h2_style))
+    
+    for i in range(person_count):
+        story.append(Paragraph(f"<b>Beneficial Owner Profile #{i+1}</b>", h2_style))
+        sec_c_meta = [
+            ("Full Name of beneficial owner (inc. alias)", st.session_state.get(f"caf_sec_c_fullname_{i}", "")),
+            ("Unique Identification number", st.session_state.get(f"caf_sec_c_id_{i}", "")),
+            ("Date of birth", st.session_state.get(f"caf_sec_c_dob_{i}", "")),
+            ("Nationality", st.session_state.get(f"caf_sec_c_nat_{i}", "")),
+            ("Contact number", st.session_state.get(f"caf_sec_c_phone_{i}", "")),
+            ("Nature of beneficial ownership", st.session_state.get(f"caf_sec_c_nature_{i}", "NA")),
+            ("Ownership / control structure info", st.session_state.get(f"caf_sec_c_structure_{i}", "NA")),
+            ("Proof of Ultimate Beneficial Ownership", st.session_state.get(f"caf_sec_c_proof_{i}", "NA"))
+        ]
+        story.append(create_grid_table(sec_c_meta))
+        story.append(Spacer(1, 10))
+
+    # --- SECTION D ---
+    story.append(Paragraph("SECTION D", h1_style))
+    story.append(Paragraph("INFORMATION OF POLITICALLY EXPOSED PERSONS, THEIR IMMEDIATE FAMILY MEMBERS AND CLOSE ASSOCIATES", h2_style))
+    
+    pep_q1_text = "Are any of the persons listed above a politically exposed person, that is, a person who is or has been entrusted with any prominent public function in Singapore, a country or territory outside Singapore, or by an international organisation at present?"
+    pep_q2_text = "Are any of the persons listed above a politically exposed person, that is, a person who has been entrusted with any prominent public function in Singapore, a country or territory outside Singapore, or by an international organisation who has stepped down from his prominent public function?"
+    pep_q3_text = "Are any of the persons listed above an immediate family member or a close associate of a politically exposed person or a politically exposed person who has stepped down?"
+
+    sec_d_meta = [
+        (pep_q1_text, st.session_state.get("caf_sec_d_q1", "No")),
+        (pep_q2_text, st.session_state.get("caf_sec_d_q2", "No")),
+        (pep_q3_text, st.session_state.get("caf_sec_d_q3", "No"))
+    ]
+    story.append(create_grid_table(sec_d_meta))
+    story.append(Spacer(1, 15))
+
+    # --- SECTION E: DECLARATIONS ROW FOR EACH CUSTOMER PROFILE ---
+    story.append(Paragraph("SECTION E", h1_style))
+    story.append(Paragraph("CUSTOMER'S DECLARATION", h2_style))
+    
+    dec_notice = (
+        "<i>I declare that the information provided in this form is true and correct. I am aware that I may be "
+        "subject to prosecution and criminal sanctions under written law if I am found to have made any false "
+        "statement which I know to be false or which I do not believe to be true, or if I have intentionally "
+        "suppressed any material fact.</i>"
+    )
+    story.append(Paragraph(dec_notice, body_style))
+    story.append(Spacer(1, 8))
+
+    for i in range(person_count):
+        story.append(Paragraph(f"<b>Declaration Signature Block - Person #{i+1}</b>", h2_style))
+        sec_e_meta = [
+            ("Name of customer", st.session_state.get(f"caf_sec_e_name_{i}", "")),
+            ("Unique Identification number", st.session_state.get(f"caf_sec_e_id_{i}", "")),
+            ("Signature", st.session_state.get(f"caf_sec_e_sig_{i}", "Manually Signed / Authenticated")),
+            ("Date", st.session_state.get(f"caf_sec_e_date_{i}", ""))
+        ]
+        story.append(create_grid_table(sec_e_meta))
+        story.append(Spacer(1, 10))
+
+    # --- ADVANCED PART 2: DYNAMIC PEP EXTENSION SECTION ---
+    p2_q1 = st.session_state.get("caf_sec_d_q1", "No")
+    p2_q2 = st.session_state.get("caf_sec_d_q2", "No")
+    p2_q3 = st.session_state.get("caf_sec_d_q3", "No")
+
+    if p2_q1 == "Yes" or p2_q2 == "Yes" or p2_q3 == "Yes":
+        story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#777777'), spaceBefore=15, spaceAfter=15))
+        story.append(Paragraph("PART 2 - FORM FOR POLITICALLY EXPOSED PERSONS", title_style))
+        
+        if p2_q1 == "Yes":
+            story.append(Paragraph("SECTION A (Current PEP Additional Profile Data)", h1_style))
+            p2_sec_a = [
+                ("Name of PEP & Transaction Context", st.session_state.get("caf_part2_sec_a_name", "NA")),
+                ("Nature of Prominent Public Function", st.session_state.get("caf_part2_sec_a_function", "NA")),
+                ("Period of Time Active", st.session_state.get("caf_part2_sec_a_period", "NA")),
+                ("Source of Wealth Info", st.session_state.get("caf_part2_sec_a_wealth", "NA")),
+                ("Source of Funds for Relationship", st.session_state.get("caf_part2_sec_a_funds", "NA"))
+            ]
+            story.append(create_grid_table(p2_sec_a))
+            story.append(Spacer(1, 10))
+
+        if p2_q2 == "Yes":
+            story.append(Paragraph("SECTION B (Immediate Family Member Profile Data)", h1_style))
+            p2_sec_b = [
+                ("Name of Family Member & Context", st.session_state.get("caf_part2_sec_b_name", "NA")),
+                ("Relationship Nature to PEP", st.session_state.get("caf_part2_sec_b_rel_nature", "NA")),
+                ("Source of Wealth Info (Family)", st.session_state.get("caf_part2_sec_b_wealth", "NA")),
+                ("Source of Funds Info (Family)", st.session_state.get("caf_part2_sec_b_funds", "NA"))
+            ]
+            story.append(create_grid_table(p2_sec_b))
+            story.append(Spacer(1, 10))
+
+        if p2_q3 == "Yes":
+            story.append(Paragraph("SECTION C (Close Associate Profile Data)", h1_style))
+            p2_sec_c = [
+                ("Name of Associate & Context", st.session_state.get("caf_part2_sec_c_name", "NA")),
+                ("Relationship Nature to PEP", st.session_state.get("caf_part2_sec_c_rel_nature", "NA")),
+                ("Source of Wealth Info (Associate)", st.session_state.get("caf_part2_sec_c_wealth", "NA")),
+                ("Source of Funds Info (Associate)", st.session_state.get("caf_part2_sec_c_funds", "NA"))
+            ]
+            story.append(create_grid_table(p2_sec_c))
+            story.append(Spacer(1, 15))
+
+        # --- PART 2 SECONDARY TERMINAL FOOT DECLARATION ---
+        story.append(Paragraph("SECTION B (PART 2 - CUSTOMER'S DECLARATION FOR PEP)", h1_style))
+        story.append(Paragraph(dec_notice, body_style))
+        story.append(Spacer(1, 8))
+        
+        for i in range(person_count):
+            story.append(Paragraph(f"<b>PEP Form Declaration Signature Block - Person #{i+1}</b>", h2_style))
+            p2_dec_meta = [
+                ("Name of customer", st.session_state.get(f"caf_sec_e_name_{i}", "")),
+                ("Unique Identification number", st.session_state.get(f"caf_sec_e_id_{i}", "")),
+                ("Signature", st.session_state.get(f"caf_sec_e_sig_{i}", "Manually Signed / Authenticated")),
+                ("Date", st.session_state.get(f"caf_sec_e_date_{i}", ""))
+            ]
+            story.append(create_grid_table(p2_dec_meta))
+            story.append(Spacer(1, 10))
+
+    # Document assembly build trigger execution 
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+def render_customer_acceptance_form(client_name_arg=None):
+    import streamlit as st
+
+    # 1. Initialize global tracking configurations safely
+    if "selected_client_name" not in st.session_state:
+        st.session_state["selected_client_name"] = ""
+
+    if client_name_arg and not st.session_state["selected_client_name"]:
+        st.session_state["selected_client_name"] = client_name_arg
+
+    if "caf_person_count" not in st.session_state:
+        st.session_state["caf_person_count"] = 1
+
+    # 2. Component Custom Progress Line UI Styling
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 10%; right: 10%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle inactive-circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle active-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+            <div class="step"><div class="circle inactive-circle">4</div><div class="label">Secretarial Engagement Letter</div></div>
+            <div class="step"><div class="circle inactive-circle">5</div><div class="label">Terms and Conditions</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # --- TOP CLIENT DETAILS SECTION ---
+    st.caption("BGC-CUSTOMER ACCEPTANCE FORM")
+    st.subheader("INFORMATION ABOUT CUSTOMERS (BENEFICIAL OWNERS AND POLITICALLY EXPOSED PERSONS)")
+
+    client_status = st.radio(
+        "Client Type",
+        options=["Existing Client", "New Client"],
+        index=1,
+        label_visibility="collapsed",
+        key="caf_client_status_radio"
+    )
+
+    client_name = st.text_input(
+        "Name of the Client", 
+        value=st.session_state["selected_client_name"],
+        key="caf_main_client_name"
+    )
+    st.session_state["selected_client_name"] = client_name
+
+    # Auto Pack profile detection values
+    default_uen = "200517609N"
+    default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
+    default_inc_date = "01/01/2005"
+
+    if "STAGCO DOUBLEZ" in client_name.upper():
+        default_uen = "202546019H"
+        default_address = "761 ANG MO KIO AVENUE 2, HORIZON GREEN, SINGAPORE 567792"
+        default_inc_date = "15/10/2025"
+    elif "DSFGH" in client_name.upper():
+        default_uen = ""
+        default_address = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"
+        default_inc_date = "19/05/2026"
+
+    client_since = st.text_input("Client Since", value="01/01/2005", key="caf_client_since_field")
+    referred_by = st.selectbox("Referred by", options=["NA", "Internal Referral", "External Partner"], index=0, key="caf_referred_by_field")
+    date_of_inc = st.text_input("Date of Incorporation", value=default_inc_date, key="caf_date_of_inc_field")
+    other_info = st.text_input("Other", key="caf_other_info_field")
+
+    st.markdown("---")
+
+    # --- SECTION A (INFORMATION OF CUSTOMER) ---
+    st.subheader("SECTION A ( Information of customer )")
+    st.markdown("**NEW OR BUSINESS ENTITY'S INFORMATION**")
+
+    entity_name = st.text_input("Name of entity", value=client_name, key="caf_section_a_entity_name")
+    inc_reg_num = st.text_input("Incorporation registration number", value=default_uen, key="caf_section_a_inc_reg_num")
+    address_office = st.text_area("Address (place of business/registered office)", value=default_address, key="caf_section_a_address_office")
+    place_of_reg = st.text_input("Place of registration /incorporation", value="Singapore", key="caf_section_a_place_of_reg")
+    date_of_reg = st.text_input("Date of registration /incorporation", value=date_of_inc, key="caf_section_a_date_of_reg")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<font color='red'><b>INTENDED NATURE AND PURPOSE OF BUSINESS RELATIONSHIP REQUIRED</b></font>", unsafe_allow_html=True)
+    
+    rel_registered_office = st.checkbox("Registered office", value=True, key="caf_rel_reg_office")
+    rel_corp_sec = st.checkbox("Acting as corporate Secretary", value=True, key="caf_rel_corp_sec")
+    rel_accounting = st.checkbox("Accounting services", value=True, key="caf_rel_accounting")
+    rel_taxation = st.checkbox("Taxation services", value=True, key="caf_rel_taxation")
+    rel_acra = st.checkbox("ACRA filing services", value=True, key="caf_rel_acra")
+    rel_others = st.checkbox("Others", value=False, key="caf_rel_others")
+
+    st.markdown("---")
+
+    # --- SECTION B (INFORMATION OF DIRECTORS & SHAREHOLDERS) ---
+    st.subheader("SECTION B")
+    st.markdown("**INFORMATION OF DIRECTORS, PARTNERS AND OTHER PERSONS WITH EXECUTIVE AUTHORITY**")
+
+    for i in range(st.session_state["caf_person_count"]):
+        st.markdown(f"#### Individual Profile #{i+1}")
+        
+        b_default_name = "Janakiraman Ayyappan" if i == 0 else ""
+        b_default_addr = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" if i == 0 else ""
+        b_default_phone = "+6597679806" if i == 0 else ""
+        b_default_email = "jack@bgconsultancy.com.sg" if i == 0 else ""
+
+        st.text_input("Name as per Passport/NRIC", value=b_default_name, key=f"caf_sec_b_name_{i}")
+        st.text_area("Address", value=b_default_addr, key=f"caf_sec_b_address_{i}", height=68)
+        st.text_input("Contact Number", value=b_default_phone, key=f"caf_sec_b_phone_{i}")
+        st.text_input("Email", value=b_default_email, key=f"caf_sec_b_email_{i}")
+        
+        st.selectbox("Profession", options=["Business", "Professional", "Employment", "Other"], index=0, key=f"caf_sec_b_profession_{i}")
+        st.selectbox("Director", options=["Yes", "No"], index=0, key=f"caf_sec_b_director_{i}")
+        st.selectbox("Shareholder", options=["Yes", "No"], index=0, key=f"caf_sec_b_shareholder_{i}")
+        
+        st.text_input("% of Shareholdings", value="100" if i == 0 else "", key=f"caf_sec_b_shareholding_pct_{i}")
+        st.text_input("Proposed Amount of capital", value="150000" if i == 0 else "", key=f"caf_sec_b_capital_{i}")
+        st.selectbox("Source of funds", options=["Savings", "Loan", "Earnings", "Inheritance"], index=0, key=f"caf_sec_b_source_{i}")
+        
+        st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # --- SECTION C (INFORMATION OF BENEFICIAL OWNERS) ---
+    st.subheader("SECTION C")
+    st.markdown("**INFORMATION OF CUSTOMER'S BENEFICIAL OWNER(S)**")
+
+    for i in range(st.session_state["caf_person_count"]):
+        st.markdown(f"#### Beneficial Owner Profile #{i+1}")
+        
+        c_default_name = "Janakiraman Ayyappan" if i == 0 else ""
+        c_default_id = "S7277791C" if i == 0 else ""
+        c_default_dob = "15/06/1972" if i == 0 else ""
+        c_default_nat = "SG" if i == 0 else ""
+        c_default_phone = "+6597679806" if i == 0 else ""
+
+        st.text_input("Full Name of beneficial owner (including any alias)", value=c_default_name, key=f"caf_sec_c_fullname_{i}")
+        st.text_input("Unique Identification number", value=c_default_id, key=f"caf_sec_c_id_{i}")
+        st.text_input("Date of birth", value=c_default_dob, key=f"caf_sec_c_dob_{i}")
+        st.text_input("Nationality", value=c_default_nat, key=f"caf_sec_c_nat_{i}")
+        st.text_input("Contact number", value=c_default_phone, key=f"caf_sec_c_phone_{i}")
+        
+        st.text_input("Provide information of nature of beneficial ownership (e.g. more than 25% of ownership of the customer)", value="NA", key=f"caf_sec_c_nature_{i}")
+        st.text_input("Information on ownership and control structure of the customer.", value="NA", key=f"caf_sec_c_structure_{i}")
+        st.text_input("Attach the proof of Ultimate Beneficial Ownership proof", value="NA", key=f"caf_sec_c_proof_{i}")
+        
+        st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    # --- SECTION D (POLITICALLY EXPOSED PERSONS CHECKS) ---
+    st.subheader("SECTION D")
+    st.markdown("**INFORMATION OF POLITICALLY EXPOSED PERSONS, THEIR IMMEDMATE FAMILY MEMBERS AND CLOSE ASSOCIATES**")
+
+    st.markdown("###### Are any of the persons listed above a politically exposed person, that is, a person who is or has been entrusted with any prominent public function in Singapore, a country or territory outside Singapore, or by an international organisation at present?")
+    pep_q1 = st.radio("Current PEP Check", ["Yes", "No"], index=1, key="caf_sec_d_q1", label_visibility="collapsed")
+
+    st.markdown("###### Are any of the persons listed above a politically exposed person, that is, a person who has been entrusted with any prominent public function in Singapore, a country or territory outside Singapore, or by an international organisation who has stepped down from his prominent public function?")
+    pep_q2 = st.radio("Stepped down PEP Check", ["Yes", "No"], index=1, key="caf_sec_d_q2", label_visibility="collapsed")
+
+    st.markdown("###### Are any of the persons listed above an immediate family member or a close associate of a politically exposed person or a politically exposed person who has stepped down?")
+    pep_q3 = st.radio("PEP Family/Associate Check", ["Yes", "No"], index=1, key="caf_sec_d_q3", label_visibility="collapsed")
+
+    st.markdown("---")
+
+    # --- SECTION E (CUSTOMER'S DECLARATION - FOR EVERY INDIVIDUAL CUSTOMER) ---
+    st.subheader("SECTION E")
+    st.markdown("**CUSTOMER'S DECLARATION**")
+
+    declaration_text = (
+        "I declare that the information provided in this form is true and correct. I am aware that I may be "
+        "subject to prosecution and criminal sanctions under written law if I am found to have made any false "
+        "statement which I know to be false or which I do not believe to be true, or if I have intentionally "
+        "suppressed any material fact."
+    )
+
+    for i in range(st.session_state["caf_person_count"]):
+        st.markdown(f"##### Declaration Profile Entry #{i+1}")
+        st.info(declaration_text)
+        
+        default_person_name = st.session_state.get(f"caf_sec_b_name_{i}", "")
+        if i == 0 and not default_person_name:
+            default_person_name = "Janakiraman Ayyappan"
+        elif i == 1 and not default_person_name:
+            default_person_name = "Vaidyanathan Padmini"
+
+        default_person_id = st.session_state.get(f"caf_sec_c_id_{i}", "")
+        if i == 0 and not default_person_id:
+            default_person_id = "S7277791C"
+        elif i == 1 and not default_person_id:
+            default_person_id = "S7379693H"
+        
+        st.text_input("Name of customer", value=default_person_name, key=f"caf_sec_e_name_{i}")
+        st.text_input("Unique Identification number", value=default_person_id, key=f"caf_sec_e_id_{i}")
+        st.text_input("Signature", value="Manually Signed / Authenticated", key=f"caf_sec_e_sig_{i}")
+        st.text_input("Date", value="01/01/2005", key=f"caf_sec_e_date_{i}")
+        
+        st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+    # --- ADVANCED PART 2: DYNAMIC PEP EXTENSION SECTION (PLACED AT THE VERY END) ---
+    if pep_q1 == "Yes" or pep_q2 == "Yes" or pep_q3 == "Yes":
+        st.markdown("---")
+        st.subheader("PART 2- FORM FOR POLITICALLY EXPOSED PERSONS")
+        
+        if pep_q1 == "Yes":
+            st.markdown("#### SECTION A (Current PEP Additional Profile Data)")
+            st.text_input("Name of politically exposed person and background / purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_a_name")
+            st.text_input("Describe nature of prominent public function that the person is or has been entrusted with", value="NA", key="caf_part2_sec_a_function")
+            st.text_input("Period of time in which the person is/was a politically exposed person", value="NA", key="caf_part2_sec_a_period")
+            st.text_input("Provide information on the person's source of wealth", value="NA", key="caf_part2_sec_a_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship", value="NA", key="caf_part2_sec_a_funds")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+        if pep_q2 == "Yes":
+            st.markdown("#### SECTION B (Immediate Family Member Profile Data)")
+            st.text_input("Name of person who is an immediate family member of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_b_name")
+            st.text_input("Describe nature of the person's relationship with the politically exposed person", value="NA", key="caf_part2_sec_b_rel_nature")
+            st.text_input("Provide information on the person's source of wealth (Family Row)", value="NA", key="caf_part2_sec_b_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Family Row)", value="NA", key="caf_part2_sec_b_funds")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+        if pep_q3 == "Yes":
+            st.markdown("#### SECTION C (Close Associate Profile Data)")
+            st.text_input("Name of person who is close associate of a politically exposed person and background /purpose of any transaction that registered filing agent is required to carry out", value="NA", key="caf_part2_sec_c_name")
+            st.text_input("Describe nature of the person's relationship with the politically exposed person (Associate Row)", value="NA", key="caf_part2_sec_c_rel_nature")
+            st.text_input("Provide information on the person's source of wealth (Associate Row)", value="NA", key="caf_part2_sec_c_wealth")
+            st.text_input("Provide information on the person's source of funds in the proposed business relationship (Associate Row)", value="NA", key="caf_part2_sec_c_funds")
+            st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
+
+        st.markdown("#### SECTION B (PART 2 - CUSTOMER'S DECLARATION FOR PEP)")
+        for i in range(st.session_state["caf_person_count"]):
+            st.markdown(f"##### PEP Form Declaration Signature Entry #{i+1}")
+            st.info(declaration_text)
+            st.text_input("Name of customer (PEP Block)", value=st.session_state.get(f"caf_sec_e_name_{i}", ""), key=f"caf_part2_sec_b_name_{i}")
+            st.text_input("Unique Identification number (PEP Block)", value=st.session_state.get(f"caf_sec_e_id_{i}", ""), key=f"caf_part2_sec_b_id_{i}")
+            st.text_input("Signature (PEP Block)", value="Manually Signed / Authenticated", key=f"caf_part2_sec_b_sig_{i}")
+            st.text_input("Date (PEP Block)", value="01/01/2005", key=f"caf_part2_sec_b_date_{i}")
+            st.markdown("<hr style='border-top: 1px dotted #bbb;'>", unsafe_allow_html=True)
+
+    # Dynamic Profile Counters Layout
+    ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 4])
+    
+    if ctrl_col1.button("➕ Add Shareholder / Director"):
+        st.session_state["caf_person_count"] += 1
+        st.rerun()
+        
+    if ctrl_col2.button("➖ Remove Last") and st.session_state["caf_person_count"] > 1:
+        st.session_state["caf_person_count"] -= 1
+        st.rerun()
+
+    # --- ACTION BUTTONS FOOTER AREA ---
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    
+    # 1. Trigger Data Preservation Save Confirmation
+    if st.button("SUBMIT AND SAVE FORM DATA", type="secondary", use_container_width=True):
+        st.success("Customer Acceptance Form Saved Successfully!")
+        
+    # 2. Dynamic ReportLab PDF Document Download Execution Hook
+    pdf_data = generate_customer_acceptance_pdf()
+    filename_slug = f"CustomerAcceptance_{client_name.replace(' ', '_') if client_name else 'Form'}.pdf"
+    
+    st.download_button(
+        label="📥 DOWNLOAD COMPLETED CAF PDF",
+        data=pdf_data,
+        file_name=filename_slug,
+        mime="application/pdf",
+        use_container_width=True,
+        type="primary"
+    )
 def master_kyc_form(client_name):
     if f"loaded_{client_name}" not in st.session_state:
         if load_client_data(client_name):
@@ -2003,6 +2587,22 @@ def render_customer_acceptance_form(client_name_arg=None):
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("SUBMIT NOW", type="primary", use_container_width=True):
         st.success("Customer Acceptance Form Saved Successfully!")
+    # --- PDF GENERATION BUTTON ---
+    st.markdown("---")
+    st.subheader("Generate Document")
+    
+    # 1. Logic to trigger the PDF generation function defined previously
+    pdf_buffer = generate_customer_acceptance_pdf()
+    
+    # 2. Add the download button
+    st.download_button(
+        label="📥 DOWNLOAD COMPLETED CAF PDF",
+        data=pdf_buffer,
+        file_name=f"CustomerAcceptance_{st.session_state.get('caf_main_client_name', 'Form').replace(' ', '_')}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        type="primary"
+    )
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
