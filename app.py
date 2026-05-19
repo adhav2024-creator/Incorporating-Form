@@ -555,64 +555,63 @@ def create_pdf_report(client_name):
     return pdf.output(dest='S').encode('latin-1')
 def create_minutes_pdf(client_name):
     from fpdf import FPDF
+    from datetime import date, datetime
+    
     pdf = FPDF()
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- INTERNAL HELPER: DEFINING THE MISSING FUNCTION ---
     def draw_pdf_row(label, value):
-        """Draws the Label-Value table row in the PDF"""
-        pdf.set_font("Arial", 'B', 10)
-        # Calculate how many lines the text will take to determine row height
+        val_str = str(value) if value is not None else ""
         pdf.set_font("Arial", '', 10)
-        lines = pdf.multi_cell(130, 8, f" {value}", split_only=True)
+        lines = pdf.multi_cell(130, 8, f" {val_str}", split_only=True)
         h = max(8, len(lines) * 8)
         
         y_start = pdf.get_y()
         
-        # Draw Left Box (Label)
+        # Check for page boundary breaks
+        if y_start + h > 270:
+            pdf.add_page()
+            y_start = pdf.get_y()
+            
         pdf.set_font("Arial", 'B', 10)
         pdf.multi_cell(60, h, f" {label}", border=1)
-        
-        # Draw Right Box (Value)
         pdf.set_xy(70, y_start) 
         pdf.set_font("Arial", '', 10)
-        pdf.multi_cell(130, 8, f" {value}", border=1)
-        
-        # Reset Y to the bottom of this row
+        pdf.multi_cell(130, 8, f" {val_str}", border=1)
         pdf.set_y(y_start + h)
 
     def fmt_date(d_obj):
         if not d_obj: return ""
-        if isinstance(d_obj, date): return d_obj.strftime("%d/%m/%Y")
+        if isinstance(d_obj, (date, datetime)): 
+            return d_obj.strftime("%d/%m/%Y")
         return str(d_obj)
 
-    # --- START GENERATING CONTENT ---
+    # --- TOP HEADER ---
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
     pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
     pdf.ln(5)
 
-    # 1. METADATA
+    # 1. METADATA SECTION
     draw_pdf_row("Place of Meeting", st.session_state.get('sec_meeting_place', ''))
-    
     meet_date_raw = st.session_state.get('sec_meet_date')
     meet_time = str(st.session_state.get('sec_meet_time', ''))
     draw_pdf_row("Date & Time", f"{fmt_date(meet_date_raw)} {meet_time}")
-    
     draw_pdf_row("Directors Present", st.session_state.get('sec_dirs_present', ''))
     draw_pdf_row("Chairman", st.session_state.get('sec_chairman_name', ''))
-
     pdf.ln(5)
 
-    # 2. INCORPORATION
+    # 2. INCORPORATION SECTION
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 8, "2. INCORPORATION", ln=True)
-    draw_pdf_row("Cert. of Incorporation", st.session_state.get('sec_inc_no', ''))
-    draw_pdf_row("Date of Incorporation", fmt_date(st.session_state.get('kyc_inc_date')))
-
+    uen_pdf = st.session_state.get('sec_inc_no', st.session_state.get('kyc_co_no', ''))
+    inc_date_pdf = st.session_state.get('sec_inc_date_display', st.session_state.get('kyc_inc_date'))
+    draw_pdf_row("Cert. of Incorporation No.", uen_pdf)
+    draw_pdf_row("Date of Incorporation", fmt_date(inc_date_pdf))
     pdf.ln(5)
 
-    # 3. DIRECTORS
+    # 3. DIRECTORS SECTION
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 8, "3. DIRECTORS", ln=True)
     pdf.set_font("Arial", '', 10)
@@ -625,13 +624,17 @@ def create_minutes_pdf(client_name):
         if d_name:
             pdf.cell(10, 8, "-", align='C')
             pdf.cell(0, 8, d_name, ln=True)
-
     pdf.ln(5)
 
-    # 4. ALLOTMENT TABLE
+    # 4. SHARE CAPITAL & ALLOTMENT
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "5. APPLICATION FOR ALLOTMENT OF SHARES", ln=True)
+    pdf.cell(0, 8, "4. SHARE CAPITAL & ALLOTMENT", ln=True)
+    pdf.set_font("Arial", '', 10)
+    cap_amt_val = st.session_state.get("sec_cap_amt", "100")
+    pdf.multi_cell(0, 5, f"The share capital of the Company was recorded as SGD {cap_amt_val} divided into {cap_amt_val} ordinary shares.")
+    pdf.ln(2)
     
+    # Allotment Table
     pdf.set_font("Arial", 'B', 9)
     pdf.cell(80, 8, " Name of Shareholder", border=1)
     pdf.cell(60, 8, " NRIC/Passport No.", border=1)
@@ -640,25 +643,93 @@ def create_minutes_pdf(client_name):
     pdf.set_font("Arial", '', 9)
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
-        # Using the keys from the UI relay
         name = st.session_state.get(f"sec_sh_name_{j}", "")
         nric = st.session_state.get(f"sec_sh_id_{j}", "")
         qty = st.session_state.get(f"sec_sh_qty_{j}", "")
-        
-        pdf.cell(80, 8, f" {name}", border=1)
-        pdf.cell(60, 8, f" {nric}", border=1)
-        pdf.cell(50, 8, f" {qty}", border=1, ln=True)
-
+        if name or nric:
+            pdf.cell(80, 8, f" {name}", border=1)
+            pdf.cell(60, 8, f" {nric}", border=1)
+            pdf.cell(50, 8, f" {qty}", border=1, ln=True)
     pdf.ln(5)
 
     # 5. REGISTERED OFFICE
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "6. REGISTERED OFFICE", ln=True)
+    pdf.cell(0, 8, "5. REGISTERED OFFICE AND CORRESPONDENCE ADDRESS", ln=True)
     pdf.set_font("Arial", '', 10)
     reg_office = st.session_state.get('sec_reg_office', '')
-    pdf.multi_cell(0, 5, f"It was resolved that the registered office of the company be situated at: {reg_office}")
+    corr_office = st.session_state.get('sec_corr_office', '')
+    pdf.multi_cell(0, 5, f"Resolved that the Registered Office be situated at: {reg_office}")
+    pdf.multi_cell(0, 5, f"Resolved that the Correspondence Address be situated at: {corr_office}")
+    pdf.ln(5)
 
-    # Return the encoded PDF
+    # --- NEW PDF SECTIONS ---
+    
+    # 6. APPOINTMENT OF SECRETARY
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "6. APPOINTMENT OF SECRETARY", ln=True)
+    sec_name = st.session_state.get("sec_secretary_name", "KUMARAN S/O BALAKRISHNAN")
+    sec_id = st.session_state.get("sec_secretary_id", "S8123456A")
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5, f"Resolved that {sec_name} ({sec_id}) be and is hereby appointed as the First Secretary of the Company.")
+    pdf.ln(5)
+
+    # 7. APPOINTMENT OF AUDITORS
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "7. APPOINTMENT OF AUDITORS", ln=True)
+    pdf.set_font("Arial", '', 10)
+    auditor_val = st.session_state.get("sec_auditor_name", "EXEMPT")
+    if auditor_val == "EXEMPT" or not auditor_val:
+        pdf.multi_cell(0, 5, "Noted that the company is qualified as a small company and is exempt from formal auditing requirements under Section 205B of the Companies Act.")
+    else:
+        pdf.multi_cell(0, 5, f"Resolved that {auditor_val} be appointed as the auditors of the company.")
+    pdf.ln(5)
+
+    # 8. BANKING ACCOUNT
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "8. BANKING ACCOUNT", ln=True)
+    pdf.set_font("Arial", '', 10)
+    bank_name = st.session_state.get("sec_bank_name", "DBS BANK LTD")
+    bank_sign = st.session_state.get("sec_bank_signatories", "")
+    pdf.multi_cell(0, 5, f"Resolved that a corporate bank account be opened with {bank_name} and that the authorized signatories to operate the account are: {bank_sign}.")
+    pdf.ln(5)
+
+    # 9. FINANCIAL YEAR END
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "9. FINANCIAL YEAR END", ln=True)
+    pdf.set_font("Arial", '', 10)
+    fye_day = st.session_state.get("sec_fye_day", "31")
+    fye_month = st.session_state.get("sec_fye_month", "December")
+    pdf.multi_cell(0, 5, f"Resolved that the Financial Year End (FYE) of the company be fixed on {fye_day} {fye_month} annually.")
+    pdf.ln(5)
+
+    # 10. CLOSE OF MEETING
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 8, "CLOSE OF MEETING", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 8, "There being no other business, the meeting closed.", ln=True)
+    pdf.ln(15)
+
+    # --- MATCHING SIGNATURE SECTION ---
+    if pdf.get_y() > 220: # Prevent orphan signature lines
+        pdf.add_page()
+        
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 5, "Certified as true record", ln=True)
+    pdf.cell(0, 5, "Of Minutes", ln=True)
+    pdf.ln(12)
+
+    # Draw a line for every actual director found in the database setup
+    for i in range(num_dirs):
+        d_name = st.session_state.get(f"d_name_{i}", "")
+        if d_name:
+            # Dotted line boundary rule
+            pdf.cell(0, 5, "...........................................................................", ln=True)
+            pdf.set_font("Arial", 'B', 10)
+            pdf.cell(0, 5, d_name.upper(), ln=True)
+            pdf.set_font("Arial", '', 10)
+            pdf.cell(0, 5, "Director", ln=True)
+            pdf.ln(12)
+
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
 def master_kyc_form(client_name):
@@ -934,6 +1005,7 @@ def bg_sec_file_form(client_name):
         with c1: st.markdown(f"**{label}**")
         with c2: st.text_input(label, value=value, key=key, disabled=disabled, label_visibility="collapsed")
 
+    # [KEEP EXISTING SECTIONS 1 TO 6 INDISTINGUISHED HERE]
     # 1. METADATA
     row_input("Name of Company", client_name.upper(), "sec_co_name", disabled=True)
     row_input("Place of Meeting", "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", "sec_meeting_place")
@@ -942,43 +1014,31 @@ def bg_sec_file_form(client_name):
     with col_d1: st.markdown("**Date and Time**")
     with col_d2:
         d_c1, d_c2 = st.columns(2)
-        # DATE FORMAT FIX: Added format="DD/MM/YYYY"
         d_c1.date_input("Date", value=date.today(), key="sec_meet_date", format="DD/MM/YYYY", label_visibility="collapsed")
-        d_c2.text_input("Time", value="10:00 AM", key="sec_meet_time", label_visibility="collapsed", placeholder="e.g. 10:00 AM")
+        d_c2.text_input("Time", value="10:00 AM", key="sec_meet_time", label_visibility="collapsed")
 
-    # Relay Directors
     num_dirs = st.session_state.get("num_directors", 1)
     dir_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}", "")]
     row_input("Directors Present", ", ".join(dir_list), "sec_dirs_present")
 
     st.markdown("---")
-
-    # 2. CHAIRMAN
     st.write("#### 1. CHAIRMAN")
     default_chair = dir_list[0] if dir_list else ""
     row_input("The Chair was taken by", default_chair, "sec_chairman_name")
 
-    # 3. INCORPORATION
     st.write("#### 2. INCORPORATION")
-    st.write("It was noted that the Company was incorporated under the COMPANIES ACT.(CAP.50).")
-    
     uen_number = st.session_state.get("kyc_co_no", "")
     inc_date = st.session_state.get("kyc_inc_date", date.today())
-
     row_input("The Certificate of Incorporation number was:", uen_number, "sec_inc_no")
     
     ci1, ci2 = st.columns([1, 3])
     with ci1: st.markdown("**The Date of Incorporation was:**")
-    # DATE FORMAT FIX: Added format="DD/MM/YYYY"
     with ci2: st.date_input("Inc Date", value=inc_date, key="sec_inc_date_display", disabled=True, format="DD/MM/YYYY", label_visibility="collapsed")
 
-    # 4. DIRECTORS
     st.write("#### 3. DIRECTORS")
-    st.write("It was resolved that the following be appointed as the first director(s) of the Company:")
     for i, d_name in enumerate(dir_list):
         row_input(f"Director {i+1}", d_name, f"sec_dir_name_{i}", disabled=True)
 
-    # 5. SHARE CAPITAL
     st.write("#### 4. SHARE CAPITAL")
     cap_amt = st.session_state.get("cap_amount", "100")
     sc1, sc2, sc3, sc4 = st.columns([2, 1, 1, 2])
@@ -987,28 +1047,21 @@ def bg_sec_file_form(client_name):
     with sc3: st.write("divided into")
     with sc4: st.write(f"{cap_amt} shares of 1 each.")
 
-    # 6. ALLOTMENT
     st.write(f"#### 5. APPLICATION FOR ALLOTMENT OF {client_name.upper()}")
-    st.write("The application(s) for shares in the Company were submitted. It was resolved that the application(s) be approved.")
-    
-    st.markdown("**Application for and allotment of shares**")
     h1, h2, h3 = st.columns([2, 2, 1])
     h1.markdown("**Name of Shareholder**")
     h2.markdown("**NRIC/Passport No**")
     h3.markdown("**No. of shares**")
-
     num_sh = st.session_state.get("num_shareholders", 1)
     for j in range(num_sh):
         sh_name = st.session_state.get(f"s_name_{j}", "")
         sh_id = st.session_state.get(f"s_id_{j}", "")
         sh_qty = st.session_state.get(f"p_issued_{j}", "")
-        
         r1, r2, r3 = st.columns([2, 2, 1])
         r1.text_input(f"s_name_{j}", value=sh_name, key=f"sec_sh_name_{j}", label_visibility="collapsed")
         r2.text_input(f"s_id_{j}", value=sh_id, key=f"sec_sh_id_{j}", label_visibility="collapsed")
         r3.text_input(f"s_qty_{j}", value=sh_qty, key=f"sec_sh_qty_{j}", label_visibility="collapsed")
 
-    # 7. REGISTERED OFFICE
     st.write("#### 6. REGISTERED OFFICE AND CORRESPONDENCE ADDRESS")
     reg_addr = st.session_state.get("reg_office_address", "")
     st.markdown("**It was resolved that the registered office of the company be situated at:**")
@@ -1016,8 +1069,39 @@ def bg_sec_file_form(client_name):
     st.markdown("**It was resolved that the address to be used for all correspondence be as follows:**")
     st.text_input("Corr Office", value=reg_addr, key="sec_corr_office", label_visibility="collapsed")
 
-    st.divider()
 
+    # --- NEW ADDITIONS: SECTION 7 ONWARDS ---
+    st.markdown("---")
+    
+    # 7. APPOINTMENT OF SECRETARY
+    st.write("#### 7. APPOINTMENT OF SECRETARY")
+    st.write("It was resolved that the following person be appointed as the First Secretary of the Company:")
+    row_input("Secretary Name", st.session_state.get("sec_secretary_name", "KUMARAN S/O BALAKRISHNAN"), "sec_secretary_name")
+    row_input("Secretary NRIC/Passport", st.session_state.get("sec_secretary_id", "S8123456A"), "sec_secretary_id")
+
+    # 8. APPOINTMENT OF AUDITORS
+    st.write("#### 8. APPOINTMENT OF AUDITORS")
+    st.write("It was noted that the company may opt for audit exemption under the small company concept.")
+    audit_opt = st.radio("Auditor Status", ["Exempt / No Auditor Appointed", "Appoint Audit Firm"], key="sec_audit_status")
+    if audit_opt == "Appoint Audit Firm":
+        row_input("Audit Firm Name", "", "sec_auditor_name")
+    else:
+        st.session_state["sec_auditor_name"] = "EXEMPT"
+
+    # 9. BANKING ACCOUNT
+    st.write("#### 9. BANKING ACCOUNT")
+    st.write("It was resolved that a corporate bank account be opened with the following institution:")
+    row_input("Bank Name", "DBS BANK LTD", "sec_bank_name")
+    row_input("Authorized Signatories", ", ".join(dir_list), "sec_bank_signatories")
+
+    # 10. FINANCIAL YEAR END
+    st.write("#### 10. FINANCIAL YEAR END")
+    st.write("It was resolved that the Financial Year End (FYE) of the company be fixed as:")
+    fye_col1, fye_col2 = st.columns(2)
+    fye_col1.selectbox("Day", list(range(1, 32)), index=30, key="sec_fye_day")
+    fye_col2.selectbox("Month", ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], index=11, key="sec_fye_month")
+
+    st.divider()
     # BUTTONS
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     if b_col1.button("← Back to KYC"):
@@ -1025,12 +1109,11 @@ def bg_sec_file_form(client_name):
         st.rerun()
 
     if b_col2.button("Generate Minutes PDF"):
-        save_client_data(client_name)
+        # Ensure data is saved before executing layout generation
         pdf_data = create_minutes_pdf(client_name)
         st.download_button("Download Minutes PDF", data=pdf_data, file_name=f"{client_name}_Minutes.pdf", mime="application/pdf")
 
     if b_col3.button("Next: Acceptance Form →"):
-        save_client_data(client_name)
         st.session_state.view = "acceptance_form"
         st.rerun()
 def check_password():
