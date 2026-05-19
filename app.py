@@ -1142,12 +1142,55 @@ def bg_sec_file_form(client_name):
                 st.caption("Signature: `_______________________`")
             with c_col2:
                 st.markdown(f"**Witness / Lodging Agent Certification**")
-                st.caption(f"Certified By: {st.session_state.get('sec_secretary_name', 'JANAKIRAMAN AYYAPPAN').upper()}")
+                st.caption(f"Certified By: {st.session_state.get('sec_secretary_name', '').upper()}")
                 st.caption("Signature: `_______________________`")
 
     # =========================================================================
 
     st.divider()
+    # =========================================================================
+    # --- STATUTORY LEDGER: REGISTER OF DIRECTORS ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### STATUTORY BOOK: REGISTER OF DIRECTORS")
+    st.write("Official statutory record blocks managed per executive officer assignment:")
+
+    for i, d_name in enumerate(dir_list):
+        if not d_name:
+            continue
+            
+        with st.expander(f"🗃️ Register of Directors Ledger Card: {d_name.upper()}", expanded=False):
+            st.markdown(f"**REGISTER OF DIRECTORS — FOLIO REFERENCE REFERENCE NO. {i+1}**")
+            
+            # Fetch variables verified earlier in state
+            d_id = st.session_state.get(f"f45_id_{i}", st.session_state.get(f"d_id_{i}", ""))
+            d_addr = st.session_state.get(f"f45_address_{i}", st.session_state.get(f"d_address_{i}", reg_addr))
+            app_date_raw = st.session_state.get(f"f45_app_date_{i}", inc_date)
+            formatted_date = app_date_raw.strftime("%d/%m/%Y") if isinstance(app_date_raw, date) else str(app_date_raw)
+            
+            # Display information matching your image template tabular parameters exactly
+            director_ledger_entries = {
+                "Statutory Parameter Column": [
+                    "Full Name Registered", 
+                    "Identity Number (NRIC / Passport)", 
+                    "Residential Address", 
+                    "Nationality", 
+                    "Business Occupation", 
+                    "Date of Original Appointment", 
+                    "Date of Cessation / Resignation"
+                ],
+                "Current Corporate Records Status": [
+                    d_name.upper(),
+                    d_id,
+                    d_addr,
+                    st.session_state.get(f"d_nationality_{i}", "SINGAPORE CITIZEN"),
+                    st.session_state.get(f"d_occupation_{i}", "DIRECTOR"),
+                    formatted_date,
+                    "ACTIVE / OPEN"
+                ]
+            }
+            
+            st.table(director_ledger_entries)
     
     # NAVIGATION AND DATA EXPORT CONTROL BUTTONS
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
