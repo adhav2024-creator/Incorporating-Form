@@ -1865,7 +1865,6 @@ if check_password():
     if st.session_state["view"] == "management":
         st.title("Client Management System")
 
-       
         df = get_clients()
 
         if not df.empty:
@@ -1913,7 +1912,6 @@ if check_password():
             sort_col = st.selectbox("Sort data by:", ["CLIENT NUM", "YEAR END", "NAME"])
             df_sorted = filtered_df.sort_values(by=sort_col)
             
-            # Use dataframe as requested
             st.dataframe(df_sorted, use_container_width=True, hide_index=True)
             st.divider()
 
@@ -1952,7 +1950,6 @@ if check_password():
                         st.warning("Deleted.")
                         st.rerun()
 
-                    # --- ADDED KYC BUTTON HERE ---
                     if btn_col3.button("📂 Open KYC Form"):
                         st.session_state["selected_client_name"] = client_info['NAME']
                         st.session_state["view"] = "kyc_form"
@@ -1962,11 +1959,13 @@ if check_password():
         else:
             st.info("No clients found.")
 
-    # --- VIEWS FOR KYC FORM ---
+    # --- VIEWS FOR KYC FORM FLOW ---
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
 
     elif st.session_state["view"] == "bg_sec_file":
         bg_sec_file_form(st.session_state["selected_client_name"])
+
+    # ADDED THIS BLOCK TO PREVENT THE ROUTING CRASH
     elif st.session_state["view"] == "acceptance_form":
         render_customer_acceptance_form(st.session_state["selected_client_name"])
