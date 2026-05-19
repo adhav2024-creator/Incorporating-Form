@@ -1352,7 +1352,7 @@ def bg_sec_file_form(client_name):
         with s_col1:
             st.text_input("Name of Secretary", value=sec_name_val, key="f45a_ui_name")
             st.text_input("Company Name", value=client_name.upper(), key="f45a_ui_co_name", disabled=True)
-            st.text_area("Residential Address", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", key="f45a_ui_address", height=68)
+            st.text_area("Residential Address", value="", key="f45a_ui_address", height=68)
         with s_col2:
             st.text_input("NRIC / Passport No.", value=sec_id_val, key="f45a_ui_id")
             st.text_input("Company No. (UEN)", value=uen_number, key="f45a_ui_uen", disabled=True)
