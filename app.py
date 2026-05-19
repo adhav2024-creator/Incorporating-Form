@@ -558,10 +558,9 @@ def create_minutes_pdf(client_name):
     from datetime import date, datetime
     
     pdf = FPDF()
-    pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- TABLE ROW GENERATOR (Matching structural grid layout) ---
+    # --- HELPER FUNCTION: TABLE ROW GENERATOR (For metadata/particulars grids) ---
     def draw_pdf_row(label, value):
         val_str = str(value) if value is not None else ""
         pdf.set_font("Arial", '', 10)
@@ -586,7 +585,10 @@ def create_minutes_pdf(client_name):
             return d_obj.strftime("%d/%m/%Y")
         return str(d_obj)
 
-    # --- TOP HEADER BLOCK ---
+    # =========================================================================
+    # PART 1: FIRST DIRECTORS' MINUTES
+    # =========================================================================
+    pdf.add_page()
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 6, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
     pdf.cell(0, 6, client_name.upper(), ln=True, align='C')
@@ -617,8 +619,8 @@ def create_minutes_pdf(client_name):
     pdf.multi_cell(0, 5, "It was noted that the Company was incorporated under the COMPANIES ACT. (CAP.50).")
     pdf.ln(2)
     
-    uen_pdf = st.session_state.get('sec_inc_no', st.session_state.get('kyc_co_no', ''))
-    inc_date_pdf = st.session_state.get('sec_inc_date_display', st.session_state.get('kyc_inc_date'))
+    uen_pdf = st.session_state.get('sec_inc_no', '')
+    inc_date_pdf = st.session_state.get('sec_inc_date_display')
     draw_pdf_row("The Certificate of Incorporation number was:", uen_pdf)
     draw_pdf_row("The Date of Incorporation was:", fmt_date(inc_date_pdf))
     
@@ -635,17 +637,17 @@ def create_minutes_pdf(client_name):
     
     num_dirs = st.session_state.get("num_directors", 1)
     for i in range(num_dirs):
-        d_name = st.session_state.get(f"sec_dir_name_{i}", st.session_state.get(f"d_name_{i}", ""))
+        d_name = st.session_state.get(f"sec_dir_name_{i}", "")
         if d_name:
             pdf.cell(10, 6, "-", align='C')
-            pdf.cell(0, 6, d_name, ln=True)
+            pdf.cell(0, 6, d_name.upper(), ln=True)
     pdf.ln(4)
 
     # 4. SHARE CAPITAL
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 6, "4. SHARE CAPITAL", ln=True)
     pdf.set_font("Arial", '', 10)
-    cap_amt_val = st.session_state.get("sec_cap_amt", "100")
+    cap_amt_val = st.session_state.get("sec_cap_amt", "")
     pdf.multi_cell(0, 5, f"It was noted that the share capital of the Company was {cap_amt_val} divided into {cap_amt_val} shares of $1 each.")
     pdf.ln(4)
 
@@ -673,7 +675,7 @@ def create_minutes_pdf(client_name):
         nric = st.session_state.get(f"sec_sh_id_{j}", "")
         qty = st.session_state.get(f"sec_sh_qty_{j}", "")
         if name or nric:
-            pdf.cell(80, 7, f" {name}", border=1)
+            pdf.cell(80, 7, f" {name.upper()}", border=1)
             pdf.cell(60, 7, f" {nric}", border=1)
             pdf.cell(50, 7, f" {qty}", border=1, ln=True)
             
@@ -697,7 +699,7 @@ def create_minutes_pdf(client_name):
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 6, "7. Secretary", ln=True)
     pdf.set_font("Arial", '', 10)
-    sec_name = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
+    sec_name = st.session_state.get("sec_secretary_name", "")
     pdf.multi_cell(0, 5, f"It was resolved that {sec_name} be appointed as Secretary")
     pdf.ln(4)
 
@@ -705,26 +707,387 @@ def create_minutes_pdf(client_name):
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 6, "8. Location of books and records", ln=True)
     pdf.set_font("Arial", '', 10)
-    books_place = st.session_state.get("sec_meeting_place", "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    books_place = st.session_state.get("sec_meeting_place", "")
     pdf.multi_cell(0, 5, f"It was resolved that the books, records and minutes of the Company be kept at the following location, until otherwise determined by the director(s):\n{books_place}")
     pdf.ln(6)
 
-    # CLOSE MEETING STATEMENT
-    pdf.multi_cell(0, 5, "There being no further business, the Chairman declared the meeting closed.")
+    # 9. TERMINATION
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 6, "TERMINATION", ln=True)
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 11)
+    pdf.multi_cell(0, 6, "There being no further business, the meeting was terminated with a vote of thanks to the Chair.")
     pdf.ln(15)
 
-    # --- MATCHING CLOSING SIGNATURE BLOCK ---
-    if pdf.get_y() > 230:
-        pdf.add_page()
-        
-    dir_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}", "")]
+    # --- SIGNATURE BLOCK FOR FIRST DIRECTORS MINUTES ---
+    sign_chair = st.session_state.get("res_chairman_sign", "")
+    sign_dir = st.session_state.get("res_director_sign", "")
+    res_date = st.session_state.get("res_dated_day", date.today())
+
+    y_sig = pdf.get_y()
+    pdf.set_xy(10, y_sig)
+    pdf.cell(85, 5, "........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_x(10)
+    pdf.cell(85, 5, f"CHAIRMAN: {sign_chair.upper()}", ln=True)
     
-    # Renders signatures matching the text structure layout of your reference file
-    for d_name in dir_list:
-        if d_name:
-            pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 6, d_name.upper(), ln=True)
-            pdf.ln(12) # Gap for actual hand signature execution
+    pdf.set_xy(110, y_sig)
+    pdf.cell(85, 5, "........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_xy(110, y_sig + 5)
+    pdf.cell(85, 5, f"DIRECTOR: {sign_dir.upper()}", ln=True)
+    pdf.ln(10)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 5, f"Dated This Day Of: {fmt_date(res_date)}", ln=True)
+
+    # =========================================================================
+    # PART 2: FORM 45 - CONSENT TO ACT AS DIRECTOR
+    # =========================================================================
+    for i in range(num_dirs):
+        f45_name = st.session_state.get(f"f45_name_{i}", "")
+        f45_id = st.session_state.get(f"f45_id_{i}", "")
+        f45_uen = st.session_state.get(f"f45_uen_{i}", "")
+        f45_addr = st.session_state.get(f"f45_address_{i}", "")
+        f45_app_date = st.session_state.get(f"f45_app_date_{i}", date.today())
+        f45_witness = st.session_state.get(f"f45_witness_{i}", "")
+
+        # PAGE 1: FORM 45 MAIN
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 8, "FORM 45: CONSENT TO ACT AS DIRECTOR", ln=True, align='C')
+        pdf.ln(4)
+
+        draw_pdf_row("Name of Director", f45_name.upper())
+        draw_pdf_row("NRIC / Passport No.", f45_id)
+        draw_pdf_row("Company Name", client_name.upper())
+        draw_pdf_row("Company No. (UEN)", f45_uen)
+        draw_pdf_row("Residential Address", f45_addr)
+        draw_pdf_row("Date of Appointment", fmt_date(f45_app_date))
+        pdf.ln(6)
+
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 5, "Statutory Declaration Under Singapore Companies Act:", ln=True)
+        pdf.ln(2)
+        pdf.set_font("Arial", '', 10)
+        pdf.multi_cell(0, 5, 
+            "1. I hereby consent to act as director of the above-named company with effect from the incorporation date.\n\n"
+            "2. I declare that I am not disqualified from acting as a director under any relevant legal provisions of the Act."
+        )
+        pdf.ln(10)
+        pdf.cell(0, 5, "Signature: .............................................................  Date: ............................", ln=True)
+
+        # PAGE 2: FORM 45 CONTINUATION SHEET I
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 6, "Form 45 Continuation Sheet I", ln=True)
+        pdf.set_font("Arial", '', 10)
+        pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+        pdf.ln(4)
+
+        draw_pdf_row("Name of Company", client_name.upper())
+        draw_pdf_row("Company No (UEN)", f45_uen)
+        pdf.ln(6)
+
+        pdf.set_font("Arial", '', 10)
+        pdf.multi_cell(0, 5.5,
+            "(8) That the statements made by me in this form are true. I read and understand English.\n\n"
+            "I confirm that the statements are true, I am also aware that I can be prosecuted in Court if I wilfully give any information on this form which is false."
+        )
+        pdf.ln(15)
+
+        pdf.cell(0, 5, "...........................................................................", ln=True)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 5, f"Signature of Director: {f45_name.upper()}", ln=True)
+        pdf.ln(15)
+
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, "WITNESS / SECRETARIAL PROFESSIONAL CERTIFICATION", ln=True)
+        pdf.set_font("Arial", '', 10)
+        pdf.cell(0, 4, "___________________________________________________________________________", ln=True)
+        pdf.ln(4)
+        pdf.multi_cell(0, 5, f"I hereby certify that the individual named above appeared before me, executed this statement, and verified their identification profile to me.\nCertified By: {f45_witness.upper()}")
+
+    # =========================================================================
+    # PART 3: REGISTER OF DIRECTORS
+    # =========================================================================
+    for i in range(num_dirs):
+        f45_name = st.session_state.get(f"f45_name_{i}", "")
+        f45_id = st.session_state.get(f"f45_id_{i}", "")
+        f45_addr = st.session_state.get(f"f45_address_{i}", "")
+        
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 8, "REGISTER OF DIRECTORS", ln=True, align='C')
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, f"DIRECTOR FOLIO INDEX REFERENCE NO: {i+1}", ln=True, align='L')
+        pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+        pdf.ln(4)
+
+        draw_pdf_row("Full Name Registered", f45_name.upper())
+        draw_pdf_row("Identity Number (NRIC / Passport)", f45_id)
+        draw_pdf_row("Residential Address", f45_addr)
+        draw_pdf_row("Nationality", "")
+        draw_pdf_row("Business Occupation", "")
+        draw_pdf_row("Date of Original Appointment", fmt_date(st.session_state.get(f"f45_app_date_{i}", "")))
+        draw_pdf_row("Date of Cessation", "ACTIVE / OPEN")
+
+    # =========================================================================
+    # PART 4: STATUTORY TRANSACTION RECORD: ALLOTMENT OF SHARES
+    # =========================================================================
+    for j in range(num_sh):
+        sh_name = st.session_state.get(f"sec_sh_name_{j}", "")
+        sh_id = st.session_state.get(f"sec_sh_id_{j}", "")
+        sh_qty = st.session_state.get(f"sec_sh_qty_{j}", "")
+        
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 8, "APPLICATION FOR AND ALLOTMENT OF SHARES", ln=True, align='C')
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, f"ALLOTMENT RECORD SEQUENCE DETAILS NO: {j+1}", ln=True, align='L')
+        pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+        pdf.ln(4)
+        
+        draw_pdf_row("Name of the Shareholder", sh_name.upper())
+        draw_pdf_row("NRIC/Passport No", sh_id)
+        draw_pdf_row("No. of Shares Allotted", f"{sh_qty} Shares")
+        draw_pdf_row("Class of Shares Issued", "ORDINARY")
+        draw_pdf_row("Share Certificate Number", f"Cert No. {j+1}")
+        draw_pdf_row("Date of Allotment Resolution", fmt_date(inc_date_pdf))
+
+    # =========================================================================
+    # PART 5: REGISTER OF MEMBERS (Two Logs Breakdown Structure)
+    # =========================================================================
+    for j in range(num_sh):
+        sh_name = st.session_state.get(f"sec_sh_name_{j}", "")
+        sh_id = st.session_state.get(f"sec_sh_id_{j}", "")
+        sh_qty = st.session_state.get(f"sec_sh_qty_{j}", "")
+        
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 8, "REGISTER OF MEMBERS", ln=True, align='C')
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, f"MEMBER FOLIO REFERENCE SEQUENCE NO: {j+1}", ln=True, align='L')
+        pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+        pdf.ln(2)
+        
+        # Particulars Grid Header
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(30, 6, "Member Name:", border=0)
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(70, 6, sh_name.upper(), border=0)
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(35, 6, "NRIC/Passport No:", border=0)
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(0, 6, sh_id, border=0, ln=True)
+        pdf.ln(4)
+        
+        # Log 1: Shares Allotted/Acquired Log
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, "1. SHARES ALLOTTED / ACQUIRED LOG", ln=True)
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(24, 6, "Date Entry", border=1, align='C')
+        pdf.cell(24, 6, "Allotment No", border=1, align='C')
+        pdf.cell(24, 6, "Qty Issued", border=1, align='C')
+        pdf.cell(24, 6, "Dist. From", border=1, align='C')
+        pdf.cell(24, 6, "Dist. To", border=1, align='C')
+        pdf.cell(24, 6, "Cert No", border=1, align='C')
+        pdf.cell(24, 6, "Paid/Share", border=1, align='C')
+        pdf.cell(24, 6, "Total Paid", border=1, align='C', ln=True)
+        
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(24, 6, fmt_date(inc_date_pdf), border=1, align='C')
+        pdf.cell(24, 6, f"#{j+1}", border=1, align='C')
+        pdf.cell(24, 6, str(sh_qty), border=1, align='C')
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, f"Cert-{j+1}", border=1, align='C')
+        pdf.cell(24, 6, "$1.00", border=1, align='C')
+        pdf.cell(24, 6, f"${sh_qty}.00", border=1, align='C', ln=True)
+        pdf.ln(4)
+
+        # Log 2: Shares Transferred/Disposed Log
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, "2. SHARES TRANSFERRED / REDEEMED LOG", ln=True)
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(24, 6, "Date Trans.", border=1, align='C')
+        pdf.cell(24, 6, "Deed No", border=1, align='C')
+        pdf.cell(24, 6, "Qty Trans", border=1, align='C')
+        pdf.cell(24, 6, "Dist. From", border=1, align='C')
+        pdf.cell(24, 6, "Dist. To", border=1, align='C')
+        pdf.cell(44, 6, "Transferred To Folio / Name", border=1, align='C')
+        pdf.cell(24, 6, "Balance Held", border=1, align='C', ln=True)
+        
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, "-", border=1, align='C')
+        pdf.cell(44, 6, "-", border=1, align='C')
+        pdf.cell(24, 6, str(sh_qty), border=1, align='C', ln=True)
+
+    # =========================================================================
+    # PART 6: REGISTER OF TRANSFERS
+    # =========================================================================
+    for j in range(num_sh):
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(0, 8, "REGISTER OF TRANSFERS", ln=True, align='C')
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, f"TRANSFER TRANSACTION DEED FOLIO NO: {j+1}", ln=True, align='L')
+        pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+        pdf.ln(4)
+        
+        draw_pdf_row("Date of Transfer Lodgement", "-")
+        draw_pdf_row("No. of Transfer Deed", "-")
+        draw_pdf_row("Transferor Name (From)", "-")
+        draw_pdf_row("Transferee Name (To)", "-")
+        draw_pdf_row("Number of Shares Transferred", "-")
+        draw_pdf_row("Distinctive Numbers (From - To)", "-")
+        draw_pdf_row("New Share Certificate No.", "-")
+
+    # =========================================================================
+    # PART 7: FORM 45A - CONSENT TO ACT AS SECRETARY
+    # =========================================================================
+    f45a_name = st.session_state.get("f45a_ui_name", "")
+    f45a_id = st.session_state.get("f45a_ui_id", "")
+    f45a_addr = st.session_state.get("f45a_ui_address", "")
+    f45a_nat = st.session_state.get("f45a_ui_nationality", "")
+    f45a_uen = st.session_state.get("f45a_ui_uen", "")
+
+    # PAGE 1: MAIN DECLARATION FORM
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 8, "FORM 45A: CONSENT TO ACT AS SECRETARY", ln=True, align='C')
+    pdf.ln(4)
+
+    draw_pdf_row("Name of the Secretary", f45a_name.upper())
+    draw_pdf_row("Identity No. (NRIC / Passport)", f45a_id)
+    draw_pdf_row("Nationality", f45a_nat.upper())
+    draw_pdf_row("Company Name", client_name.upper())
+    draw_pdf_row("Company No. (UEN)", f45a_uen)
+    draw_pdf_row("Residential Address", f45a_addr)
+    pdf.ln(6)
+
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 5, "Statutory Statement Under the Provisions of the Singapore Companies Act:", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5,
+        "1. I, the under mentioned person, hereby consent to act as a secretary of the above named company with effect from the date of incorporation.\n\n"
+        "2. I am a qualified person under section 171(1AA) of the Companies Act by virtue of my being:\n"
+        "   *(i)   a secretary of a company for at least 3 of the 5 years immediately preceding my appointment.\n"
+        "   *(ii)  a qualified person under the Legal Profession Act (Cap. 161).\n"
+        "   *(iii) a public accountant.\n"
+        "   *(iiia) a member of the Institute of Certified Public Accountants in Singapore.\n"
+        "   *(iv)  a member of the Singapore Association of the Institute of Chartered Secretaries and Administrators.\n"
+        "   *(v)   a member of the Association of International Accountants (Singapore Branch).\n"
+        "   *(vi)  a member of the Institute of Company Accountants, Singapore."
+    )
+    pdf.ln(10)
+    pdf.cell(0, 5, "Signature: .............................................................  Date This Day Of: ............................", ln=True)
+
+    # PAGE 2: FORM 45A CONTINUATION SHEET I
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 6, "Form 45A Continuation Sheet I", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+    pdf.ln(4)
+
+    draw_pdf_row("Name of Company", client_name.upper())
+    draw_pdf_row("Company No (UEN)", f45a_uen)
+    pdf.ln(6)
+
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5.5,
+        "(3) That the statements made by me in this form are true. I read and understand English.\n\n"
+        "I confirm that the statements are true, I am also aware that I can be prosecuted in Court if I wilfully give any information on this form which is false."
+    )
+    pdf.ln(15)
+
+    pdf.cell(0, 5, "...........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 5, f"Signature of Secretary: {f45a_name.upper()}", ln=True)
+    pdf.ln(12)
+
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 6, "WITNESS / LODGING AGENT CERTIFICATION", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 4, "___________________________________________________________________________", ln=True)
+    pdf.ln(4)
+    pdf.multi_cell(0, 5, "I hereby certify that the above named person appeared before me and signed this Consent together with the statement in my presence and that I have verified his/her identity.")
+    pdf.ln(15)
+    pdf.cell(0, 5, "...........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 9.5)
+    pdf.cell(0, 4, "Signature of Witness / Lodging Agent", ln=True)
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(0, 4, "Registered Filing Agent / Secretarial Compliance Professional", ln=True)
+
+    # =========================================================================
+    # PART 8: REGISTER OF SECRETARIES
+    # =========================================================================
+    reg_sec_name = st.session_state.get("reg_sec_name", "")
+    reg_sec_id = st.session_state.get("reg_sec_id", "")
+    reg_sec_nat = st.session_state.get("reg_sec_nationality", "")
+    reg_sec_addr = st.session_state.get("reg_sec_address", "")
+    reg_sec_app = st.session_state.get("reg_sec_app_date", date.today())
+    reg_sec_cess = st.session_state.get("reg_sec_cess_date", "ACTIVE / OPEN")
+
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 8, "REGISTER OF SECRETARIES", ln=True, align='C')
+    pdf.set_font("Arial", 'I', 9)
+    pdf.cell(0, 5, "To be completed by secretaries of public companies or by secretaries of private companies", ln=True, align='C')
+    pdf.cell(0, 4, "appointed under section 171(1AB) of the Act.", ln=True, align='C')
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 6, "FOLIO REFERENCE BOOK NO: Folio No. 1", ln=True, align='L')
+    pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+    pdf.ln(4)
+
+    draw_pdf_row("Full Official Name", reg_sec_name.upper())
+    draw_pdf_row("Identity Card / Passport No.", reg_sec_id)
+    draw_pdf_row("Registered Nationality", reg_sec_nat.upper())
+    draw_pdf_row("Residential Address", reg_sec_addr)
+    draw_pdf_row("Date of Appointment", fmt_date(reg_sec_app))
+    draw_pdf_row("Date of Cessation", reg_sec_cess)
+
+    # =========================================================================
+    # PART 9: FINAL WRAP CLOSURE RESOLUTION
+    # =========================================================================
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 8, "MINUTES OF DIRECTORS' MEETING & RESOLUTIONS", ln=True, align='C')
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 4, "-----------------------------------------------------------------------------------------------------------------------------", ln=True)
+    pdf.ln(10)
+
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 6, "TERMINATION", ln=True)
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 11)
+    pdf.multi_cell(0, 6, "There being no further business, the meeting was terminated with a vote of thanks to the Chair.")
+    pdf.ln(30)
+
+    # Side-by-side closure execution placeholders
+    y_sig_final = pdf.get_y()
+    pdf.set_xy(10, y_sig_final)
+    pdf.cell(85, 5, "........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_x(10)
+    pdf.cell(85, 5, f"CHAIRMAN: {sign_chair.upper()}", ln=True)
+    
+    pdf.set_xy(110, y_sig_final)
+    pdf.cell(85, 5, "........................................................................", ln=True)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_xy(110, y_sig_final + 5)
+    pdf.cell(85, 5, f"DIRECTOR: {sign_dir.upper()}", ln=True)
+    
+    pdf.ln(25)
+    pdf.set_font("Arial", '', 10)
+    pdf.set_x(10)
+    pdf.cell(0, 5, f"Dated This Day Of: {fmt_date(res_date)}", ln=True)
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
