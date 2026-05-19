@@ -1758,7 +1758,92 @@ def bg_sec_file_form(client_name):
        st.session_state["view"] = "acceptance_form"
        st.rerun()
 
-def render_customer_acceptance_form():
+def render_customer_acceptance_form(client_name_arg=None):
+    import streamlit as st
+
+    # Initialize global company variable if not present
+    if "selected_client_name" not in st.session_state:
+        st.session_state["selected_client_name"] = ""
+
+    # If a name was passed as an argument, sync it to session state
+    if client_name_arg:
+        st.session_state["selected_client_name"] = client_name_arg
+
+    # Progress Bar Component Alignment
+    st.markdown("""
+        <style>
+        .progress-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; position: relative; }
+        .progress-line { position: absolute; top: 45px; left: 5%; right: 5%; height: 4px; background-color: #2E7D32; z-index: 1; }
+        .step { text-align: center; z-index: 2; flex: 1; }
+        .circle { width: 50px; height: 50px; background-color: #2E7D32; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold; font-size: 20px; border: 3px solid #2E7D32; }
+        .active-circle { background-color: #2E7D32; color: white; }
+        .inactive-circle { background-color: white; color: #2E7D32; border: 3px solid #2E7D32; }
+        .label { margin-top: 10px; font-weight: bold; font-size: 14px; color: #2E7D32; }
+        </style>
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="step"><div class="circle inactive-circle">1</div><div class="label">Master KYC Form</div></div>
+            <div class="step"><div class="circle inactive-circle">2</div><div class="label">BG Sec File</div></div>
+            <div class="step"><div class="circle active-circle">3</div><div class="label">Customer Acceptance Form</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 1. CUSTOMER ACCEPTANCE FORM (Header)
+    st.subheader("CUSTOMER ACCEPTANCE FORM")
+    
+    client_name = st.text_input(
+        "Name of Client / Proposed Company Name:", 
+        value=st.session_state["selected_client_name"],
+        key="caf_client_name_input"
+    )
+    st.session_state["selected_client_name"] = client_name
+
+    if not client_name:
+        st.info("Please enter the client/company name to fill the form.")
+        return
+
+    # =========================================================================
+    # PART 1
+    # =========================================================================
+    st.markdown("### PART 1")
+
+    # A. CORPORATE PARTICULARS
+    st.markdown("#### A. CORPORATE PARTICULARS")
+    col_a1, col_a2 = st.columns(2)
+    with col_a1:
+        st.session_state['kyc_country'] = st.text_input("Country of Incorporation:", value="SINGAPORE", key="caf_country_state")
+        st.session_state['kyc_entity_type'] = st.text_input("Type of Entity:", key="caf_entity_type_state")
+    with col_a2:
+        st.session_state['kyc_biz_activity'] = st.text_area("Principal Business Activity:", key="caf_biz_act_state")
+        st.session_state['sec_reg_office'] = st.text_area("Registered Office Address:", key="caf_reg_off_state")
+
+    # B. PARTICULARS OF DIRECTORS / SHAREHOLDERS / UBO
+    st.markdown("#### B. PARTICULARS OF DIRECTORS / SHAREHOLDERS / UBO")
+    num_dirs = st.number_input("Number of Individuals:", min_value=1, max_value=20, value=1, key="caf_num_inds_state")
+    st.session_state["num_directors"] = num_dirs
+
+    for i in range(num_dirs):
+        st.markdown(f"**Individual {i+1}**")
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            st.session_state[f"sec_dir_name_{i}"] = st.text_input("Full Name:", key=f"caf_name_state_{i}")
+            st.session_state[f"f45_id_{i}"] = st.text_input("NRIC / Passport No:", key=f"caf_id_state_{i}")
+        with col_b2:
+            st.session_state[f"f45_nationality_{i}"] = st.text_input("Country of Nationality:", key=f"caf_nat_state_{i}")
+            st.session_state[f"kyc_capacity_{i}"] = st.text_input("Capacity (e.g. Director / Shareholder / UBO):", key=f"caf_cap_state_{i}")
+
+    # C. SOURCE OF FUNDS & REVENUE ESTIMATION
+    st.markdown("#### C. SOURCE OF FUNDS & REVENUE ESTIMATION")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        st.session_state['kyc_source_funds'] = st.text_input("Source of Start-up Capital / Wealth:", key="caf_sof_state")
+        st.session_state['kyc_est_turnover'] = st.text_input("Estimated Annual Turnover:", key="caf_turnover_state")
+    with col_c2:
+        st.session_state['kyc_target_countries'] = st.text_area("Target Countries of Operation:", key="caf_countries_state")
+
+    # =========================================================================
+    # FUTURE PARTS WILL BE APPENDED HERE
+    # =========================================================================
 
     # Progress Bar Component Alignment
     st.markdown("""
@@ -1960,12 +2045,12 @@ if check_password():
             st.info("No clients found.")
 
     # --- VIEWS FOR KYC FORM FLOW ---
+    # --- VIEWS FOR KYC FORM FLOW ---
     elif st.session_state["view"] == "kyc_form":
         master_kyc_form(st.session_state["selected_client_name"])
 
     elif st.session_state["view"] == "bg_sec_file":
         bg_sec_file_form(st.session_state["selected_client_name"])
 
-    # ADDED THIS BLOCK TO PREVENT THE ROUTING CRASH
     elif st.session_state["view"] == "acceptance_form":
         render_customer_acceptance_form(st.session_state["selected_client_name"])
