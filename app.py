@@ -1098,6 +1098,36 @@ def bg_sec_file_form(client_name):
     fye_col2.selectbox("Month", ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], index=11, key="sec_fye_month")
 
     st.divider()
+    # --- FORM 45: CONSENT TO ACT AS DIRECTOR SECTION ---
+    st.markdown("---")
+    st.write("### FORM 45: CONSENT TO ACT AS DIRECTOR")
+    st.write("The following statutory declarations will be generated automatically for each appointed director:")
+
+    # Loop through the known directors to display/verify Form 45 configurations
+    for i, d_name in enumerate(dir_list):
+        if not d_name:
+            continue
+            
+        with st.expander(f"📄 Form 45 Particulars: {d_name.upper()}", expanded=(i == 0)):
+            st.markdown(f"**Declaration Details for Director {i+1}**")
+            
+            # Fetch existing data from state if available, otherwise fallback to defaults
+            d_id = st.session_state.get(f"d_id_{i}", "")
+            d_addr = st.session_state.get(f"d_address_{i}", reg_addr) # Fallback to company reg office if missing
+            
+            # Form 45 input/display rows
+            st.text_input("Name of Director", value=d_name, key=f"f45_name_{i}", disabled=True)
+            st.text_input("NRIC / Passport No.", value=d_id, key=f"f45_id_{i}")
+            st.text_input("Company Name", value=client_name.upper(), key=f"f45_co_name_{i}", disabled=True)
+            st.text_input("Company No. (UEN)", value=uen_number, key=f"f45_uen_{i}", disabled=True)
+            st.text_area("Residential Address", value=d_addr, key=f"f45_address_{i}", rows=2)
+            
+            col_f1, col_f2 = st.columns(2)
+            col_f1.date_input("Date of Appointment", value=inc_date, key=f"f45_app_date_{i}", format="DD/MM/YYYY")
+            col_f2.text_input("Witness / Secretarial Agent Name", value=st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), key=f"f45_witness_{i}")
+            
+            # Quick status info highlighting the legal provisions of Form 45
+            st.caption("⚠️ By generating this document, the director declares they are at least 21 years of age, of full capacity, and not disqualified from acting as a director under sections 148, 149, 154, or 155 of the Singapore Companies Act.")
     # BUTTONS
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
     if b_col1.button("← Back to KYC"):
