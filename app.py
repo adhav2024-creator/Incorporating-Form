@@ -1908,7 +1908,7 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # --- SECTION D (POLITICALLY EXPOSED PERSONS INITIAL SCANS) ---
+    # --- SECTION D (POLITICALLY EXPOSED PERSONS CHECKS) ---
     st.subheader("SECTION D")
     st.markdown("**INFORMATION OF POLITICALLY EXPOSED PERSONS, THEIR IMMEDMATE FAMILY MEMBERS AND CLOSE ASSOCIATES**")
 
@@ -1938,7 +1938,6 @@ def render_customer_acceptance_form(client_name_arg=None):
         st.markdown(f"##### Declaration Profile Entry #{i+1}")
         st.info(declaration_text)
         
-        # Tie declaration data defaults back to values entered in section B / Section C
         default_person_name = st.session_state.get(f"caf_sec_b_name_{i}", "")
         if i == 0 and not default_person_name:
             default_person_name = "Janakiraman Ayyappan"
@@ -1958,8 +1957,8 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # --- PART 2: DYNAMIC PEP EXTENSION SECTION (MOVED TO THE VERY END) ---
-    # Activates here below Section E if any of the Section D triggers are flagged to "Yes"
+    # --- ADVANCED PART 2: DYNAMIC PEP EXTENSION SECTION (PLACED AT THE VERY END) ---
+    # Activates exactly when any of the core section D checks above are flagged to "Yes"
     if pep_q1 == "Yes" or pep_q2 == "Yes" or pep_q3 == "Yes":
         st.markdown("---")
         st.subheader("PART 2- FORM FOR POLITICALLY EXPOSED PERSONS")
@@ -1989,7 +1988,7 @@ def render_customer_acceptance_form(client_name_arg=None):
             st.text_input("Provide information on the person's source of funds in the proposed business relationship (Associate Row)", value="NA", key="caf_part2_sec_c_funds")
             st.markdown("<hr style='border-top: 1px dashed #bbb;'>", unsafe_allow_html=True)
 
-    # Global structural control adjustments layout
+    # Dynamic Profile Counters Layout
     ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 4])
     
     if ctrl_col1.button("➕ Add Shareholder / Director"):
@@ -2003,7 +2002,7 @@ def render_customer_acceptance_form(client_name_arg=None):
     # --- BOTTOM FORM EXECUTION ACTION ---
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("SUBMIT NOW", type="primary", use_container_width=True):
-        st.success("Customer Acceptance Form Saved Successfully with Part 2 placed at the very end!")
+        st.success("Customer Acceptance Form Saved Successfully!")
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
