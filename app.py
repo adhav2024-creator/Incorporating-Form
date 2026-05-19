@@ -561,6 +561,7 @@ def create_minutes_pdf(client_name):
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
+    # --- TABLE ROW GENERATOR (Matching structural grid layout) ---
     def draw_pdf_row(label, value):
         val_str = str(value) if value is not None else ""
         pdf.set_font("Arial", '', 10)
@@ -568,9 +569,7 @@ def create_minutes_pdf(client_name):
         h = max(8, len(lines) * 8)
         
         y_start = pdf.get_y()
-        
-        # Check for page boundary breaks
-        if y_start + h > 270:
+        if y_start + h > 275:
             pdf.add_page()
             y_start = pdf.get_y()
             
@@ -587,58 +586,85 @@ def create_minutes_pdf(client_name):
             return d_obj.strftime("%d/%m/%Y")
         return str(d_obj)
 
-    # --- TOP HEADER ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
-    pdf.cell(0, 10, client_name.upper(), ln=True, align='C')
-    pdf.ln(5)
+    # --- TOP HEADER BLOCK ---
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 6, "FIRST DIRECTORS' MINUTES", ln=True, align='C')
+    pdf.cell(0, 6, client_name.upper(), ln=True, align='C')
+    pdf.ln(4)
 
-    # 1. METADATA SECTION
+    # 1. METADATA BLOCK GRID
+    draw_pdf_row("Name of Company", client_name.upper())
     draw_pdf_row("Place of Meeting", st.session_state.get('sec_meeting_place', ''))
+    
     meet_date_raw = st.session_state.get('sec_meet_date')
     meet_time = str(st.session_state.get('sec_meet_time', ''))
-    draw_pdf_row("Date & Time", f"{fmt_date(meet_date_raw)} {meet_time}")
+    draw_pdf_row("Date and Time of Meeting", f"{fmt_date(meet_date_raw)} {meet_time}")
     draw_pdf_row("Directors Present", st.session_state.get('sec_dirs_present', ''))
-    draw_pdf_row("Chairman", st.session_state.get('sec_chairman_name', ''))
     pdf.ln(5)
 
-    # 2. INCORPORATION SECTION
+    # 1. CHAIRMAN
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "2. INCORPORATION", ln=True)
+    pdf.cell(0, 6, "1. CHAIRMAN", ln=True)
+    pdf.set_font("Arial", '', 10)
+    chairman_name = st.session_state.get('sec_chairman_name', '')
+    pdf.multi_cell(0, 5, f"The Chair was taken by {chairman_name}")
+    pdf.ln(4)
+
+    # 2. INCORPORATION
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 6, "2. INCORPORATION", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5, "It was noted that the Company was incorporated under the COMPANIES ACT. (CAP.50).")
+    pdf.ln(2)
+    
     uen_pdf = st.session_state.get('sec_inc_no', st.session_state.get('kyc_co_no', ''))
     inc_date_pdf = st.session_state.get('sec_inc_date_display', st.session_state.get('kyc_inc_date'))
-    draw_pdf_row("Cert. of Incorporation No.", uen_pdf)
-    draw_pdf_row("Date of Incorporation", fmt_date(inc_date_pdf))
-    pdf.ln(5)
+    draw_pdf_row("The Certificate of Incorporation number was:", uen_pdf)
+    draw_pdf_row("The Date of Incorporation was:", fmt_date(inc_date_pdf))
+    
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5, "A Copy of Constitution was also presented to the meeting.")
+    pdf.ln(4)
 
-    # 3. DIRECTORS SECTION
+    # 3. DIRECTORS
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "3. DIRECTORS", ln=True)
+    pdf.cell(0, 6, "3. DIRECTORS", ln=True)
     pdf.set_font("Arial", '', 10)
     pdf.multi_cell(0, 5, "It was resolved that the following be appointed as the first director(s) of the Company:")
     pdf.ln(2)
     
     num_dirs = st.session_state.get("num_directors", 1)
     for i in range(num_dirs):
-        d_name = st.session_state.get(f"d_name_{i}", "")
+        d_name = st.session_state.get(f"sec_dir_name_{i}", st.session_state.get(f"d_name_{i}", ""))
         if d_name:
-            pdf.cell(10, 8, "-", align='C')
-            pdf.cell(0, 8, d_name, ln=True)
-    pdf.ln(5)
+            pdf.cell(10, 6, "-", align='C')
+            pdf.cell(0, 6, d_name, ln=True)
+    pdf.ln(4)
 
-    # 4. SHARE CAPITAL & ALLOTMENT
+    # 4. SHARE CAPITAL
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "4. SHARE CAPITAL & ALLOTMENT", ln=True)
+    pdf.cell(0, 6, "4. SHARE CAPITAL", ln=True)
     pdf.set_font("Arial", '', 10)
     cap_amt_val = st.session_state.get("sec_cap_amt", "100")
-    pdf.multi_cell(0, 5, f"The share capital of the Company was recorded as SGD {cap_amt_val} divided into {cap_amt_val} ordinary shares.")
+    pdf.multi_cell(0, 5, f"It was noted that the share capital of the Company was {cap_amt_val} divided into {cap_amt_val} shares of $1 each.")
+    pdf.ln(4)
+
+    # 5. APPLICATION FOR ALLOTMENT OF SHARES
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 6, f"5. Application for allotment of {client_name.upper()}", ln=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5, "The application(s) for shares in the Company were submitted as per A attached. It was resolved that the application(s) be approved and that the share(s) be issued accordingly.")
     pdf.ln(2)
     
-    # Allotment Table
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 6, "Application for and allotment of shares", ln=True)
+    pdf.ln(1)
+    
+    # Grid Data Header
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(80, 8, " Name of Shareholder", border=1)
-    pdf.cell(60, 8, " NRIC/Passport No.", border=1)
-    pdf.cell(50, 8, " Shares Issued", border=1, ln=True)
+    pdf.cell(80, 7, " Name of the Shareholder", border=1)
+    pdf.cell(60, 7, " NRIC/Passport No", border=1)
+    pdf.cell(50, 7, " No. of shares Issued", border=1, ln=True)
     
     pdf.set_font("Arial", '', 9)
     num_sh = st.session_state.get("num_shareholders", 1)
@@ -647,88 +673,58 @@ def create_minutes_pdf(client_name):
         nric = st.session_state.get(f"sec_sh_id_{j}", "")
         qty = st.session_state.get(f"sec_sh_qty_{j}", "")
         if name or nric:
-            pdf.cell(80, 8, f" {name}", border=1)
-            pdf.cell(60, 8, f" {nric}", border=1)
-            pdf.cell(50, 8, f" {qty}", border=1, ln=True)
-    pdf.ln(5)
+            pdf.cell(80, 7, f" {name}", border=1)
+            pdf.cell(60, 7, f" {nric}", border=1)
+            pdf.cell(50, 7, f" {qty}", border=1, ln=True)
+            
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 10)
+    pdf.multi_cell(0, 5, "It was further resolved that the common seal of the Company be affixed to the share certificate(s) to be issued and that details be entered in the Register of Members.")
+    pdf.ln(4)
 
-    # 5. REGISTERED OFFICE
+    # 6. REGISTERED OFFICE AND CORRESPONDENCE ADDRESS
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "5. REGISTERED OFFICE AND CORRESPONDENCE ADDRESS", ln=True)
+    pdf.cell(0, 6, "6. Registered office and correspondence Address", ln=True)
     pdf.set_font("Arial", '', 10)
     reg_office = st.session_state.get('sec_reg_office', '')
     corr_office = st.session_state.get('sec_corr_office', '')
-    pdf.multi_cell(0, 5, f"Resolved that the Registered Office be situated at: {reg_office}")
-    pdf.multi_cell(0, 5, f"Resolved that the Correspondence Address be situated at: {corr_office}")
-    pdf.ln(5)
+    pdf.multi_cell(0, 5, f"It was resolved that the registered office of the company be situated at:\n{reg_office}")
+    pdf.ln(2)
+    pdf.multi_cell(0, 5, f"It was resolved that the address to be used for all correspondence be as follows:\n{corr_office}")
+    pdf.ln(4)
 
-    # --- NEW PDF SECTIONS ---
-    
-    # 6. APPOINTMENT OF SECRETARY
+    # 7. SECRETARY
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "6. APPOINTMENT OF SECRETARY", ln=True)
-    sec_name = st.session_state.get("sec_secretary_name", "KUMARAN S/O BALAKRISHNAN")
-    sec_id = st.session_state.get("sec_secretary_id", "S8123456A")
+    pdf.cell(0, 6, "7. Secretary", ln=True)
     pdf.set_font("Arial", '', 10)
-    pdf.multi_cell(0, 5, f"Resolved that {sec_name} ({sec_id}) be and is hereby appointed as the First Secretary of the Company.")
-    pdf.ln(5)
+    sec_name = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
+    pdf.multi_cell(0, 5, f"It was resolved that {sec_name} be appointed as Secretary")
+    pdf.ln(4)
 
-    # 7. APPOINTMENT OF AUDITORS
+    # 8. LOCATION OF BOOKS AND RECORDS
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "7. APPOINTMENT OF AUDITORS", ln=True)
+    pdf.cell(0, 6, "8. Location of books and records", ln=True)
     pdf.set_font("Arial", '', 10)
-    auditor_val = st.session_state.get("sec_auditor_name", "EXEMPT")
-    if auditor_val == "EXEMPT" or not auditor_val:
-        pdf.multi_cell(0, 5, "Noted that the company is qualified as a small company and is exempt from formal auditing requirements under Section 205B of the Companies Act.")
-    else:
-        pdf.multi_cell(0, 5, f"Resolved that {auditor_val} be appointed as the auditors of the company.")
-    pdf.ln(5)
+    books_place = st.session_state.get("sec_meeting_place", "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787")
+    pdf.multi_cell(0, 5, f"It was resolved that the books, records and minutes of the Company be kept at the following location, until otherwise determined by the director(s):\n{books_place}")
+    pdf.ln(6)
 
-    # 8. BANKING ACCOUNT
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "8. BANKING ACCOUNT", ln=True)
-    pdf.set_font("Arial", '', 10)
-    bank_name = st.session_state.get("sec_bank_name", "DBS BANK LTD")
-    bank_sign = st.session_state.get("sec_bank_signatories", "")
-    pdf.multi_cell(0, 5, f"Resolved that a corporate bank account be opened with {bank_name} and that the authorized signatories to operate the account are: {bank_sign}.")
-    pdf.ln(5)
-
-    # 9. FINANCIAL YEAR END
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "9. FINANCIAL YEAR END", ln=True)
-    pdf.set_font("Arial", '', 10)
-    fye_day = st.session_state.get("sec_fye_day", "31")
-    fye_month = st.session_state.get("sec_fye_month", "December")
-    pdf.multi_cell(0, 5, f"Resolved that the Financial Year End (FYE) of the company be fixed on {fye_day} {fye_month} annually.")
-    pdf.ln(5)
-
-    # 10. CLOSE OF MEETING
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "CLOSE OF MEETING", ln=True)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, "There being no other business, the meeting closed.", ln=True)
+    # CLOSE MEETING STATEMENT
+    pdf.multi_cell(0, 5, "There being no further business, the Chairman declared the meeting closed.")
     pdf.ln(15)
 
-    # --- MATCHING SIGNATURE SECTION ---
-    if pdf.get_y() > 220: # Prevent orphan signature lines
+    # --- MATCHING CLOSING SIGNATURE BLOCK ---
+    if pdf.get_y() > 230:
         pdf.add_page()
         
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 5, "Certified as true record", ln=True)
-    pdf.cell(0, 5, "Of Minutes", ln=True)
-    pdf.ln(12)
-
-    # Draw a line for every actual director found in the database setup
-    for i in range(num_dirs):
-        d_name = st.session_state.get(f"d_name_{i}", "")
+    dir_list = [st.session_state.get(f"d_name_{i}", "") for i in range(num_dirs) if st.session_state.get(f"d_name_{i}", "")]
+    
+    # Renders signatures matching the text structure layout of your reference file
+    for d_name in dir_list:
         if d_name:
-            # Dotted line boundary rule
-            pdf.cell(0, 5, "...........................................................................", ln=True)
             pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 5, d_name.upper(), ln=True)
-            pdf.set_font("Arial", '', 10)
-            pdf.cell(0, 5, "Director", ln=True)
-            pdf.ln(12)
+            pdf.cell(0, 6, d_name.upper(), ln=True)
+            pdf.ln(12) # Gap for actual hand signature execution
 
     return pdf.output(dest='S').encode('latin-1')
 # --- 3. KYC FORM SECTION ---
