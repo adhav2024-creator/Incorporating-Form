@@ -1094,10 +1094,9 @@ def bg_sec_file_form(client_name):
     # --- FORM 45: CONSENT TO ACT AS DIRECTOR & CONTINUATION PACKAGE ---
     # =========================================================================
     st.markdown("---")
-    st.write("### FORM 45 PACKAGE: DIRECTORS & SECRETARY STATUTORY FORMS")
-    st.write("Statutory declarations and legal ledgers dynamically compiled per designated officer profile:")
+    st.write("### FORM 45: CONSENT TO ACT AS DIRECTOR")
+    st.write("Statutory Form 45 and matching Continuation Sheet tracking for active directors:")
 
-    # 1. GENERATE INDIVIDUAL SECTIONS FOR EACH ACTIVE DIRECTOR
     for i, d_name in enumerate(dir_list):
         if not d_name:
             continue
@@ -1145,47 +1144,6 @@ def bg_sec_file_form(client_name):
                 st.markdown(f"**Witness / Lodging Agent Certification**")
                 st.caption(f"Certified By: {st.session_state.get('sec_secretary_name', 'JANAKIRAMAN AYYAPPAN').upper()}")
                 st.caption("Signature: `_______________________`")
-
-    # 2. GENERATE SECRETARY CONSENT SECTION (FORM 45A)
-    st.markdown("---")
-    sec_name_val = st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN")
-    sec_id_val = st.session_state.get("sec_secretary_id", "S7277791C")
-    
-    with st.expander(f"🔐 Form 45A: Consent to Act as Secretary — {sec_name_val.upper()}", expanded=True):
-        st.markdown("#### FORM 45A: CONSENT TO ACT AS SECRETARY")
-        st.write("To be completed by the named Corporate Secretary compliance officer:")
-        
-        s_col1, s_col2 = st.columns(2)
-        with s_col1:
-            st.text_input("Secretary Full Name", value=sec_name_val, key="f45a_sec_name")
-            st.text_input("Identity Card / NRIC No.", value=sec_id_val, key="f45a_sec_id")
-        with s_col2:
-            st.text_input("Nationality", value="SINGAPORE CITIZEN", key="f45a_sec_nationality")
-            st.text_input("Effective Date of Appointment", value=inc_date.strftime("%d/%m/%Y") if isinstance(inc_date, date) else str(inc_date), key="f45a_sec_date", disabled=True)
-            
-        st.text_area("Residential Office Address", value="NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787", key="f45a_sec_address", height=68)
-        
-        st.markdown("**Statutory Qualification Declarations Under Section 171(1AA):**")
-        st.markdown("""
-        * **1.** I, the undermentioned person, hereby consent to act as a secretary of the above-named company.
-        * **2.** I am a qualified person under section 171(1AA) of the Companies Act by virtue of being a member of the **Singapore Association of the Institute of Chartered Secretaries and Administrators (SAICSA)** / Registered Filing Agent.
-        """)
-        st.caption("Signature of Secretary: `_______________________` \u00A0\u00A0\u00A0\u00A0 Dated Day Of: `_______________________`")
-
-    # 3. REGISTER OF SECRETARIES LEDGER BOX LAYOUT
-    with st.expander("🗃️ Statutory Ledger: Register of Secretaries", expanded=False):
-        st.markdown("#### REGISTER OF SECRETARIES")
-        st.caption("Internal statutory book layout kept at the Registered Office address:")
-        
-        ledger_data = {
-            "Folio Reference No.": ["Folio No. 1"],
-            "Full Official Name": [sec_name_val.upper()],
-            "Identity / Passport Number": [sec_id_val],
-            "Registered Address": ["NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787"],
-            "Date of Appointment": [inc_date.strftime("%d/%m/%Y") if isinstance(inc_date, date) else str(inc_date)],
-            "Date of Cessation": ["🎨 OPEN / ACTIVE"]
-        }
-        st.table(ledger_data)
 
     # =========================================================================
 
