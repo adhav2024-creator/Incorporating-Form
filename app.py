@@ -1385,6 +1385,54 @@ def bg_sec_file_form(client_name):
             st.markdown(f"**Witness / Lodging Agent Certification**")
             st.caption("Certified By: REGISTERED FILING AGENT")
             st.caption("Signature: `_______________________`")
+    # =========================================================================
+    # --- STATUTORY LEDGER: REGISTER OF SECRETARIES ---
+    # =========================================================================
+    st.markdown("---")
+    st.write("### STATUTORY BOOK: REGISTER OF SECRETARIES")
+    st.write("Official continuous ledger tracking historical and current corporate secretary appointments:")
+
+    with st.expander("🗃️ Register of Secretaries Ledger Card", expanded=True):
+        st.markdown("#### REGISTER OF SECRETARIES")
+        st.caption("To be completed by secretaries of public companies or by secretaries of private companies appointed under section 171(1AB) of the Act.")
+        
+        # Capture input parameters as completely empty baseline defaults
+        sec_ledger_name = st.text_input("Official Full Name", value="", key="reg_sec_name")
+        sec_ledger_id = st.text_input("Identity No. (NRIC / Passport)", value="", key="reg_sec_id")
+        sec_ledger_nat = st.text_input("Registered Nationality", value="", key="reg_sec_nationality")
+        sec_ledger_addr = st.text_area("Residential Address Record", value="", key="reg_sec_address", height=68)
+        
+        col_sl1, col_sl2 = st.columns(2)
+        with col_sl1:
+            sec_ledger_app = col_sl1.date_input("Date of Appointment", value=date.today(), key="reg_sec_app_date", format="DD/MM/YYYY")
+        with col_sl2:
+            sec_ledger_cess = col_sl2.text_input("Date of Cessation", value="ACTIVE / OPEN", key="reg_sec_cess_date")
+
+        st.markdown("---")
+        st.markdown("**Current Ledger Summary Entry View:**")
+        
+        # Display table representation matching IMG_0298.jpg criteria layout
+        sec_ledger_table = {
+            "Statutory Book Parameter": [
+                "Folio Reference Number",
+                "Full Registered Name",
+                "Identity Card / Passport Number",
+                "Nationality Status",
+                "Residential Address Ledger Entry",
+                "Official Appointment Date",
+                "Official Cessation Date"
+            ],
+            "Live Database Value": [
+                "Folio No. 1",
+                sec_ledger_name.upper(),
+                sec_ledger_id,
+                sec_ledger_nat.upper(),
+                sec_ledger_addr,
+                sec_ledger_app.strftime("%d/%m/%Y") if isinstance(sec_ledger_app, date) else str(sec_ledger_app),
+                sec_ledger_cess
+            ]
+        }
+        st.table(sec_ledger_table)
     st.divider()
     
     b_col1, b_col2, b_col3 = st.columns([1, 1, 1])
