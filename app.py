@@ -1432,10 +1432,10 @@ def render_customer_acceptance_form(client_name_arg=None):
     for i in range(st.session_state["caf_person_count"]):
         st.markdown(f"#### Individual Profile #{i+1}")
         
-        b_default_name = "Janakiraman Ayyappan" if i == 0 else ""
-        b_default_addr = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" if i == 0 else ""
-        b_default_phone = "+6597679806" if i == 0 else ""
-        b_default_email = "jack@bgconsultancy.com.sg" if i == 0 else ""
+        b_default_name = "" if i == 0 else ""
+        b_default_addr = "" if i == 0 else ""
+        b_default_phone = "" if i == 0 else ""
+        b_default_email = "" if i == 0 else ""
 
         st.text_input("Name as per Passport/NRIC", value=b_default_name, key=f"caf_sec_b_name_{i}")
         st.text_area("Address", value=b_default_addr, key=f"caf_sec_b_address_{i}", height=68)
@@ -1461,11 +1461,11 @@ def render_customer_acceptance_form(client_name_arg=None):
     for i in range(st.session_state["caf_person_count"]):
         st.markdown(f"#### Beneficial Owner Profile #{i+1}")
         
-        c_default_name = "Janakiraman Ayyappan" if i == 0 else ""
-        c_default_id = "S7277791C" if i == 0 else ""
-        c_default_dob = "15/06/1972" if i == 0 else ""
-        c_default_nat = "SG" if i == 0 else ""
-        c_default_phone = "+6597679806" if i == 0 else ""
+        c_default_name = "" if i == 0 else ""
+        c_default_id = "" if i == 0 else ""
+        c_default_dob = "" if i == 0 else ""
+        c_default_nat = "" if i == 0 else ""
+        c_default_phone = "" if i == 0 else ""
 
         st.text_input("Full Name of beneficial owner (including any alias)", value=c_default_name, key=f"caf_sec_c_fullname_{i}")
         st.text_input("Unique Identification number", value=c_default_id, key=f"caf_sec_c_id_{i}")
@@ -1511,16 +1511,16 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         default_person_name = st.session_state.get(f"caf_sec_b_name_{i}", "")
         if i == 0 and not default_person_name:
-            default_person_name = "Janakiraman Ayyappan"
+            default_person_name = ""
         elif i == 1 and not default_person_name:
-            default_person_name = "Vaidyanathan Padmini"
+            default_person_name = ""
 
         default_person_id = st.session_state.get(f"caf_sec_c_id_{i}", "")
         if i == 0 and not default_person_id:
-            default_person_id = "S7277791C"
+            default_person_id = ""
         elif i == 1 and not default_person_id:
-            default_person_id = "S7379693H"
-        
+            default_person_id = ""
+
         st.text_input("Name of customer", value=default_person_name, key=f"caf_sec_e_name_{i}")
         st.text_input("Unique Identification number", value=default_person_id, key=f"caf_sec_e_id_{i}")
         st.text_input("Signature", value="Manually Signed / Authenticated", key=f"caf_sec_e_sig_{i}")
@@ -1941,8 +1941,8 @@ def bg_sec_file_form(client_name):
     
     # SECTIONS 7 - 10 MANAGEMENT SECTIONS
     st.write("#### 7. APPOINTMENT OF SECRETARY")
-    row_input("Secretary Name", st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), "sec_secretary_name")
-    row_input("Secretary NRIC/Passport", st.session_state.get("sec_secretary_id", "S7277791C"), "sec_secretary_id")
+    row_input("Secretary Name", st.session_state.get("sec_secretary_name", ""), "sec_secretary_name")
+    row_input("Secretary NRIC/Passport", st.session_state.get("sec_secretary_id", ""), "sec_secretary_id")
 
     st.write("#### 8. APPOINTMENT OF AUDITORS")
     audit_opt = st.radio("Auditor Status", ["Exempt / No Auditor Appointed", "Appoint Audit Firm"], key="sec_audit_status")
@@ -1986,7 +1986,7 @@ def bg_sec_file_form(client_name):
             
             col_f1, col_f2 = st.columns(2)
             col_f1.date_input("Date of Appointment", value=inc_date, key=f"f45_app_date_{i}", format="DD/MM/YYYY")
-            col_f2.text_input("Witness / Secretarial Professional Agent", value=st.session_state.get("sec_secretary_name", "JANAKIRAMAN AYYAPPAN"), key=f"f45_witness_{i}")
+            col_f2.text_input("Witness / Secretarial Professional Agent", value=st.session_state.get("sec_secretary_name", ""), key=f"f45_witness_{i}")
             
             st.markdown("---")
             st.markdown("**Section B: Under the provisions of the Singapore Companies Act, I state as follows:**")
@@ -2442,10 +2442,10 @@ def render_customer_acceptance_form(client_name_arg=None):
     for i in range(st.session_state["caf_person_count"]):
         st.markdown(f"#### Individual Profile #{i+1}")
         
-        b_default_name = "Janakiraman Ayyappan" if i == 0 else ""
-        b_default_addr = "NO 10, JALAN BESAR, SIM LIM TOWER #09-03, SINGAPORE 208787" if i == 0 else ""
-        b_default_phone = "+6597679806" if i == 0 else ""
-        b_default_email = "jack@bgconsultancy.com.sg" if i == 0 else ""
+        b_default_name = "" if i == 0 else ""
+        b_default_addr = "" if i == 0 else ""
+        b_default_phone = "" if i == 0 else ""
+        b_default_email = "" if i == 0 else ""
 
         st.text_input("Name as per Passport/NRIC", value=b_default_name, key=f"caf_sec_b_name_{i}")
         st.text_area("Address", value=b_default_addr, key=f"caf_sec_b_address_{i}", height=68)
@@ -2471,11 +2471,11 @@ def render_customer_acceptance_form(client_name_arg=None):
     for i in range(st.session_state["caf_person_count"]):
         st.markdown(f"#### Beneficial Owner Profile #{i+1}")
         
-        c_default_name = "Janakiraman Ayyappan" if i == 0 else ""
-        c_default_id = "S7277791C" if i == 0 else ""
-        c_default_dob = "15/06/1972" if i == 0 else ""
-        c_default_nat = "SG" if i == 0 else ""
-        c_default_phone = "+6597679806" if i == 0 else ""
+        c_default_name = "" if i == 0 else ""
+        c_default_id = "" if i == 0 else ""
+        c_default_dob = "" if i == 0 else ""
+        c_default_nat = "" if i == 0 else ""
+        c_default_phone = "" if i == 0 else ""
 
         st.text_input("Full Name of beneficial owner (including any alias)", value=c_default_name, key=f"caf_sec_c_fullname_{i}")
         st.text_input("Unique Identification number", value=c_default_id, key=f"caf_sec_c_id_{i}")
@@ -2521,15 +2521,15 @@ def render_customer_acceptance_form(client_name_arg=None):
         
         default_person_name = st.session_state.get(f"caf_sec_b_name_{i}", "")
         if i == 0 and not default_person_name:
-            default_person_name = "Janakiraman Ayyappan"
+            default_person_name = ""
         elif i == 1 and not default_person_name:
-            default_person_name = "Vaidyanathan Padmini"
+            default_person_name = ""
 
         default_person_id = st.session_state.get(f"caf_sec_c_id_{i}", "")
         if i == 0 and not default_person_id:
-            default_person_id = "S7277791C"
+            default_person_id = ""
         elif i == 1 and not default_person_id:
-            default_person_id = "S7379693H"
+            default_person_id = ""
         
         st.text_input("Name of customer", value=default_person_name, key=f"caf_sec_e_name_{i}")
         st.text_input("Unique Identification number", value=default_person_id, key=f"caf_sec_e_id_{i}")
